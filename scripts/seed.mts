@@ -52,8 +52,13 @@ async function demoPassword(): Promise<string> {
   return generated;
 }
 
-/** 데모 데이터 전부 삭제. 순서: 신청·후기 → 소셜링 → 장소·지역·카테고리 → 데모 계정 */
+/** 데모 데이터 전부 삭제. 순서: 사진 → 신청·후기 → 소셜링 → 장소·지역·카테고리 → 데모 계정 */
 async function wipe() {
+  // 사진 버킷을 비운다 (지난 시드, 테스트, 실기기 확인에서 올린 사진). SQL로는 지울 수 없어 Storage API로 지운다
+  for (const bucket of ["socialing-photos", "review-photos"]) {
+    ok(`${bucket} 비우기`, await supabase.storage.emptyBucket(bucket));
+  }
+
   // review_checks는 reviews 삭제 때 함께 지워진다 (on delete cascade)
   for (const table of ["reviews", "applications", "socialings", "venues", "regions", "categories"] as const) {
     ok(`${table} 삭제`, await supabase.from(table).delete().gte("id", 0));

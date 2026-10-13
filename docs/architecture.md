@@ -33,6 +33,9 @@ flowchart LR
 - **읽기**: 서버 컴포넌트가 Supabase에서 바로 읽는다. 비로그인도 목록·상세·피드를 읽을 수 있게 RLS를 연다. 동적 페이지가 기본이다.
 - **쓰기**: 버튼 하나 = 서버 액션 하나 = Postgres 함수(RPC) 하나. 상태 전환·권한·정원 검사는 **DB 함수 안에만** 둔다. 서버 액션은 입력을 zod로 검사하고 함수를 부른 뒤, 결과를 화면 문구로 바꾸고 관련 경로를 재검증(revalidate)한다.
 - **사진**: 브라우저에서 1MB 이하로 축소 → Storage에 직접 업로드(`사용자id/파일명`) → 경로를 함수에 넘긴다. 업로드가 실패하면 경로 없이 제출한다(Q4).
+  - SP3에서 정한 것: `components/photo-picker.tsx`가 사진을 고르는 즉시 줄여서 올리고, 올린 경로를 폼의 숨은 칸으로 넘긴다(실패하거나 지우면 빈 값). 줄이기는 `lib/photos/compress.ts`: 긴 변 1600px, 목표 0.9MB, JPEG로 저장(버킷 한도 1MB에 여유). 라이브러리의 웹 워커는 외부 CDN(jsdelivr)에서 코드를 받아 와서 쓰지 않는다(`useWebWorker: false`).
+  - 파일 고르기는 `accept="image/*"`. iPhone은 이때 HEIC 사진을 JPEG로 바꿔 넘긴다. 브라우저가 열지 못하는 형식(예: Android Chrome의 HEIC)은 "사진을 올리지 못했어요" + "JPEG로 골라 주세요".
+  - 경로는 `<사용자 id>/<무작위 uuid>.jpg`. 고른 뒤 제출하지 않고 나간 사진은 버킷에 남는다(MVP에서는 정리하지 않음). `npm run seed`가 두 버킷을 비운다.
 - **시간**: 현재/지난, 신청 가능, 버튼 가능 여부는 조회할 때 `now()`로 계산한다. 예약 작업(cron)은 없다. DB는 `timestamptz`, 화면 표시와 날짜 필터 계산은 Asia/Seoul로 고정한다(서버가 UTC여도 같은 결과).
 - **세션**: `@supabase/ssr`로 쿠키 세션. Next.js 16은 루트 `proxy.ts`(예전 이름 middleware)에서 `supabase.auth.getClaims()`로 세션을 갱신하고, 로그인이 필요한 경로는 `/login?next=원래주소`로 보낸다. 서버 코드에서 `getSession()` 결과는 믿지 않고 `getClaims()`로 확인한다(Supabase 공식 Next.js 가이드, 2026-10-12 판).
   - SP1에서 정한 것: 세션 갱신과 주소 처리는 `lib/supabase/proxy.ts`(`updateSession`), 서버 컴포넌트·서버 액션용 클라이언트는 `lib/supabase/server.ts`. 로그인이 필요한 주소 목록(P06 `/me`, P07, P08, P09, P11)과 `next` 검사는 `lib/routes.ts` 한 곳에 둔다. 로그인한 사람이 `/login`·`/signup`에 오면 proxy가 `next`(없으면 `/`)로 보낸다.
@@ -167,7 +170,7 @@ MS1에서 실제 구조를 확정하면 이 장을 고친다.
 
 **마이그레이션**: Docker(로컬 Supabase)는 쓰지 않는다. SQL은 `supabase/migrations/`에 파일로 남긴다. 클라우드 세션은 HTTP/HTTPS로만 나가므로(Claude Code 공식 문서, 2026-10-13 시험에서 80·443 외 포트 막힘) Postgres 직접 접속인 `supabase db push`는 기대하지 않는다. 기본 방법은 Supabase Management API(HTTPS `api.supabase.com`, `SUPABASE_ACCESS_TOKEN`)로 원격 dev에 적용하는 것이다. SP5에서 정한 방법: `npm run db:push`(`scripts/db-push.mts`)가 `POST /database/query`로 파일 하나를 트랜잭션 하나로 적용하고, 같은 트랜잭션에서 `supabase_migrations.schema_migrations`에 파일 이름의 버전·이름을 남긴다. 적용 기록용 엔드포인트(`POST /database/migrations`)는 버전을 적용 시각으로 새로 붙여 파일 버전과 달라지고(Supabase CLI가 같은 파일을 다시 적용하려 함), API로 되돌리기도 막혀 있어(production 브랜치) 쓰지 않는다. 막히면 ② 대시보드 SQL 편집기 ③ PM의 로컬 터미널(`supabase link` + `db push`, `SUPABASE_DB_PASSWORD`) 순서이고, 기록 방식이 CLI와 같아서 ③으로 바꿔도 이미 적용한 파일을 다시 적용하지 않는다. 타입 생성은 `npm run db:types`(`GET /types/typescript`). 자세한 규칙은 AGENTS.md "보안과 환경".
 
-**시드**: `npm run seed` 한 번으로 데모 데이터 삭제 → 데모 계정 생성(관리자 API: `@supabase/supabase-js`의 `createClient`에 secret 키, auth 옵션 `persistSession`·`autoRefreshToken`·`detectSessionInUrl`은 false, 이메일 인증 완료 상태) → 지역·지점·카테고리 → 소셜링·신청·후기·비공개 응답 → 대표 사진 업로드. 날짜는 실행 시점 기준 상대값. 두 번 실행해도 결과가 같고 1분 안에 끝난다. 요구 조건은 spec 7장. 대표 사진은 `scripts/seed-assets/`(Gemini 생성 이미지, 출처는 `SOURCES.md`). 사진이 없으면 전부 카테고리 그림으로 둔다.
+**시드**: `npm run seed` 한 번으로 데모 데이터 삭제(사진 버킷 2개 비우기 포함, Storage API) → 데모 계정 생성(관리자 API: `@supabase/supabase-js`의 `createClient`에 secret 키, auth 옵션 `persistSession`·`autoRefreshToken`·`detectSessionInUrl`은 false, 이메일 인증 완료 상태) → 지역·지점·카테고리 → 소셜링·신청·후기·비공개 응답 → 대표 사진 업로드. 날짜는 실행 시점 기준 상대값. 두 번 실행해도 결과가 같고 1분 안에 끝난다. 요구 조건은 spec 7장. 대표 사진은 `scripts/seed-assets/`(Gemini 생성 이미지, 출처는 `SOURCES.md`). 사진이 없으면 전부 카테고리 그림으로 둔다.
 - 데모 계정 이메일은 메일이 가지 않는 `@socialing.test` 주소이고, 시드는 이 도메인의 계정만 지우고 다시 만든다.
 - 데모 계정 비밀번호는 `DEMO_PASSWORD` 환경 변수. 없으면 시드가 새로 만들어 `.env.local`에 저장한다(공개 저장소라 코드에 두지 않음). E2E도 같은 값을 읽는다(`playwright.config.ts`가 `.env.local`을 읽음).
 
