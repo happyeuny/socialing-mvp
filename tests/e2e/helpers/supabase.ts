@@ -130,7 +130,7 @@ export async function addApplication(
 }
 
 /**
- * 테스트 소셜링을 바로 바꾼다. 창을 연 사이 다른 일이 생긴 경우(호스트 취소, 신청 마감)를 만든다.
+ * 테스트 소셜링을 바로 바꾼다. 창을 연 사이 다른 일이 생긴 경우(호스트 취소, 신청 마감, 호스트가 바뀜)를 만든다.
  * 테스트 전용 [E2E] 소셜링만 바꾼다.
  */
 export async function updateFixtureSocialing(
@@ -140,6 +140,8 @@ export async function updateFixtureSocialing(
     deadlineInHours?: number;
     /** 소셜링 일시. 신청 마감 일시는 그보다 늦을 수 없어 함께 옮긴다 (deadlineInHours가 없으면 일시 1시간 전) */
     startsInHours?: number;
+    /** 호스트를 바꾼다. 보는 사람이 그 소셜링의 호스트가 된 경우(IS_HOST)를 만든다 */
+    host?: DemoUserKey;
   },
 ) {
   const deadline = change.deadlineInHours ?? (change.startsInHours !== undefined ? change.startsInHours - 1 : undefined);
@@ -147,6 +149,9 @@ export async function updateFixtureSocialing(
     change.status ? `status = '${change.status}'` : null,
     deadline !== undefined ? `apply_deadline_at = now() + interval '${deadline} hours'` : null,
     change.startsInHours !== undefined ? `starts_at = now() + interval '${change.startsInHours} hours'` : null,
+    change.host
+      ? `host_id = (select id from auth.users where email = ${sqlText(DEMO_USERS[change.host].email)})`
+      : null,
   ].filter(Boolean);
   if (sets.length === 0) return;
   await runQuery(

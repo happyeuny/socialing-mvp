@@ -155,29 +155,30 @@ erDiagram
   (tabs)/                 메인 탭 화면 묶음. layout.tsx가 header-main + tab-bar를 둔다 (주소에는 안 나타남)
     page.tsx              P00 홈
     explore/              P01 탐색
-    me/                   P06 (지금은 닉네임·로그아웃만, MS3에서 채움)
+    me/                   P06 내 소셜링 (page: 닉네임·로그아웃·top-tabs, applied-socialings·hosted-socialings: 탭 내용)
   login/  signup/         P04 · P05 (page.tsx + 폼 클라이언트 컴포넌트). 하위 화면은 각자 header-sub
   past/                   P02 지난 소셜링 (하위 화면, header-sub)
   socialings/[id]/        P03 상세 (page + loading + not-found)
   error.tsx               화면 전체 오류: "불러오지 못했어요" + 다시 시도 · 홈으로
   dev/photo-upload/       SP3 실기기 확인·E2E용 임시 화면 (미리보기·로컬만. MS5에서 테스트를 후기 쓰기로 옮기고 지움)
-  (MS3~) socialings/[id]/ 아래 manage/ · edit/ · review/, socialings/new/, (tabs)/reviews/
+  (MS4~) socialings/[id]/ 아래 manage/ · edit/ · review/, socialings/new/, (tabs)/reviews/
 /components               DESIGN.md 이름의 컴포넌트: button, text-field, avatar-initial, photo-picker,
-                          header-main, header-sub, tab-bar (+ 뒤로 판단용 navigation-tracker),
-                          status-badge, status-tag, socialing-card, category-art(사진 없을 때 카테고리 그림),
-                          skeleton, empty-state, error-state, host-profile-row, info-list, notice-box,
-                          intro-text(소개 5줄 접기), apply-bar(spec 8.4 순서표. 지금은 2·11·13줄),
-                          hero-card, section-header, shortcut-category, shortcut-branch, review-card
-                          (MS3~ application-chip, bottom-sheet 등)
-/components/ui            shadcn/ui 원본 (생성된 코드. ui.shadcn.com 접속이 열리면 씀)
+                          password-field, header-main, header-sub, header-login-link, tab-bar (+ 뒤로 판단용
+                          navigation-tracker), top-tabs, status-badge, status-tag, application-chip, count-pill,
+                          socialing-card, category-art(사진 없을 때 카테고리 그림), skeleton, empty-state,
+                          error-state, host-profile-row, info-list, notice-box, intro-text(소개 5줄 접기),
+                          apply-bar(spec 8.4 순서표 13줄), hero-card, section-header, shortcut-category,
+                          shortcut-branch, review-card, toast(짧은 안내),
+                          bottom-sheet · dialog(Radix Dialog 위, decisions.md), confirm-apply-sheet(O02),
+                          confirm-cancel-application-sheet(O05)
 /lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)
-/lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). auth.ts, applications.ts(신청)
+/lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). auth.ts, applications.ts(신청·신청 취소)
 /lib/validation           zod 스키마 (폼과 서버 액션이 같이 씀)
 /lib/photos               사진 줄이기 (compress.ts)
 /lib/routes.ts            로그인 필요 주소, `next` 검사
 /lib/in-app-history.ts    머리글 뒤로 버튼: 앱 안 이전 화면이 없으면 홈 (spec 8.7)
 /lib/queries              읽기 함수. viewer.ts(지금 보는 사람, 닉네임은 로그인 토큰에서), socialings.ts(socialing_summaries 뷰),
-                          my-socialings.ts("나" 기준 뷰: 상세 아래 영역의 보는 사람·내 신청·승인 대기 건수),
+                          my-socialings.ts("나" 기준 뷰: 상세 아래 영역의 보는 사람, 내 소셜링 두 탭 목록),
                           catalog.ts(카테고리·스터디지점), reviews.ts(인증 후기)
 /lib/format               날짜(Asia/Seoul)·금액 표시
 /lib/simulated-state.ts   화면 상태 흉내 `?_state=empty|error|loading|partial` (운영 주소에서는 무시, decisions.md)
