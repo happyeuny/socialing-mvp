@@ -125,18 +125,21 @@ erDiagram
 
 ## 6. 폴더 구조
 
-MS1 끝의 실제 구조. 아직 없는 폴더(`lib/queries`, `lib/format`, `scripts/seed-assets/`)는 처음 쓰는 마일스톤에서 만든다.
+실제 구조. 아직 없는 폴더(`lib/format`, `scripts/seed-assets/`)는 처음 쓰는 마일스톤에서 만든다.
 
 ```
 /proxy.ts                 세션 갱신과 로그인 필요 주소 처리 (Next.js 16 proxy, 2장 세션)
 /app                      화면 (라우트는 spec 8.2 주소 그대로)
-  page.tsx                P00 홈 (MS2에서 채움)
-  login/  signup/         P04 · P05 (page.tsx + 폼 클라이언트 컴포넌트)
-  me/                     P06 (지금은 닉네임·로그아웃만, MS3에서 채움)
+  (tabs)/                 메인 탭 화면 묶음. layout.tsx가 header-main + tab-bar를 둔다 (주소에는 안 나타남)
+    page.tsx              P00 홈 (MS2에서 채움)
+    explore/              P01 탐색
+    me/                   P06 (지금은 닉네임·로그아웃만, MS3에서 채움)
+  login/  signup/         P04 · P05 (page.tsx + 폼 클라이언트 컴포넌트). 하위 화면은 각자 header-sub
   error.tsx               화면 전체 오류: "불러오지 못했어요" + 다시 시도 · 홈으로
   dev/photo-upload/       SP3 실기기 확인·E2E용 임시 화면 (미리보기·로컬만. MS5에서 테스트를 후기 쓰기로 옮기고 지움)
-  (MS2~) explore/  past/  reviews/  socialings/[id]/ (+ manage/, edit/, review/), socialings/new/
-/components               DESIGN.md 이름의 컴포넌트: button, text-field, avatar-initial, photo-picker
+  (MS2~) past/  (tabs)/reviews/  socialings/[id]/ (+ manage/, edit/, review/), socialings/new/
+/components               DESIGN.md 이름의 컴포넌트: button, text-field, avatar-initial, photo-picker,
+                          header-main, header-sub, tab-bar (+ 뒤로 판단용 navigation-tracker)
                           (MS2~ status-badge, application-chip, socialing-card, apply-bar 등)
 /components/ui            shadcn/ui 원본 (생성된 코드. ui.shadcn.com 접속이 열리면 씀)
 /lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)
@@ -144,7 +147,8 @@ MS1 끝의 실제 구조. 아직 없는 폴더(`lib/queries`, `lib/format`, `scr
 /lib/validation           zod 스키마 (폼과 서버 액션이 같이 씀)
 /lib/photos               사진 줄이기 (compress.ts)
 /lib/routes.ts            로그인 필요 주소, `next` 검사
-/lib/queries              읽기 함수 (MS2~)
+/lib/in-app-history.ts    머리글 뒤로 버튼: 앱 안 이전 화면이 없으면 홈 (spec 8.7)
+/lib/queries              읽기 함수. viewer.ts(지금 보는 사람, 닉네임은 로그인 토큰에서)
 /lib/format               날짜(Asia/Seoul)·금액 표시 (MS2~)
 /supabase/migrations      테이블·enum·RLS·함수 SQL (파일 하나 = 변경 하나)
 /scripts/seed.mts         데모 시드 (secret 키는 여기서만), seed-data.mts는 데이터 정의

@@ -1,4 +1,4 @@
-// P00 홈. MS1에서는 빈 화면이고, 히어로·바로가기·목록은 MS2에서 만든다.
+// P00 홈. 아직 빈 화면이고, 히어로·바로가기·목록은 MS2 홈 PR에서 만든다. 머리글·아래 탭은 (tabs)/layout.tsx.
 export default function HomePage() {
   return (
     <main className="px-page-x py-xl">
