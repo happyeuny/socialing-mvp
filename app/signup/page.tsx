@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { buttonVariants } from "@/components/button";
+import { HeaderSub } from "@/components/header-sub";
 import { safeNextPath, withNext } from "@/lib/routes";
 import { SignupForm } from "./signup-form";
 
@@ -15,15 +16,17 @@ export default async function SignupPage({ searchParams }: Props) {
   const next = safeNextPath((await searchParams).next);
 
   return (
-    <main className="flex flex-col gap-xl px-page-x py-2xl">
-      <h1 className="text-title-xl text-text-primary">가입</h1>
-      <SignupForm next={next} />
-      <p className="flex items-center justify-center gap-xxs text-body-md text-text-secondary">
-        이미 계정이 있나요?
-        <Link href={withNext("/login", next)} className={buttonVariants({ variant: "text-link", size: "inline" })}>
-          로그인
-        </Link>
-      </p>
-    </main>
+    <>
+      <HeaderSub title="가입" />
+      <main className="flex flex-col gap-xl px-page-x py-xl">
+        <SignupForm next={next} />
+        <p className="flex items-center justify-center gap-xxs text-body-md text-text-secondary">
+          이미 계정이 있나요?
+          <Link href={withNext("/login", next)} className={buttonVariants({ variant: "text-link", size: "inline" })}>
+            로그인
+          </Link>
+        </p>
+      </main>
+    </>
   );
 }
