@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, SearchX } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -30,6 +30,29 @@ export function ErrorStateFull({ onRetry }: { onRetry?: () => void }) {
         <Button variant="primary" size="md" loading={isPending} onClick={retry}>
           다시 시도
         </Button>
+        <Link href="/" className={buttonVariants({ variant: "text-link", size: "inline" })}>
+          홈으로
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/** error-state/not-found: 없는 소셜링 주소. 탐색으로 · 홈으로 */
+export function ErrorStateNotFound() {
+  return (
+    <div className="flex flex-col items-center gap-sm px-lg py-3xl text-center">
+      <div className="flex size-12 items-center justify-center rounded-full bg-surface-muted text-text-secondary">
+        <SearchX className="size-6" aria-hidden />
+      </div>
+      <div className="flex flex-col gap-xxs">
+        <p className="text-title-md text-text-primary">찾을 수 없는 소셜링이에요</p>
+        <p className="text-body-sm text-text-secondary">주소가 맞는지 확인해 주세요</p>
+      </div>
+      <div className="mt-xs flex flex-col items-center">
+        <Link href="/explore" className={buttonVariants({ variant: "primary", size: "md" })}>
+          탐색으로
+        </Link>
         <Link href="/" className={buttonVariants({ variant: "text-link", size: "inline" })}>
           홈으로
         </Link>

@@ -52,6 +52,9 @@ export type FixtureOptions = {
   /** 소셜링 일시까지 남은 시간(시간). 음수면 지난 소셜링. 기본은 신청 마감 24시간 뒤. 신청 마감보다 앞서면 안 된다 */
   startsInHours?: number;
   accepted?: DemoUserKey[];
+  description?: string;
+  staffCount?: number;
+  approvalCriteria?: string;
 };
 
 /** 테스트 전용 소셜링을 만들고 id를 돌려준다. 제목은 "[E2E]"로 시작한다. */
@@ -64,6 +67,9 @@ export async function createFixtureSocialing(options: FixtureOptions): Promise<n
     deadlineInHours = 24,
     startsInHours = Math.max(deadlineInHours, 0) + 24,
     accepted = [],
+    description = "자동 테스트가 만들고 지우는 소셜링",
+    staffCount = 0,
+    approvalCriteria,
   } = options;
   const title = `[E2E] 테스트 소셜링 ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const acceptedEmails = accepted.map((u) => sqlText(DEMO_USERS[u].email)).join(", ");
@@ -74,13 +80,13 @@ export async function createFixtureSocialing(options: FixtureOptions): Promise<n
     ), inserted as (
       insert into public.socialings
         (host_id, title, description, category_id, has_alcohol, venue_id,
-         starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, status)
-      select host.id, ${sqlText(title)}, '자동 테스트가 만들고 지우는 소셜링',
+         starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, status)
+      select host.id, ${sqlText(title)}, ${sqlText(description)},
         (select id from public.categories where slug = 'learning'), false,
         (select id from public.venues order by id limit 1),
         now() + interval '${startsInHours} hours',
         now() + interval '${deadlineInHours} hours',
-        0, ${capacity}, 0, '${joinType}', '${status}'
+        0, ${capacity}, ${staffCount}, '${joinType}', ${approvalCriteria ? sqlText(approvalCriteria) : "null"}, '${status}'
       from host
       returning id
     )
