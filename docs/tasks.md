@@ -45,7 +45,7 @@
 - [x] H4 클라우드 환경에 dev 환경 변수 4개(DB 비밀번호 제외, secret 키는 Claude 전용, access token은 dev 범위 제한), 네트워크 Limited + `*.supabase.co`, `*.supabase.com`
 - [x] H3 Vercel Hobby에 저장소 연결, Preview·Production 모두 dev의 `NEXT_PUBLIC_` 2개
 - [x] H6 화면 시안 (Stitch → Figma 14화면)과 최종 DESIGN.md (2026-10-13)
-- [ ] H6-1 시안 PNG를 `docs/design/screens/`에 (화면 ID 이름, MS2 전까지)
+- [x] H6-1 시안 PNG를 `docs/design/screens/`에 (화면 ID 이름, MS2 전까지). 14장 (2026-10-13)
 - [ ] H7 시드 대표 사진 10장 (Gemini, 사람·글자·로고 없음, 4:3). 없으면 카테고리 그림으로 시드
 
 ### MS1. 기반과 스파이크
