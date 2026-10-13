@@ -480,7 +480,7 @@ components:
 
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
-| socialing-card/photo | surface, border-default 1px, 모서리 xl, 여백 16. 왼쪽 96px 정사각 사진(모서리 lg), 오른쪽 위에서부터: status-badge(+status-tag), 제목 1줄 말줄임(title-md), "카테고리 · 술 여부", "일시 · 장소", avatar-initial 20 + "호스트 · 참가자 n/정원 · 총 참가비" | 홈·탐색·지난 소셜링 목록 |
+| socialing-card/photo | surface, border-default 1px, 모서리 xl, 여백 16. 왼쪽 96px 정사각 사진(모서리 lg), 오른쪽 위에서부터: status-badge(+status-tag), 제목 1줄 말줄임(title-md), "카테고리 · 술 여부", "일시 · 장소", avatar-initial 20 + "호스트 · 4/8명 · 총 참가비"(닉네임과 총 참가비는 text-primary) | 홈·탐색·지난 소셜링 목록 |
 | socialing-card/no-photo | 왼쪽 칸이 primary-soft 바탕 + 카테고리 선 아이콘 | 대표 사진이 없을 때 |
 | socialing-card/my-application | photo 카드 + application-chip. 후기를 쓸 수 있으면(참여 확정 + 종료 + 아직 안 씀) sm primary "후기 쓰기" | 내 소셜링 "신청한 소셜링" 탭 |
 | socialing-card/host | photo 카드 + "승인 대기" count-pill + "소셜링 관리 ›" | 내 소셜링 "호스트인 소셜링" 탭 |

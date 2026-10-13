@@ -1,0 +1,26 @@
+// 화면에 보이는 날짜·금액 (spec 6장). 날짜는 언제나 한국 시간으로 계산한다(서버가 어느 시간대에 있든).
+
+const dateTimeFormat = new Intl.DateTimeFormat("ko-KR", {
+  timeZone: "Asia/Seoul",
+  month: "numeric",
+  day: "numeric",
+  weekday: "short",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+
+/** 예: `10/14(화) 오후 7:30` */
+export function formatDateTime(value: string | Date): string {
+  const parts = Object.fromEntries(
+    dateTimeFormat.formatToParts(new Date(value)).map((part) => [part.type, part.value]),
+  );
+  return `${parts.month}/${parts.day}(${parts.weekday}) ${parts.dayPeriod} ${parts.hour}:${parts.minute}`;
+}
+
+const wonFormat = new Intl.NumberFormat("ko-KR");
+
+/** 총 참가비. 예: `15,000원`, 0원이면 `무료` */
+export function formatFee(fee: number): string {
+  return fee === 0 ? "무료" : `${wonFormat.format(fee)}원`;
+}
