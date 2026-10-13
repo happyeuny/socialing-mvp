@@ -488,7 +488,7 @@ components:
 | review-card/compact | surface, border-default 1px, 모서리 lg, 여백 14·16. "닉네임 · 날짜 · 소셜링 제목" + 글 2줄 | 홈 "최근 인증 후기" |
 | review-card/full-no-photo | surface, 모서리 xl, 여백 16. avatar-initial 32, 닉네임, 날짜, verified-badge, 소셜링 제목 링크 "주말 아침 독서 토론 ›", 글(body-long) | 인증 후기 목록 |
 | review-card/full-with-photo | full-no-photo + 4:3 사진(모서리 lg) | 사진이 있는 후기 |
-| shortcut-category/default | 56px 원(surface, border-default 1px) 안 카테고리 선 아이콘 24(primary-strong) + 아래 이름(label, text-primary, 가운뎃점 뒤에서 줄바꿈) | 홈 카테고리 바로가기 5개 (시안) |
+| shortcut-category/default | 56px 원(surface, border-default 1px) 안 카테고리 선 아이콘 24(primary-strong) + 아래 이름(label, text-primary, 가운뎃점 뒤에서 줄바꿈). 5개가 한 줄을 똑같이 나눠 쓰고, 칸이 56px보다 좁은 화면에서는 원이 칸 폭에 맞춰 줄어든다 | 홈 카테고리 바로가기 5개 (시안) |
 | shortcut-branch/default | surface, border-default 1px, 모서리 lg, 여백 12, 가운데 정렬. 지점 이름(title-md) + 지역 "서울 강남구"(body-sm, text-secondary). 3개가 한 줄을 나눠 씀 | 홈 스터디지점 바로가기 3개 (시안) |
 
 **호스트 기록과 상세 정보**
