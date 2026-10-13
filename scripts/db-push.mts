@@ -16,7 +16,8 @@ import { listAppliedMigrations, runQuery } from "./lib/management-api.mts";
 
 const MIGRATIONS_DIR = path.join(process.cwd(), "supabase", "migrations");
 const FILE_PATTERN = /^(\d{14})_([a-z0-9_]+)\.sql$/;
-const TRANSACTION_CONTROL = /^\s*(begin|commit|rollback|start\s+transaction)\b/im;
+// 맨 앞의 트랜잭션 문장만 잡는다 (plpgsql 함수 본문의 "begin"은 세미콜론이 없어서 걸리지 않음)
+const TRANSACTION_CONTROL = /^\s*(begin|commit|rollback|start\s+transaction)(\s+(work|transaction))?\s*;/im;
 
 type MigrationFile = { version: string; name: string; fileName: string };
 
