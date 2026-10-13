@@ -533,7 +533,7 @@ components:
 | dialog/confirm | surface, 모서리 xl, 여백 20, 뒤 dim. 제목 + 본문 + secondary "돌아가기" + primary 행동 | 호스트 동작 확인(O04)의 확정·종료: "확정할까요? 확정하면 되돌릴 수 없어요." |
 | dialog/confirm-danger | confirm과 같고 행동 버튼이 button/danger/default | O04의 호스트 취소·거절: "호스트 취소할까요?" |
 | dialog/result | 버튼 하나 primary "확인" | 결과 안내: "신청하지 못했어요 · 방금 정원이 찼어요" |
-| bottom-sheet/confirm-apply | surface, 위 모서리 2xl, 손잡이 36×4, 뒤 dim. 제목 + 소셜링 요약(제목·일시·장소·총 참가비) + notice-box 승인 기준(있을 때) + 결과 안내 + 결제 안내 문구, 아래 secondary "돌아가기" + primary "신청하기" (문구는 docs/spec.md M7) | 신청 확인(O02) |
+| bottom-sheet/confirm-apply | surface, 위 모서리 2xl, 손잡이 36×4, 뒤 dim. 제목 title-lg "신청할까요?" + 소셜링 요약 두 줄(body-md, text-secondary: "제목 · 일시" / "장소 · 총 참가비") + notice-box 승인 기준(있을 때) + 결과 안내("• …", body-md) + 결제 안내 문구(body-sm, text-muted), 아래 secondary "돌아가기" + primary "신청하기"(폭 1:2). 네트워크 오류면 버튼 위에 오류 문구(body-sm, danger)와 "다시 시도" (문구는 docs/spec.md M7·8.4) | 신청 확인(O02) |
 | bottom-sheet/trust-criteria | bottom-sheet와 같은 틀. 제목 "믿고 가는 호스트", 조건 3행(조건 · 이 호스트의 실제 값 · 채움 ✓), 닫기 | 등급 조건(O03) |
 | bottom-sheet/confirm-cancel-application | bottom-sheet와 같은 틀. 제목 "신청을 취소할까요?", 선착순일 때만 본문 "취소하면 다른 사람이 자리를 채울 수 있어요.", 버튼 secondary "돌아가기" + danger "신청 취소" | 신청 취소 확인(O05), 상세에서 "신청 취소"를 누를 때 |
 | bottom-sheet/filter-sheet | surface, 위 모서리 2xl, 손잡이 36×4, 제목 + 닫기 X, 스크롤 내용, 아래 고정 secondary "초기화" + primary "소셜링 4개 보기" | 탐색 필터(O01) |
@@ -582,6 +582,7 @@ components:
 | 필터가 하위 화면 | bottom-sheet/filter-sheet (O01) | spec 8.2 |
 | 상세 아래 영역 5가지 | apply-bar 14가지 | spec 8.4 13줄 |
 | 상세(P03) 시안의 호스트 묶음에 trust-label이 두 번, 닉네임 없음 | 호스트 묶음은 avatar-initial + 닉네임, trust-label은 조건을 채운 호스트만 하나 | 등급 라벨은 기준을 채운 호스트에게 하나만 (spec M5) |
+| 신청 확인(O02) 요약이 "제목 · 일시" 한 줄 | 그 아래 "장소 · 총 참가비" 한 줄 더 | 결제 안내 바로 위에서 금액과 장소를 한 번 더 확인하게 (bottom-sheet/confirm-apply) |
 | 로그인(P04)·가입(P05) 머리글 오른쪽에 사람 아이콘 원 | header-sub/default(뒤로 + 제목)만 | 로그인 전 화면에 프로필 원이 있으면 이미 로그인된 것처럼 보임 |
 | 지난 소셜링(P02) 시안의 배지가 네모에 가깝고 모집중이 연한 하늘 바탕, 카드 안 호스트 줄 위에 구분선 | 모든 목록이 같은 status-badge(알약, 모집중은 흰 바탕 + 테두리)와 같은 socialing-card | 배지 모양은 10-13 결정, 카드는 화면마다 같게 |
 

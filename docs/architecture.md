@@ -10,7 +10,7 @@
 | 프레임워크 | Next.js App Router + React | next 16.3.x (16.4는 쓰지 않음), react 19.x |
 | 언어 | TypeScript | 6.0.x (7.0 쓰지 않음) |
 | DB·인증·파일 | Supabase (Postgres, Auth, Storage). 키는 새 방식 publishable·secret만 | @supabase/supabase-js 2.x, @supabase/ssr 0.12.x, supabase CLI 2.x (`npx supabase`) |
-| UI | Tailwind CSS + shadcn/ui, 아이콘 lucide-react | tailwindcss 4.x, shadcn CLI 4.x |
+| UI | Tailwind CSS + shadcn/ui, 아이콘 lucide-react. 창(바텀시트·가운데 창)은 Radix Dialog에 DESIGN 토큰을 직접 입힌다(decisions.md) | tailwindcss 4.x, shadcn CLI 4.x, @radix-ui/react-dialog 1.1.x |
 | 글꼴 | Noto Sans KR. npm 글꼴 패키지로 앱 안에서 제공 (`next/font/google`은 빌드 때 Google에 접속하는데 클라우드 환경 네트워크가 막을 수 있음) | @fontsource-variable/noto-sans-kr 5.3.x |
 | 입력 검증 | zod | 4.x |
 | 린트 | ESLint + eslint-config-next (core-web-vitals, typescript) | eslint 9.x (10 쓰지 않음) |
@@ -171,7 +171,7 @@ erDiagram
                           (MS3~ application-chip, bottom-sheet 등)
 /components/ui            shadcn/ui 원본 (생성된 코드. ui.shadcn.com 접속이 열리면 씀)
 /lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)
-/lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). 지금은 auth.ts
+/lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). auth.ts, applications.ts(신청)
 /lib/validation           zod 스키마 (폼과 서버 액션이 같이 씀)
 /lib/photos               사진 줄이기 (compress.ts)
 /lib/routes.ts            로그인 필요 주소, `next` 검사

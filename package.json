@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@fontsource-variable/noto-sans-kr": "5.3.1",
+    "@radix-ui/react-dialog": "1.1.23",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.117.3",
     "browser-image-compression": "2.0.2",
