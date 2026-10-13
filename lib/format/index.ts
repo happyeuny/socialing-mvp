@@ -18,6 +18,16 @@ export function formatDateTime(value: string | Date): string {
   return `${parts.month}/${parts.day}(${parts.weekday}) ${parts.dayPeriod} ${parts.hour}:${parts.minute}`;
 }
 
+const monthDayFormat = new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric" });
+
+/** 예: `10/12` (후기 날짜) */
+export function formatMonthDay(value: string | Date): string {
+  const parts = Object.fromEntries(
+    monthDayFormat.formatToParts(new Date(value)).map((part) => [part.type, part.value]),
+  );
+  return `${parts.month}/${parts.day}`;
+}
+
 const wonFormat = new Intl.NumberFormat("ko-KR");
 
 /** 총 참가비. 예: `15,000원`, 0원이면 `무료` */

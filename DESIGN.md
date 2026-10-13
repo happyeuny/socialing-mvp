@@ -488,6 +488,8 @@ components:
 | review-card/compact | surface, border-default 1px, 모서리 lg, 여백 14·16. "닉네임 · 날짜 · 소셜링 제목" + 글 2줄 | 홈 "최근 인증 후기" |
 | review-card/full-no-photo | surface, 모서리 xl, 여백 16. avatar-initial 32, 닉네임, 날짜, verified-badge, 소셜링 제목 링크 "주말 아침 독서 토론 ›", 글(body-long) | 인증 후기 목록 |
 | review-card/full-with-photo | full-no-photo + 4:3 사진(모서리 lg) | 사진이 있는 후기 |
+| shortcut-category/default | 56px 원(surface, border-default 1px) 안 카테고리 선 아이콘 24(primary-strong) + 아래 이름(label, text-primary, 가운뎃점 뒤에서 줄바꿈) | 홈 카테고리 바로가기 5개 (시안) |
+| shortcut-branch/default | surface, border-default 1px, 모서리 lg, 여백 12, 가운데 정렬. 지점 이름(title-md) + 지역 "서울 강남구"(body-sm, text-secondary). 3개가 한 줄을 나눠 씀 | 홈 스터디지점 바로가기 3개 (시안) |
 
 **호스트 기록과 상세 정보**
 
@@ -535,6 +537,7 @@ components:
 | error-state/inline | surface-muted, border-default 점선, 모서리 lg, 여백 16, sm secondary "다시 시도" | 묶음 하나만 실패 ("후기를 불러오지 못했어요") |
 | error-state/not-found | 아이콘 원 surface-muted, "찾을 수 없는 소셜링이에요", "주소가 맞는지 확인해 주세요", primary "탐색으로" + text-link "홈으로" | 없는 소셜링 주소 |
 | skeleton/card-list | surface-muted 덩어리: 96px 정사각 + 글 막대 3개, 2개 | 목록 로딩 |
+| skeleton/hero | surface-muted 덩어리, 높이 280, 모서리 2xl | 홈 히어로 로딩 |
 | skeleton/detail | 4:3 사진 칸 + 제목 막대 + 정보 줄 | 상세 로딩 |
 
 ### C4 상세 아래 고정 영역 (apply-bar)

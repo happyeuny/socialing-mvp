@@ -5,7 +5,9 @@ test.describe("MS1 골격", () => {
     await page.goto("/");
 
     await expect(page).toHaveTitle("문화소셜링");
-    await expect(page.getByRole("heading", { level: 1, name: "문화소셜링" })).toBeVisible();
+    // 홈 제목(h1)은 화면 읽기용. 보이는 이름은 머리글의 "문화소셜링" (MS2 홈)
+    await expect(page.getByRole("heading", { level: 1, name: "문화소셜링 홈" })).toBeAttached();
+    await expect(page.getByRole("banner").getByRole("link", { name: "문화소셜링" })).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("lang", "ko");
 
     const overflow = await page.evaluate(
@@ -23,8 +25,9 @@ test.describe("MS1 골격", () => {
     await expect(body).toHaveCSS("color", "rgb(17, 24, 39)");
     await expect(body).toHaveCSS("font-family", /Noto Sans KR/);
 
-    // title-xl 22px / 28px / 700
-    const heading = page.getByRole("heading", { level: 1 });
+    // title-xl 22px / 28px / 700 (홈에는 보이는 큰 제목이 없어 탐색 제목으로 확인)
+    await page.goto("/explore");
+    const heading = page.getByRole("heading", { level: 1, name: "탐색" });
     await expect(heading).toHaveCSS("font-size", "22px");
     await expect(heading).toHaveCSS("line-height", "28px");
     await expect(heading).toHaveCSS("font-weight", "700");
