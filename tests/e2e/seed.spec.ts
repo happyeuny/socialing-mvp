@@ -107,8 +107,11 @@ test.describe("시드 조건 (spec 7장)", () => {
   });
 
   test("DB에 정의한 만큼 들어가 있다", async ({ request }) => {
-    const socialings = await (await request.get(`${supabaseUrl}/rest/v1/socialings?select=id`, { headers })).json();
-    expect(socialings.length).toBe(definitions.length);
+    const socialings: { title: string }[] = await (
+      await request.get(`${supabaseUrl}/rest/v1/socialings?select=title`, { headers })
+    ).json();
+    // 다른 E2E가 잠깐 만드는 "[E2E]" 소셜링은 세지 않는다
+    expect(socialings.filter((s) => !s.title.startsWith("[E2E]")).length).toBe(definitions.length);
 
     const reviews = await (await request.get(`${supabaseUrl}/rest/v1/reviews?select=id`, { headers })).json();
     expect(reviews.length).toBe(definitions.flatMap((s) => s.reviews ?? []).length);
