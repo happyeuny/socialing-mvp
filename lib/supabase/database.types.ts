@@ -47,6 +47,13 @@ export type Database = {
             foreignKeyName: "applications_socialing_id_fkey"
             columns: ["socialing_id"]
             isOneToOne: false
+            referencedRelation: "socialing_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_socialing_id_fkey"
+            columns: ["socialing_id"]
+            isOneToOne: false
             referencedRelation: "socialings"
             referencedColumns: ["id"]
           },
@@ -180,6 +187,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reviews_socialing_id_fkey"
+            columns: ["socialing_id"]
+            isOneToOne: false
+            referencedRelation: "socialing_summaries"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reviews_socialing_id_fkey"
             columns: ["socialing_id"]
@@ -324,7 +338,62 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      socialing_summaries: {
+        Row: {
+          accepted_count: number | null
+          apply_deadline_at: string | null
+          approval_criteria: string | null
+          can_apply: boolean | null
+          capacity: number | null
+          category_id: number | null
+          category_is_party: boolean | null
+          category_name: string | null
+          category_slug: string | null
+          closed_reason: string | null
+          cover_photo_path: string | null
+          description: string | null
+          fee: number | null
+          has_alcohol: boolean | null
+          host_id: string | null
+          host_nickname: string | null
+          id: number | null
+          is_past: boolean | null
+          join_type: Database["public"]["Enums"]["join_type"] | null
+          region_sido: string | null
+          region_sigungu: string | null
+          staff_count: number | null
+          starts_at: string | null
+          status: Database["public"]["Enums"]["socialing_status"] | null
+          status_tag: string | null
+          title: string | null
+          venue_id: number | null
+          venue_name: string | null
+          venue_type: Database["public"]["Enums"]["venue_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "socialings_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "socialings_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "socialings_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       apply_to_socialing: {
@@ -344,6 +413,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      socialing_accepted_count: {
+        Args: { p_socialing_id: number }
+        Returns: number
       }
     }
     Enums: {
