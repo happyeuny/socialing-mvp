@@ -31,7 +31,7 @@ export type SocialingCardData = {
   status_tag: StatusTag | null;
 };
 
-const CARD_COLUMNS =
+export const CARD_COLUMNS =
   "id, title, host_nickname, category_slug, category_name, has_alcohol, venue_type, venue_name, region_sigungu, starts_at, fee, capacity, accepted_count, cover_photo_path, status, status_tag";
 
 // 현재/지난은 상태가 아니라 소셜링 일시로 나눈다(spec 3.1). 상태는 그대로 보인다.

@@ -1,4 +1,4 @@
-import type { ApplicationStatus } from "@/lib/queries/socialings";
+import { CARD_COLUMNS, type ApplicationStatus, type SocialingCardData } from "@/lib/queries/socialings";
 import { getViewer } from "@/lib/queries/viewer";
 import { createClient } from "@/lib/supabase/server";
 
@@ -36,4 +36,45 @@ export async function getApplyBarViewer(socialingId: number): Promise<ApplyBarVi
     kind: "member",
     application: { id: row.application_id, status: row.application_status, hasReview: row.has_review ?? false },
   };
+}
+
+/** 내 소셜링(P06) 신청한 소셜링 탭의 카드: 소셜링마다 내 가장 최근 신청 하나 */
+export type MyAppliedSocialing = SocialingCardData & {
+  is_past: boolean;
+  application_status: ApplicationStatus;
+  has_review: boolean;
+};
+
+/** 내 소셜링(P06) 호스트인 소셜링 탭의 카드 */
+export type MyHostedSocialing = SocialingCardData & { is_past: boolean; pending_count: number };
+
+/** 다가오는 소셜링(가까운 일시 순)과 지난 소셜링(최근 순)으로 나눈다 (spec M11). 지난 것은 뷰의 is_past */
+export type SplitByPast<T> = { upcoming: T[]; past: T[] };
+
+function splitByPast<T extends { is_past: boolean }>(rows: T[]): SplitByPast<T> {
+  // rows는 소셜링 일시가 이른 순으로 온다
+  return { upcoming: rows.filter((row) => !row.is_past), past: rows.filter((row) => row.is_past).reverse() };
+}
+
+export async function listMyAppliedSocialings(): Promise<SplitByPast<MyAppliedSocialing>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("my_applied_socialings")
+    .select(`${CARD_COLUMNS}, is_past, application_status, has_review`)
+    .order("starts_at", { ascending: true })
+    .order("id", { ascending: true });
+  if (error) throw new Error(`신청한 소셜링을 불러오지 못했습니다: ${error.message}`);
+  // 뷰의 칸은 생성된 타입에서 null 가능으로 나오지만, 위 칸은 테이블의 not null 칸과 계산 값이다
+  return splitByPast(data as unknown as MyAppliedSocialing[]);
+}
+
+export async function listMyHostedSocialings(): Promise<SplitByPast<MyHostedSocialing>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("my_hosted_socialings")
+    .select(`${CARD_COLUMNS}, is_past, pending_count`)
+    .order("starts_at", { ascending: true })
+    .order("id", { ascending: true });
+  if (error) throw new Error(`호스트인 소셜링을 불러오지 못했습니다: ${error.message}`);
+  return splitByPast(data as unknown as MyHostedSocialing[]);
 }

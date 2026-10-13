@@ -110,11 +110,16 @@ test.describe("시드 조건 (spec 7장)", () => {
     const socialings: { title: string }[] = await (
       await request.get(`${supabaseUrl}/rest/v1/socialings?select=title`, { headers })
     ).json();
-    // 다른 E2E가 잠깐 만드는 "[E2E]" 소셜링은 세지 않는다
-    expect(socialings.filter((s) => !s.title.startsWith("[E2E]")).length).toBe(definitions.length);
+    // 다른 E2E가 잠깐 만드는 "[E2E]" 소셜링과 거기 넣은 후기는 세지 않는다
+    const isFixture = (title: string) => title.startsWith("[E2E]");
+    expect(socialings.filter((s) => !isFixture(s.title)).length).toBe(definitions.length);
 
-    const reviews = await (await request.get(`${supabaseUrl}/rest/v1/reviews?select=id`, { headers })).json();
-    expect(reviews.length).toBe(definitions.flatMap((s) => s.reviews ?? []).length);
+    const reviews: { socialing: { title: string } }[] = await (
+      await request.get(`${supabaseUrl}/rest/v1/reviews?select=socialing:socialings(title)`, { headers })
+    ).json();
+    expect(reviews.filter((r) => !isFixture(r.socialing.title)).length).toBe(
+      definitions.flatMap((s) => s.reviews ?? []).length,
+    );
 
     // 정원 마감 소셜링: 호스트로 로그인하면 신청을 볼 수 있고, 참여 확정 인원이 정원과 같다
     const full = definitions.find((s) => s.key === "D_FULL")!;
