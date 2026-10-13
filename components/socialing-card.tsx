@@ -11,6 +11,19 @@ import { socialingPhotoUrl, type SocialingCardData } from "@/lib/queries/sociali
 // ① 상태 배지 + 꼬리표 ② 제목 1줄 ③ 카테고리 · 술 여부 ④ 소셜링 일시 · 장소 ⑤ 호스트 · 참여 확정 인원/정원 · 총 참가비.
 // 카드 전체가 상세로 가는 링크다(제목 링크를 카드 크기로 넓힘).
 
+/** 카드 목록. 카드 사이 12px (DESIGN.md Layout) */
+export function SocialingCardList({ socialings }: { socialings: SocialingCardData[] }) {
+  return (
+    <ul className="flex flex-col gap-sm">
+      {socialings.map((socialing) => (
+        <li key={socialing.id}>
+          <SocialingCard socialing={socialing} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function SocialingCard({ socialing }: { socialing: SocialingCardData }) {
   const place = socialing.venue_type === "branch" ? socialing.venue_name : socialing.region_sigungu;
 

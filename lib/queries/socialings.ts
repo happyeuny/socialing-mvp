@@ -32,18 +32,28 @@ export type SocialingCardData = {
 const CARD_COLUMNS =
   "id, title, host_nickname, category_slug, category_name, has_alcohol, venue_type, venue_name, region_sigungu, starts_at, fee, capacity, accepted_count, cover_photo_path, status, status_tag";
 
-/** 탐색(P01): 소셜링 일시가 지나지 않은 소셜링, 가까운 일시 순. 현재/지난은 상태가 아니라 일시로 나눈다(spec 3.1) */
-export async function listCurrentSocialings(): Promise<SocialingCardData[]> {
+// 현재/지난은 상태가 아니라 소셜링 일시로 나눈다(spec 3.1). 상태는 그대로 보인다.
+async function listByPast(past: boolean): Promise<SocialingCardData[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("socialing_summaries")
     .select(CARD_COLUMNS)
-    .eq("is_past", false)
-    .order("starts_at", { ascending: true })
-    .order("id", { ascending: true });
+    .eq("is_past", past)
+    .order("starts_at", { ascending: !past })
+    .order("id", { ascending: !past });
   if (error) throw new Error(`소셜링 목록을 불러오지 못했습니다: ${error.message}`);
   // 뷰의 칸은 생성된 타입에서 모두 null 가능으로 나오지만, 위 칸은 테이블의 not null 칸과 계산 값이라 null이 아니다.
   return data as SocialingCardData[];
+}
+
+/** 탐색(P01): 소셜링 일시가 지나지 않은 소셜링, 가까운 일시 순 */
+export function listCurrentSocialings(): Promise<SocialingCardData[]> {
+  return listByPast(false);
+}
+
+/** 지난 소셜링(P02): 소셜링 일시가 지난 소셜링, 최근 순 */
+export function listPastSocialings(): Promise<SocialingCardData[]> {
+  return listByPast(true);
 }
 
 /** 대표 사진 주소 (Storage `socialing-photos`는 공개 읽기) */

@@ -572,6 +572,7 @@ components:
 | 카드 사진 4:3 | 카드는 96px 정사각, 상세 대표 사진만 4:3 | spec 8.5, 실제 시안도 정사각 |
 | 필터가 하위 화면 | bottom-sheet/filter-sheet (O01) | spec 8.2 |
 | 상세 아래 영역 5가지 | apply-bar 14가지 | spec 8.4 13줄 |
+| 지난 소셜링(P02) 시안의 배지가 네모에 가깝고 모집중이 연한 하늘 바탕, 카드 안 호스트 줄 위에 구분선 | 모든 목록이 같은 status-badge(알약, 모집중은 흰 바탕 + 테두리)와 같은 socialing-card | 배지 모양은 10-13 결정, 카드는 화면마다 같게 |
 
 ## Do's and Don'ts
 
