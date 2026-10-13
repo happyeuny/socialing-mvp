@@ -101,7 +101,7 @@ erDiagram
 
 ## 5. 쓰기 함수 (RPC)
 
-모든 함수는 실패할 때 **정해진 오류 코드**를 돌려주고, 서버 액션이 그것을 spec 8.4·8.6·8.8의 문구로 바꾼다. 오류 코드 예: `NOT_AUTHENTICATED`, `NOT_HOST`, `IS_HOST`, `NOT_OPEN`(신청 불가), `DEADLINE_PASSED`, `FULL`, `HOST_CANCELED`, `ALREADY_APPLIED`, `STARTED`(소셜링 일시 지남), `NOT_STARTED`, `INVALID_STATE`, `ALREADY_PROCESSED`, `NOT_ELIGIBLE`(후기 조건), `ALREADY_REVIEWED`, `LOCKED_FIELD`, `INVALID_INPUT`.
+모든 함수는 실패할 때 **정해진 오류 코드**를 돌려주고, 서버 액션이 그것을 spec 8.4·8.6·8.8의 문구로 바꾼다. 방식(SP2에서 정함): `raise exception using errcode = 'P0001', message = 'FULL'`처럼 오류 코드를 message에 넣는다. supabase-js에서는 `error.message`가 오류 코드다. 성공하면 바뀐 행을 돌려준다(`apply_to_socialing`은 만든 `applications` 행). 오류 코드 예: `NOT_AUTHENTICATED`, `NOT_HOST`, `IS_HOST`, `NOT_OPEN`(신청 불가), `DEADLINE_PASSED`, `FULL`, `HOST_CANCELED`, `ALREADY_APPLIED`, `STARTED`(소셜링 일시 지남), `NOT_STARTED`, `INVALID_STATE`, `ALREADY_PROCESSED`, `NOT_ELIGIBLE`(후기 조건), `ALREADY_REVIEWED`, `LOCKED_FIELD`, `INVALID_INPUT`.
 
 | 함수 | 호출 화면 | 검사 |
 |---|---|---|

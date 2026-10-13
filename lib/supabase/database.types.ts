@@ -327,7 +327,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      apply_to_socialing: {
+        Args: { p_socialing_id: number }
+        Returns: {
+          canceled_at: string | null
+          created_at: string
+          decided_at: string | null
+          id: number
+          socialing_id: number
+          status: Database["public"]["Enums"]["application_status"]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "applications"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       application_status: "pending" | "accepted" | "rejected" | "canceled"
