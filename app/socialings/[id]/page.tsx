@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { ApplyBar } from "@/components/apply-bar";
 import { CategoryArt } from "@/components/category-art";
 import { ErrorStateFull } from "@/components/error-state";
 import { HeaderSub } from "@/components/header-sub";
@@ -16,7 +17,7 @@ import { getSocialing, socialingPhotoUrl, type SocialingDetail } from "@/lib/que
 import { readSimulatedState } from "@/lib/simulated-state";
 
 // P03 소셜링 상세 본문 (spec M4, 8.6, 8.7, 8.9). 로그인 없이 본다.
-// 아래 고정 영역(spec 8.4)은 다음 PR, 호스트 기록 숫자는 MS6, 등급 라벨은 MS8.
+// 맨 아래 apply-bar(spec 8.4)가 붙는다. 호스트 기록 숫자는 MS6, 등급 라벨은 MS8.
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -65,10 +66,11 @@ export default async function SocialingPage({ params, searchParams }: Props) {
   }
   if (!socialing) notFound();
 
+  // 내용이 짧아도 apply-bar가 화면 맨 아래에 붙도록 화면 높이만큼 채운다
   return (
-    <>
+    <div className="flex min-h-dvh flex-col">
       <HeaderSub title="소셜링 상세" />
-      <main className="flex flex-col bg-surface pb-2xl">
+      <main className="flex flex-1 flex-col bg-surface pb-2xl">
         <CoverPhoto socialing={socialing} />
         <div className="flex flex-col gap-xl px-page-x pt-lg">
           <section className="flex flex-col gap-xs">
@@ -106,7 +108,8 @@ export default async function SocialingPage({ params, searchParams }: Props) {
           </section>
         </div>
       </main>
-    </>
+      <ApplyBar socialing={socialing} />
+    </div>
   );
 }
 

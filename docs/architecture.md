@@ -158,8 +158,8 @@ erDiagram
                           header-main, header-sub, tab-bar (+ 뒤로 판단용 navigation-tracker),
                           status-badge, status-tag, socialing-card, category-art(사진 없을 때 카테고리 그림),
                           skeleton, empty-state, error-state, host-profile-row, info-list, notice-box,
-                          intro-text(소개 5줄 접기)
-                          (MS2~ application-chip, apply-bar 등)
+                          intro-text(소개 5줄 접기), apply-bar(spec 8.4 순서표. 지금은 2·11·13줄)
+                          (MS3~ application-chip, bottom-sheet 등)
 /components/ui            shadcn/ui 원본 (생성된 코드. ui.shadcn.com 접속이 열리면 씀)
 /lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)
 /lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). 지금은 auth.ts
