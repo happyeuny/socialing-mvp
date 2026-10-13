@@ -23,6 +23,15 @@ export function SkeletonCardList() {
   );
 }
 
+/** skeleton/hero: 홈 히어로 자리 (높이 280, 모서리 2xl) */
+export function SkeletonHero() {
+  return (
+    <div role="status" aria-busy className="h-[280px] rounded-2xl bg-surface-muted motion-safe:animate-pulse">
+      <span className="sr-only">불러오는 중</span>
+    </div>
+  );
+}
+
 /** skeleton/detail: 4:3 사진 칸 + 제목 막대 + 정보 줄 */
 export function SkeletonDetail() {
   return (

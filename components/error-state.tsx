@@ -60,3 +60,26 @@ export function ErrorStateNotFound() {
     </div>
   );
 }
+
+/** error-state/inline: 묶음 하나만 실패 (spec 8.6, Q3). 그 자리에만 안내 + 다시 시도, 나머지 화면은 그대로 */
+export function ErrorStateInline({ message }: { message: string }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <div
+      role="alert"
+      className="flex items-center justify-between gap-sm rounded-lg border border-dashed border-border-default bg-surface-muted p-md"
+    >
+      <p className="text-body-md text-text-secondary">{message}</p>
+      <Button
+        variant="secondary"
+        size="sm"
+        loading={isPending}
+        onClick={() => startTransition(() => router.refresh())}
+      >
+        다시 시도
+      </Button>
+    </div>
+  );
+}

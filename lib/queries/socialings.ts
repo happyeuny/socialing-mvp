@@ -57,6 +57,41 @@ export function listPastSocialings(): Promise<SocialingCardData[]> {
   return listByPast(true);
 }
 
+/**
+ * 홈(P00, spec 8.2): 히어로 = 지금 신청할 수 있는 소셜링 중 일시가 가장 가까운 1개(없으면 null),
+ * 곧 열리는 소셜링 = 일시가 지나지 않은 소셜링 가까운 순 3개(히어로와 호스트 취소는 뺌). 운영자가 고르거나 유료로 올리는 자리는 없다.
+ * 홈의 두 묶음이 따로 부르므로 요청 안에서 한 번만 읽는다.
+ */
+export const getHomeSocialings = cache(async (): Promise<{
+  hero: SocialingCardData | null;
+  upcoming: SocialingCardData[];
+}> => {
+  const supabase = await createClient();
+  const heroResult = await supabase
+    .from("socialing_summaries")
+    .select(CARD_COLUMNS)
+    .eq("can_apply", true)
+    .order("starts_at", { ascending: true })
+    .order("id", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (heroResult.error) throw new Error(`히어로 소셜링을 불러오지 못했습니다: ${heroResult.error.message}`);
+  const hero = heroResult.data as SocialingCardData | null;
+
+  let upcomingQuery = supabase
+    .from("socialing_summaries")
+    .select(CARD_COLUMNS)
+    .eq("is_past", false)
+    .neq("status", "canceled")
+    .order("starts_at", { ascending: true })
+    .order("id", { ascending: true })
+    .limit(3);
+  if (hero) upcomingQuery = upcomingQuery.neq("id", hero.id);
+  const upcomingResult = await upcomingQuery;
+  if (upcomingResult.error) throw new Error(`곧 열리는 소셜링을 불러오지 못했습니다: ${upcomingResult.error.message}`);
+  return { hero, upcoming: upcomingResult.data as SocialingCardData[] };
+});
+
 export type ClosedReason = "host_canceled" | "started" | "not_open" | "deadline" | "full";
 
 /** 상세(P03, spec M4)에 필요한 칸 */
