@@ -34,8 +34,8 @@
 | `npm run build` / `npm run lint` | 빌드, 린트 (PR마다 통과) |
 | `npm run test:e2e` | Playwright E2E (시드한 dev 프로젝트 대상) |
 | `npm run seed` | 데모 데이터 삭제 후 다시 넣기 (secret 키 사용) |
-| `npm run db:push` | `supabase/migrations`를 원격 dev에 적용 (클라우드에서는 Management API, 방법은 SP5에서 정함) |
-| `npm run db:types` | DB 타입 생성 |
+| `npm run db:push` | `supabase/migrations`에서 아직 적용하지 않은 파일을 원격 dev에 적용 (Management API). `-- --dry-run`은 목록만 |
+| `npm run db:types` | DB 타입 생성 → `lib/supabase/database.types.ts` (Management API) |
 
 ## 스택
 Next.js 16.3.x (App Router) · React 19 · TypeScript 6.0 · Supabase (Postgres, Auth, Storage, `@supabase/ssr`) · Tailwind CSS 4 · shadcn/ui · lucide-react · zod · Playwright · Vercel Hobby. 메이저 버전 올리기와 새 라이브러리 추가는 PR 설명에 이유를 적는다.
@@ -73,7 +73,8 @@ Next.js 16.3.x (App Router) · React 19 · TypeScript 6.0 · Supabase (Postgres,
 - `SUPABASE_SECRET_KEY`는 `scripts/seed.ts`에서만 쓴다. `app/`, `components/`, `lib/`에서 import하지 않는다. secret 키는 브라우저에서 거부된다(401).
 - `.env*.local`은 커밋하지 않는다. **이 저장소는 공개 상태다.**
 - 클라우드 환경에는 dev(`socialing-mvp`) 키만 있다. 발표용 `socialing-demo`는 PM이 MS9에서 직접 다룬다.
-- Docker는 없다. 클라우드 세션은 HTTPS로만 나가므로 Postgres 직접 접속(`supabase db push`)은 쓰지 않는다. 마이그레이션은 Management API(`api.supabase.com`, `SUPABASE_ACCESS_TOKEN`)로 원격 dev에 적용한다. 토큰은 dev 프로젝트로 범위를 줄인 것이라 권한이 모자라면 우회하지 말고 PM에게 필요한 권한 이름을 알려 준다. 정한 방법은 이 장에 적는다.
+- Docker는 없다. 클라우드 세션은 HTTPS로만 나가므로 Postgres 직접 접속(`supabase db push`)은 쓰지 않는다. 마이그레이션은 Management API(`api.supabase.com`, `SUPABASE_ACCESS_TOKEN`)로 원격 dev에 적용한다. 토큰은 dev 프로젝트로 범위를 줄인 것이라 권한이 모자라면 우회하지 말고 PM에게 필요한 권한 이름을 알려 준다.
+- **정한 방법 (SP5)**: `npm run db:push`가 `POST /v1/projects/{ref}/database/query`로 파일 하나를 트랜잭션 하나로 적용하고, 같은 트랜잭션에서 `supabase_migrations.schema_migrations`에 **파일 이름의 버전**을 기록한다. 실패하면 SQL과 기록이 함께 취소된다. 파일 이름은 `<14자리 버전>_<이름>.sql`(Supabase CLI 규칙), 파일 안에 `begin`/`commit`을 쓰지 않는다. 타입은 `npm run db:types`(`GET /types/typescript`). Supabase CLI와 Docker는 필요 없다. 클라우드 밖에서는 같은 이름의 변수를 `.env.local`에 넣고 같은 명령을 쓴다(Node 22.18 이상).
 
 ## 하지 않는 것 (전체는 spec 10장)
 채팅·메시지, 알림(푸시·메일·문자), 결제·환불·정산, 비용 항목 내역, 최소 인원·자동 확정·자동 취소·예약 작업(cron), 별점·좋아요·댓글·찜, 점수·온도·랭킹·뱃지·포인트, 추천·인기순·유료 노출·넘기는 배너, 지도·검색창·공유 버튼, 이메일 인증·소셜 로그인·비밀번호 찾기·프로필 사진, 어드민 화면·신고 처리·출석 체크, 다크 모드, "이성 교류" 같은 표현, 다른 앱(문토 등)의 이름·디자인·문구·사진.
