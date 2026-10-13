@@ -125,26 +125,34 @@ erDiagram
 
 ## 6. 폴더 구조
 
+MS1 끝의 실제 구조. 아직 없는 폴더(`lib/queries`, `lib/format`, `scripts/seed-assets/`)는 처음 쓰는 마일스톤에서 만든다.
+
 ```
+/proxy.ts                 세션 갱신과 로그인 필요 주소 처리 (Next.js 16 proxy, 2장 세션)
 /app                      화면 (라우트는 spec 8.2 주소 그대로)
-  page.tsx                P00 홈
-  explore/  past/  reviews/  me/  login/  signup/
-  socialings/[id]/        P03 (+ manage/, edit/, review/), socialings/new/
-/components/ui            shadcn/ui 원본 (생성된 코드)
-/components/…             DESIGN.md 이름의 컴포넌트: status-badge, application-chip, socialing-card, apply-bar 등
-/lib/supabase             server.ts, client.ts, 세션 갱신
-/lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만)
-/lib/queries              읽기 함수
-/lib/validation           zod 스키마
-/lib/format               날짜(Asia/Seoul)·금액 표시
+  page.tsx                P00 홈 (MS2에서 채움)
+  login/  signup/         P04 · P05 (page.tsx + 폼 클라이언트 컴포넌트)
+  me/                     P06 (지금은 닉네임·로그아웃만, MS3에서 채움)
+  error.tsx               화면 전체 오류: "불러오지 못했어요" + 다시 시도 · 홈으로
+  dev/photo-upload/       SP3 실기기 확인·E2E용 임시 화면 (미리보기·로컬만. MS5에서 테스트를 후기 쓰기로 옮기고 지움)
+  (MS2~) explore/  past/  reviews/  socialings/[id]/ (+ manage/, edit/, review/), socialings/new/
+/components               DESIGN.md 이름의 컴포넌트: button, text-field, avatar-initial, photo-picker
+                          (MS2~ status-badge, application-chip, socialing-card, apply-bar 등)
+/components/ui            shadcn/ui 원본 (생성된 코드. ui.shadcn.com 접속이 열리면 씀)
+/lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)
+/lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). 지금은 auth.ts
+/lib/validation           zod 스키마 (폼과 서버 액션이 같이 씀)
+/lib/photos               사진 줄이기 (compress.ts)
+/lib/routes.ts            로그인 필요 주소, `next` 검사
+/lib/queries              읽기 함수 (MS2~)
+/lib/format               날짜(Asia/Seoul)·금액 표시 (MS2~)
 /supabase/migrations      테이블·enum·RLS·함수 SQL (파일 하나 = 변경 하나)
 /scripts/seed.mts         데모 시드 (secret 키는 여기서만), seed-data.mts는 데이터 정의
-/scripts/seed-assets/     시드 대표 사진 + SOURCES.md
-/tests/e2e                Playwright
+/scripts/db-push.mts      마이그레이션 적용, db-types.mts 타입 생성, lib/management-api.mts 공용
+/scripts/seed-assets/     시드 대표 사진 + SOURCES.md (사진이 준비되면)
+/tests/e2e                Playwright. helpers/에 로그인·테스트 데이터 도우미
 /docs                     spec, architecture, tasks, decisions, screen-cases, design/
 ```
-
-MS1에서 실제 구조를 확정하면 이 장을 고친다.
 
 ## 7. 환경과 배포
 
