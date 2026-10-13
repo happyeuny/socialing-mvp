@@ -11,9 +11,10 @@
 | 언어 | TypeScript | 6.0.x (7.0 쓰지 않음) |
 | DB·인증·파일 | Supabase (Postgres, Auth, Storage). 키는 새 방식 publishable·secret만 | @supabase/supabase-js 2.x, @supabase/ssr 0.12.x, supabase CLI 2.x (`npx supabase`) |
 | UI | Tailwind CSS + shadcn/ui, 아이콘 lucide-react | tailwindcss 4.x, shadcn CLI 4.x |
-| 글꼴 | Noto Sans KR. npm 글꼴 패키지로 앱 안에서 제공 (`next/font/google`은 빌드 때 Google에 접속하는데 클라우드 환경 네트워크가 막을 수 있음) | MS1에서 정함 |
+| 글꼴 | Noto Sans KR. npm 글꼴 패키지로 앱 안에서 제공 (`next/font/google`은 빌드 때 Google에 접속하는데 클라우드 환경 네트워크가 막을 수 있음) | @fontsource-variable/noto-sans-kr 5.3.x |
 | 입력 검증 | zod | 4.x |
-| E2E 테스트 | Playwright (Chromium, 모바일 390px) | @playwright/test 1.x |
+| 린트 | ESLint + eslint-config-next (core-web-vitals, typescript) | eslint 9.x (10 쓰지 않음) |
+| E2E 테스트 | Playwright (Chromium, 모바일 390px) | @playwright/test 1.56.1 (클라우드 환경의 Chromium에 맞춰 고정) |
 | 이미지 축소 | browser-image-compression (문제 시 canvas로 대체) | 2.0.2 |
 | 배포 | Vercel Hobby | - |
 

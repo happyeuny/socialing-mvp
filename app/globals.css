@@ -1,0 +1,168 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/*
+ * 디자인 토큰. 값의 기준은 DESIGN.md 맨 위 front matter다.
+ * 컴포넌트에는 hex를 직접 쓰지 않고 아래 이름(bg-primary, text-on-primary 등)만 쓴다.
+ * Light mode만 있다(dark 변형 없음).
+ */
+:root {
+  /* DESIGN.md colors */
+  --primary: #59cbe8;
+  --primary-pressed: #47bbd8;
+  --on-primary: #0b2530;
+  --primary-strong: #136f86;
+  --primary-soft: #e1f7fc;
+  --point: #f5a623;
+  --on-point: #2a1c00;
+  --surface: #ffffff;
+  --surface-bg: #f4faff;
+  --surface-muted: #f5f7f9;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --text-disabled: #9ca3af;
+  --border-default: #e5e7eb;
+  --border-divider: #f3f4f6;
+  --border-strong: #136f86;
+  --toggle-off: #8a94a3;
+  --danger: #c62828;
+  --danger-soft: #fee2e2;
+  --danger-border-soft: #fca5a5;
+  --status-ended: #637077;
+  --toast-bg: #1f292e;
+  --toast-text: #ffffff;
+  --dim: rgba(0, 0, 0, 0.5);
+
+  /* shadcn/ui가 쓰는 이름을 DESIGN.md 값에 연결한다 */
+  --background: var(--surface-bg);
+  --foreground: var(--text-primary);
+  --card: var(--surface);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface);
+  --popover-foreground: var(--text-primary);
+  --primary-foreground: var(--on-primary);
+  --secondary: var(--surface);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--surface-muted);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--primary-soft);
+  --accent-foreground: var(--primary-strong);
+  --destructive: var(--danger);
+  --border: var(--border-default);
+  --input: var(--border-default);
+  --ring: var(--border-strong);
+  --radius: 12px;
+}
+
+@theme inline {
+  /* 색 */
+  --color-primary: var(--primary);
+  --color-primary-pressed: var(--primary-pressed);
+  --color-on-primary: var(--on-primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-soft: var(--primary-soft);
+  --color-point: var(--point);
+  --color-on-point: var(--on-point);
+  --color-surface: var(--surface);
+  --color-surface-bg: var(--surface-bg);
+  --color-surface-muted: var(--surface-muted);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-disabled: var(--text-disabled);
+  --color-border-default: var(--border-default);
+  --color-border-divider: var(--border-divider);
+  --color-border-strong: var(--border-strong);
+  --color-toggle-off: var(--toggle-off);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-border-soft: var(--danger-border-soft);
+  --color-status-ended: var(--status-ended);
+  --color-toast-bg: var(--toast-bg);
+  --color-toast-text: var(--toast-text);
+  --color-dim: var(--dim);
+
+  /* shadcn/ui 색 이름 */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@theme {
+  /* 글꼴: Noto Sans KR → system-ui → -apple-system → sans-serif */
+  --font-sans: "Noto Sans KR Variable", "Noto Sans KR", system-ui, -apple-system, sans-serif;
+
+  /* 글자 (DESIGN.md typography). 12px 미만은 없다 */
+  --text-title-xl: 22px;
+  --text-title-xl--line-height: 28px;
+  --text-title-xl--font-weight: 700;
+  --text-title-lg: 18px;
+  --text-title-lg--line-height: 24px;
+  --text-title-lg--font-weight: 700;
+  --text-title-md: 16px;
+  --text-title-md--line-height: 22px;
+  --text-title-md--font-weight: 600;
+  --text-body-lg: 15px;
+  --text-body-lg--line-height: 22px;
+  --text-body-lg--font-weight: 500;
+  --text-body-long: 15px;
+  --text-body-long--line-height: 24px;
+  --text-body-long--font-weight: 400;
+  --text-body-md: 14px;
+  --text-body-md--line-height: 20px;
+  --text-body-md--font-weight: 400;
+  --text-body-sm: 13px;
+  --text-body-sm--line-height: 18px;
+  --text-body-sm--font-weight: 400;
+  --text-label: 12px;
+  --text-label--line-height: 16px;
+  --text-label--font-weight: 500;
+
+  /* 모서리 (DESIGN.md rounded) */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+
+  /* 간격 (DESIGN.md spacing). 숫자 간격(p-4 = 16px)도 그대로 쓸 수 있다 */
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --spacing-3xl: 48px;
+  --spacing-page-x: 16px;
+  --spacing-touch-min: 44px;
+  --spacing-screen: 390px;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    color-scheme: light;
+  }
+  body {
+    @apply bg-background font-sans text-body-md text-foreground antialiased;
+  }
+}
