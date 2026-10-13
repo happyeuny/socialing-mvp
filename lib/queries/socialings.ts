@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 
 type Enums = Database["public"]["Enums"];
 export type SocialingStatus = Enums["socialing_status"];
+export type ApplicationStatus = Enums["application_status"];
 export type StatusTag = "closed" | "full";
 
 /** 카드(spec 8.5)에 필요한 칸 */

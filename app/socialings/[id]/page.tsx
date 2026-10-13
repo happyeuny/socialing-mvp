@@ -13,6 +13,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { StatusTag } from "@/components/status-tag";
 import { AvatarInitial } from "@/components/avatar-initial";
 import { formatDateTime, formatFee } from "@/lib/format";
+import { getApplyBarViewer, type ApplyBarViewer } from "@/lib/queries/my-socialings";
 import { getSocialing, socialingPhotoUrl, type SocialingDetail } from "@/lib/queries/socialings";
 import { readSimulatedState } from "@/lib/simulated-state";
 
@@ -50,9 +51,11 @@ export default async function SocialingPage({ params, searchParams }: Props) {
   }
 
   let socialing: SocialingDetail | null;
+  let viewer: ApplyBarViewer;
   try {
     if (simulated === "error") throw new Error("화면 상태 흉내: 오류");
-    socialing = await getSocialing(id);
+    // 아래 영역이 보는 사람의 신청에 따라 바뀌므로, 그 값도 못 읽으면 화면 전체를 다시 시도한다(틀린 버튼을 보이지 않게)
+    [socialing, viewer] = await Promise.all([getSocialing(id), getApplyBarViewer(id)]);
   } catch (error) {
     if (simulated !== "error") console.error(error);
     return (
@@ -108,7 +111,7 @@ export default async function SocialingPage({ params, searchParams }: Props) {
           </section>
         </div>
       </main>
-      <ApplyBar socialing={socialing} />
+      <ApplyBar socialing={socialing} viewer={viewer} />
     </div>
   );
 }

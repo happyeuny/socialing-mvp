@@ -544,7 +544,7 @@ components:
 
 소셜링 상세 맨 아래에 붙는 영역. 아래 14가지 중 **정확히 하나**만 보인다. 어떤 것을 고를지는 [docs/spec.md](docs/spec.md) 8.4의 순서표가 정한다: 표의 위에서부터 먼저 맞는 줄 하나.
 
-공통: surface 바탕, 위 border-default 1px, 여백 12·16, 높이 약 100(아이폰 아래 안전 영역 포함). 안내 한 줄(body-sm) + 버튼은 lg 하나까지. 상태 상자는 surface-muted 바탕, 모서리 lg.
+공통: surface 바탕, 위 border-default 1px, 여백 12·16, 높이 약 100(아이폰 아래 안전 영역 포함). 안내 한 줄(body-sm) + 버튼은 lg 하나까지. 상태 상자는 surface-muted 바탕, 모서리 lg, 버튼 lg와 같은 높이. 상자 안의 application-chip/pending은 바탕이 상자와 같아 surface 바탕으로 띄운다.
 
 | 이름 | spec 8.4 줄 | 모양 |
 |---|---|---|
