@@ -2,12 +2,14 @@
 
 import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/button";
+import { PasswordField } from "@/components/password-field";
 import { TextField } from "@/components/text-field";
 import { login, type AuthFormState } from "@/lib/actions/auth";
 import { focusFirstError } from "@/lib/focus-first-error";
 import { fieldErrorsOf, loginSchema } from "@/lib/validation/auth";
 
-export function LoginForm({ next }: { next: string }) {
+// simulateServerError: 주소에 `?_state=error`가 있으면 서버 실패 문구를 흉내 낸다 (lib/simulated-state)
+export function LoginForm({ next, simulateServerError }: { next: string; simulateServerError: boolean }) {
   const [serverState, formAction, pending] = useActionState(login, {} satisfies AuthFormState);
   // 브라우저에서 먼저 검사한 결과. 서버로 보내면 비우고 서버 결과를 보인다
   const [clientState, setClientState] = useState<AuthFormState | null>(null);
@@ -34,19 +36,21 @@ export function LoginForm({ next }: { next: string }) {
   return (
     <form ref={formRef} onSubmit={onSubmit} noValidate className="flex flex-col gap-md">
       <input type="hidden" name="next" value={next} />
+      {simulateServerError ? <input type="hidden" name="_state" value="error" /> : null}
       <TextField
         name="email"
         label="이메일"
         type="email"
         autoComplete="email"
         inputMode="email"
+        placeholder="example@email.com"
         error={state.fieldErrors?.email}
       />
-      <TextField
+      <PasswordField
         name="password"
         label="비밀번호"
-        type="password"
         autoComplete="current-password"
+        placeholder="비밀번호를 입력해 주세요"
         error={state.fieldErrors?.password}
       />
       {state.formError ? (

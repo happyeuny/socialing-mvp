@@ -22,6 +22,7 @@ export function TabBar() {
   return (
     <nav
       aria-label="아래 탭"
+      data-toast-anchor
       className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-(--spacing-screen) h-[calc(64px+env(safe-area-inset-bottom))] border-t border-border-default bg-surface pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="grid h-full grid-cols-4">

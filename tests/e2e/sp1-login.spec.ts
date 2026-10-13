@@ -74,13 +74,13 @@ test.describe("SP1 로그인 뒤 복귀", () => {
     await page.goto("/login?next=/me");
 
     await page.getByLabel("이메일").fill("not-an-email");
-    await page.getByLabel("비밀번호").fill("whatever");
+    await page.getByLabel("비밀번호", { exact: true }).fill("whatever");
     await page.getByRole("button", { name: "로그인" }).click();
     await expect(page.getByText("이메일 형식이 맞지 않아요")).toBeVisible();
     await expect(page.getByLabel("이메일")).toBeFocused();
 
     await page.getByLabel("이메일").fill(DEMO_USERS.A.email);
-    await page.getByLabel("비밀번호").fill("wrong-password");
+    await page.getByLabel("비밀번호", { exact: true }).fill("wrong-password");
     await page.getByRole("button", { name: "로그인" }).click();
     await expect(page.getByText("이메일 또는 비밀번호가 맞지 않아요")).toBeVisible();
     await expect(page).toHaveURL("/login?next=/me");
@@ -116,9 +116,9 @@ test.describe("SP1 가입", () => {
     await expect(page).toHaveURL("/signup?next=%2Fme");
 
     await page.getByLabel("이메일").fill(email);
-    await page.getByLabel("비밀번호").fill(`pw-${suffix}`);
+    await page.getByLabel("비밀번호", { exact: true }).fill(`pw-${suffix}`);
     await page.getByLabel("닉네임").fill(nickname);
-    await page.getByRole("button", { name: "가입하기" }).click();
+    await page.getByRole("button", { name: "가입하고 시작하기" }).click();
 
     await expect(page).toHaveURL("/me");
     await expect(page.getByTestId("profile-nickname")).toHaveText(nickname);
@@ -128,15 +128,15 @@ test.describe("SP1 가입", () => {
     await page.goto("/signup?next=/me");
 
     await page.getByLabel("이메일").fill(`e2e-new-${Date.now()}@${DEMO_EMAIL_DOMAIN}`);
-    await page.getByLabel("비밀번호").fill("pw-123456");
+    await page.getByLabel("비밀번호", { exact: true }).fill("pw-123456");
     await page.getByLabel("닉네임").fill(DEMO_USERS.B.nickname);
-    await page.getByRole("button", { name: "가입하기" }).click();
+    await page.getByRole("button", { name: "가입하고 시작하기" }).click();
     await expect(page.getByText("이미 쓰는 닉네임이에요")).toBeVisible();
     await expect(page.getByLabel("닉네임")).toBeFocused();
 
     await page.getByLabel("이메일").fill(DEMO_USERS.A.email);
     await page.getByLabel("닉네임").fill(`새닉${Date.now() % 100000}`);
-    await page.getByRole("button", { name: "가입하기" }).click();
+    await page.getByRole("button", { name: "가입하고 시작하기" }).click();
     await expect(page.getByText("이미 가입된 이메일이에요")).toBeVisible();
     await expect(page.getByRole("link", { name: "로그인하기" })).toHaveAttribute("href", "/login?next=%2Fme");
     await expect(page.getByLabel("이메일")).toHaveValue(DEMO_USERS.A.email);
@@ -145,9 +145,9 @@ test.describe("SP1 가입", () => {
   test("P05-03·P05-05·P05-06: 이메일 형식, 비밀번호 6자 미만, 닉네임 2~12자", async ({ page }) => {
     await page.goto("/signup");
     await page.getByLabel("이메일").fill("wrong");
-    await page.getByLabel("비밀번호").fill("12345");
+    await page.getByLabel("비밀번호", { exact: true }).fill("12345");
     await page.getByLabel("닉네임").fill("가");
-    await page.getByRole("button", { name: "가입하기" }).click();
+    await page.getByRole("button", { name: "가입하고 시작하기" }).click();
 
     await expect(page.getByText("이메일 형식이 맞지 않아요")).toBeVisible();
     await expect(page.getByText("비밀번호는 6자 이상이에요")).toBeVisible();
