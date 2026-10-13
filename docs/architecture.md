@@ -35,6 +35,11 @@ flowchart LR
 - **사진**: 브라우저에서 1MB 이하로 축소 → Storage에 직접 업로드(`사용자id/파일명`) → 경로를 함수에 넘긴다. 업로드가 실패하면 경로 없이 제출한다(Q4).
 - **시간**: 현재/지난, 신청 가능, 버튼 가능 여부는 조회할 때 `now()`로 계산한다. 예약 작업(cron)은 없다. DB는 `timestamptz`, 화면 표시와 날짜 필터 계산은 Asia/Seoul로 고정한다(서버가 UTC여도 같은 결과).
 - **세션**: `@supabase/ssr`로 쿠키 세션. Next.js 16은 루트 `proxy.ts`(예전 이름 middleware)에서 `supabase.auth.getClaims()`로 세션을 갱신하고, 로그인이 필요한 경로는 `/login?next=원래주소`로 보낸다. 서버 코드에서 `getSession()` 결과는 믿지 않고 `getClaims()`로 확인한다(Supabase 공식 Next.js 가이드, 2026-10-12 판).
+  - SP1에서 정한 것: 세션 갱신과 주소 처리는 `lib/supabase/proxy.ts`(`updateSession`), 서버 컴포넌트·서버 액션용 클라이언트는 `lib/supabase/server.ts`. 로그인이 필요한 주소 목록(P06 `/me`, P07, P08, P09, P11)과 `next` 검사는 `lib/routes.ts` 한 곳에 둔다. 로그인한 사람이 `/login`·`/signup`에 오면 proxy가 `next`(없으면 `/`)로 보낸다.
+  - proxy는 첫 관문일 뿐이라 로그인이 필요한 화면과 서버 액션도 `getClaims()`로 다시 확인한다(Next.js 16 proxy 안내). 호스트인지 같은 권한은 화면과 DB 함수가 확인한다.
+  - `next`는 `/`로 시작하고 `//`·`/\`로 시작하지 않으며, URL로 풀었을 때 앱 주소 그대로인 값만 받는다(탭·줄바꿈이 섞여 다른 사이트로 읽히는 주소도 거부).
+  - 가입은 `auth.signUp`에 `options.data.nickname`을 넘기고, profiles 행은 가입 트리거가 만든다. 닉네임 중복은 가입 전에 profiles를 읽어 확인하고, 그 사이 같은 닉네임이 먼저 가입하면 트리거가 실패하므로 한 번 더 읽어 "이미 쓰는 닉네임이에요"로 바꾼다.
+  - 로그아웃은 이 기기의 세션만 끝낸다(`signOut({ scope: "local" })`). 발표 중 같은 계정으로 연 다른 기기는 그대로다.
 
 ## 3. 데이터 모델
 
