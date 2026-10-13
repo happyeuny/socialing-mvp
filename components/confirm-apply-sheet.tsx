@@ -30,6 +30,8 @@ type ConfirmApplySheetProps = {
   fee: string;
   joinType: keyof typeof JOIN_RESULT;
   approvalCriteria: string | null;
+  /** 상세 아래 영역의 버튼 글자. 거절·신청 취소 뒤 9줄은 "다시 신청" */
+  triggerLabel?: "신청하기" | "다시 신청";
 };
 
 export function ConfirmApplySheet(props: ConfirmApplySheetProps) {
@@ -78,7 +80,7 @@ export function ConfirmApplySheet(props: ConfirmApplySheetProps) {
   return (
     <>
       <Button size="lg" className="w-full" onClick={openSheet}>
-        신청하기
+        {props.triggerLabel ?? "신청하기"}
       </Button>
 
       <BottomSheet

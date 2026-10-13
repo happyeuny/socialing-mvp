@@ -56,3 +56,41 @@ export async function applyToSocialing(socialingId: number): Promise<ApplyResult
   revalidatePath("/me");
   return { ok: true, status: data.status === "accepted" ? "accepted" : "pending" };
 }
+
+// 신청 취소 O05 (spec M7, 8.4). cancel_application이 본인·상태·소셜링 일시·호스트 취소를 소셜링 행을 잠그고 확인한다.
+
+export type CancelResult = { ok: true } | { ok: false; reason: string } | { ok: false; retry: true };
+
+const CANCEL_REASONS: Record<string, string> = {
+  STARTED: "소셜링 일시가 지나 취소할 수 없어요",
+  HOST_CANCELED: "호스트가 취소한 소셜링이에요",
+  // 창을 연 사이 호스트가 거절했거나 다른 화면에서 이미 취소함
+  ALREADY_PROCESSED: "이미 처리된 신청이에요",
+  INVALID_INPUT: "이미 처리된 신청이에요",
+};
+
+const cancelSchema = z.object({ socialingId: z.number().int().positive(), applicationId: z.number().int().positive() });
+
+export async function cancelApplication(socialingId: number, applicationId: number): Promise<CancelResult> {
+  const parsed = cancelSchema.safeParse({ socialingId, applicationId });
+  if (!parsed.success) return { ok: false, reason: CANCEL_REASONS.INVALID_INPUT };
+  const detailPath = `/socialings/${parsed.data.socialingId}`;
+
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getClaims();
+  if (!auth?.claims?.sub) redirect(withNext("/login", detailPath));
+
+  const { error } = await supabase.rpc("cancel_application", { p_application_id: parsed.data.applicationId });
+  if (error) {
+    if (error.message === "NOT_AUTHENTICATED") redirect(withNext("/login", detailPath));
+    const reason = CANCEL_REASONS[error.message];
+    if (reason) return { ok: false, reason };
+    console.error("cancel_application", error);
+    return { ok: false, retry: true };
+  }
+
+  // 아래 영역(9·10줄)과 인원, 내 소셜링 목록이 바뀐다
+  revalidatePath(detailPath);
+  revalidatePath("/me");
+  return { ok: true };
+}
