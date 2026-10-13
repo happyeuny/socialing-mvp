@@ -393,6 +393,10 @@ components:
 | text-field/filled | default와 같음, 값 표시 | 입력 뒤 |
 | text-field/error | danger 테두리 1.5px + 칸 아래 오류 아이콘과 이유(body-sm, danger) | "이미 쓰는 닉네임이에요" |
 | text-field/locked | surface-muted 바탕, text-secondary 글자, 자물쇠 아이콘 + 이유 | 수정 화면에서 "참여 확정자가 있어 바꿀 수 없어요" |
+| text-field/helper | 칸 아래 도움말(body-sm, text-muted). 오류가 나면 그 자리에 오류 이유가 대신 보인다 | 가입: "6자 이상", "2~12자 · 후기와 호스트 이름으로 보여요" |
+| text-field/password | 칸 오른쪽 안에 눈 아이콘 버튼(text-muted, 누르는 영역 44). 숨김이면 빗금 눈, 누르면 글자가 보이고 열린 눈. 버튼 이름은 "비밀번호 보기" / "비밀번호 숨기기" | 로그인·가입의 비밀번호 |
+
+**signup-intro** — 가입(P05) 맨 위. 왼쪽에 라벨 알약 "새로운 여정"(높이 24, 모서리 full, primary-soft 바탕, primary-strong 글자 label)과 그 아래 title-lg "함께할 문화 메이트를 찾아요", 오른쪽에 48px 장식 아이콘 상자(surface, border-default 1px, 모서리 lg, 선 아이콘 primary-strong). 로그인(P04)은 맨 위에 안내 한 줄(body-md, text-secondary) "로그인하면 보던 화면으로 돌아가요"만 둔다.
 
 **textarea** — 최소 높이 120, 안쪽 여백 14·16, 오른쪽 아래 글자 수.
 
@@ -522,8 +526,10 @@ components:
 | header-sub/with-action | default + 오른쪽 text-link ("상세 보기 ›") | 소셜링 관리 |
 | tab-bar/active-home · active-explore · active-review · active-mysocialing | surface, 위 border-default, 높이 64, 4칸 선 아이콘 + 글자 "홈 · 탐색 · 후기 · 내 소셜링". 활성 primary-strong 굵게, 비활성 text-muted | 메인 탭 화면 아래 |
 | top-tabs/active-applied · active-hosted | 높이 48, 활성 탭 아래 2px text-primary 밑줄, 비활성 text-muted. "신청한 소셜링 / 호스트인 소셜링" | 내 소셜링 |
-| toast/success | toast-bg, toast-text, 링크 primary, 모서리 lg, 여백 12·16. "신청했어요" + "내 소셜링에서 보기 ›" | 성공 뒤 짧은 안내 |
-| toast/info | toast-bg, toast-text | "호스트만 볼 수 있어요" 같은 안내 |
+| toast/success | toast-bg, toast-text(body-md), 링크 primary(누르는 영역 44), 모서리 lg, 여백 12·16. "신청했어요" + "내 소셜링에서 보기 ›" | 성공 뒤 짧은 안내 |
+| toast/info | toast-bg, toast-text | "환영해요, ○○님", "호스트만 볼 수 있어요" 같은 안내 |
+
+토스트 공통: 한 번에 하나, 약 4초 뒤 사라진다. 좌우 16px 안쪽 전체 폭. 자리는 아래 탭이나 apply-bar 바로 위 8px, 둘 다 없으면 화면 아래 16px(+ 아이폰 안전 영역). 화면을 옮겨도 남는다(가입 → 홈).
 | dialog/confirm | surface, 모서리 xl, 여백 20, 뒤 dim. 제목 + 본문 + secondary "돌아가기" + primary 행동 | 호스트 동작 확인(O04)의 확정·종료: "확정할까요? 확정하면 되돌릴 수 없어요." |
 | dialog/confirm-danger | confirm과 같고 행동 버튼이 button/danger/default | O04의 호스트 취소·거절: "호스트 취소할까요?" |
 | dialog/result | 버튼 하나 primary "확인" | 결과 안내: "신청하지 못했어요 · 방금 정원이 찼어요" |
@@ -576,6 +582,7 @@ components:
 | 필터가 하위 화면 | bottom-sheet/filter-sheet (O01) | spec 8.2 |
 | 상세 아래 영역 5가지 | apply-bar 14가지 | spec 8.4 13줄 |
 | 상세(P03) 시안의 호스트 묶음에 trust-label이 두 번, 닉네임 없음 | 호스트 묶음은 avatar-initial + 닉네임, trust-label은 조건을 채운 호스트만 하나 | 등급 라벨은 기준을 채운 호스트에게 하나만 (spec M5) |
+| 로그인(P04)·가입(P05) 머리글 오른쪽에 사람 아이콘 원 | header-sub/default(뒤로 + 제목)만 | 로그인 전 화면에 프로필 원이 있으면 이미 로그인된 것처럼 보임 |
 | 지난 소셜링(P02) 시안의 배지가 네모에 가깝고 모집중이 연한 하늘 바탕, 카드 안 호스트 줄 위에 구분선 | 모든 목록이 같은 status-badge(알약, 모집중은 흰 바탕 + 테두리)와 같은 socialing-card | 배지 모양은 10-13 결정, 카드는 화면마다 같게 |
 
 ## Do's and Don'ts

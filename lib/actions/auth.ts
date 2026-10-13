@@ -3,21 +3,27 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { safeNextPath } from "@/lib/routes";
+import { readSimulatedState } from "@/lib/simulated-state";
 import { createClient } from "@/lib/supabase/server";
 import { authMessages, fieldErrorsOf, loginSchema, signupSchema, type AuthField } from "@/lib/validation/auth";
 
 // 로그인 P04 · 가입 P05 · 로그아웃 (spec M6, 8.6, 8.7). 성공하면 next 주소로 보낸다.
+// 가입은 "환영해요, ○○님" 안내를 띄워야 해서 서버에서 보내지 않고 결과(signedUp)를 돌려주면 폼이 안내를 띄우고 옮긴다.
+// 화면 상태 흉내: 폼이 `_state=error`를 함께 보내면(주소에 `?_state=error`) 서버 실패 문구를 돌려준다 (운영 주소에서는 무시).
 
 export type AuthFormState = {
   fieldErrors?: Partial<Record<AuthField, string>>;
   formError?: string;
   /** "이미 가입된 이메일이에요 · 로그인하기"의 로그인하기 링크를 보일지 */
   emailTaken?: boolean;
+  /** 가입 성공. 폼이 "환영해요, ○○님"을 띄우고 next 주소로 간다 */
+  signedUp?: { nickname: string };
 };
 
 export async function login(_previous: AuthFormState, formData: FormData): Promise<AuthFormState> {
   const parsed = loginSchema.safeParse({ email: formData.get("email"), password: formData.get("password") });
   if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
+  if (simulatesServerError(formData)) return { formError: authMessages.loginFailed };
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
@@ -39,6 +45,7 @@ export async function signup(_previous: AuthFormState, formData: FormData): Prom
   });
   if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
   const { email, password, nickname } = parsed.data;
+  if (simulatesServerError(formData)) return { formError: authMessages.signupFailed };
 
   const supabase = await createClient();
   const taken = await isNicknameTaken(supabase, nickname);
@@ -60,7 +67,7 @@ export async function signup(_previous: AuthFormState, formData: FormData): Prom
   if (!data.session) return { formError: authMessages.signupFailed };
 
   revalidatePath("/", "layout");
-  redirect(safeNextPath(formData.get("next")));
+  return { signedUp: { nickname } };
 }
 
 export async function logout() {
@@ -69,6 +76,11 @@ export async function logout() {
   await supabase.auth.signOut({ scope: "local" });
   revalidatePath("/", "layout");
   redirect("/");
+}
+
+function simulatesServerError(formData: FormData) {
+  const state = formData.get("_state");
+  return readSimulatedState({ _state: typeof state === "string" ? state : undefined }) === "error";
 }
 
 /** 닉네임을 이미 쓰는지. 조회에 실패하면 null */

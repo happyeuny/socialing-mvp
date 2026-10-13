@@ -5,7 +5,7 @@ import { DEMO_USERS, type DemoUserKey } from "../../../scripts/seed-data.mts";
 export async function submitLogin(page: Page, user: DemoUserKey) {
   await expect(page.getByRole("heading", { level: 1, name: "로그인" })).toBeVisible();
   await page.getByLabel("이메일").fill(DEMO_USERS[user].email);
-  await page.getByLabel("비밀번호").fill(process.env.DEMO_PASSWORD ?? "");
+  await page.getByLabel("비밀번호", { exact: true }).fill(process.env.DEMO_PASSWORD ?? "");
   await page.getByRole("button", { name: "로그인" }).click();
 }
 

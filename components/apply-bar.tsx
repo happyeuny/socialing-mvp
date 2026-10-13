@@ -69,6 +69,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <section
       aria-label="신청"
+      data-toast-anchor
       className="sticky bottom-0 z-10 flex flex-col items-center gap-xs border-t border-border-default bg-surface px-md pt-sm pb-[calc(12px+env(safe-area-inset-bottom))] shadow-up"
     >
       {children}
