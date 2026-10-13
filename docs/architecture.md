@@ -87,6 +87,18 @@ erDiagram
 
 호스트 기록은 `get_host_record(host_id)` 같은 SECURITY DEFINER 함수가 집계값만 돌려준다. 개별 응답은 어떤 경로로도 나가지 않는다.
 
+목록·상세는 뷰 `socialing_summaries` 하나를 읽는다(MS2). 소셜링 칸에 호스트 닉네임·카테고리·장소·지역을 붙이고, 위 표를 계산한 칸을 더한다.
+
+| 칸 | 값 |
+|---|---|
+| `accepted_count` | 참여 확정 인원 |
+| `is_past` | 지난 소셜링 (starts_at <= now()) |
+| `can_apply` | 신청 가능 |
+| `status_tag` | 꼬리표 `closed`(신청 마감) / `full`(정원 마감) / null |
+| `closed_reason` | 신청할 수 없는 이유. spec 8.4의 2·13줄 순서로 `host_canceled` / `started`(소셜링 일시 지남) / `not_open`(종료) / `deadline` / `full`, 신청 가능하면 null |
+
+뷰는 `security_invoker`라 보는 사람 권한으로 읽는다. 비로그인은 applications를 못 읽으므로 참여 확정 인원만 SECURITY DEFINER 함수 `socialing_accepted_count(socialing_id)`가 숫자로 돌려준다. 누가 신청했는지는 이 경로로 나가지 않는다.
+
 ## 4. 권한 (RLS)
 
 | 데이터 | 읽기 | 쓰기 |
@@ -96,6 +108,7 @@ erDiagram
 | reviews | 모두 | 함수로만 |
 | review_checks | 아무도 직접 못 읽음 | `create_review` 함수로만 |
 | 호스트 기록 | 모두 (집계 함수) | 계산 값 |
+| `socialing_summaries` 뷰 (목록·상세) | 모두 (참여 확정 인원은 숫자만) | 없음 (SELECT 권한만) |
 | profiles | 닉네임·id는 모두, 나머지는 본인 | 본인 |
 | Storage `socialing-photos`, `review-photos` | 공개 읽기 | 로그인 사용자가 자기 폴더(`사용자id/`)에만 업로드 |
 
@@ -106,6 +119,7 @@ erDiagram
 - 가입 트리거는 `raw_user_meta_data.nickname`(앞뒤 공백 제거)으로 profiles를 만든다. 닉네임이 없거나 중복이면 가입이 실패한다(가입 화면에서 오류 문구로 바꿈).
 - 테이블에 직접 INSERT/UPDATE/DELETE 정책을 열지 않는다(profiles 닉네임 수정만 예외로 본인 허용 가능).
 - publishable 키(비로그인)로 review_checks를 조회하면 0행 또는 거부되는지 테스트한다.
+- publishable 키로 `socialing_summaries`를 고치려 하면 거부되고, 참여 확정 인원이 보여도 applications는 0행 또는 거부되는지 테스트한다(MS2).
 
 ## 5. 쓰기 함수 (RPC)
 

@@ -49,6 +49,8 @@ export type FixtureOptions = {
   status?: "recruiting" | "confirmed" | "completed" | "canceled";
   /** 신청 마감까지 남은 시간(시간). 음수면 이미 지남 */
   deadlineInHours?: number;
+  /** 소셜링 일시까지 남은 시간(시간). 음수면 지난 소셜링. 기본은 신청 마감 24시간 뒤. 신청 마감보다 앞서면 안 된다 */
+  startsInHours?: number;
   accepted?: DemoUserKey[];
 };
 
@@ -60,6 +62,7 @@ export async function createFixtureSocialing(options: FixtureOptions): Promise<n
     joinType = "first_come",
     status = "recruiting",
     deadlineInHours = 24,
+    startsInHours = Math.max(deadlineInHours, 0) + 24,
     accepted = [],
   } = options;
   const title = `[E2E] 테스트 소셜링 ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -75,7 +78,7 @@ export async function createFixtureSocialing(options: FixtureOptions): Promise<n
       select host.id, ${sqlText(title)}, '자동 테스트가 만들고 지우는 소셜링',
         (select id from public.categories where slug = 'learning'), false,
         (select id from public.venues order by id limit 1),
-        now() + interval '${Math.max(deadlineInHours, 0) + 24} hours',
+        now() + interval '${startsInHours} hours',
         now() + interval '${deadlineInHours} hours',
         0, ${capacity}, 0, '${joinType}', '${status}'
       from host
