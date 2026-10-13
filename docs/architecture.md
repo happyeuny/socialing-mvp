@@ -92,6 +92,10 @@ erDiagram
 | Storage `socialing-photos`, `review-photos` | 공개 읽기 | 로그인 사용자가 자기 폴더(`사용자id/`)에만 업로드 |
 
 - 쓰기 함수는 `SECURITY DEFINER` + `auth.uid()` 검사 + `search_path` 고정.
+- profiles는 열 권한으로 `id`, `nickname`만 공개한다. 코드에서 profiles를 읽을 때 `select('*')` 대신 `select('id, nickname')`처럼 칸을 적는다(`role` 등을 넣으면 거부됨).
+- 모든 테이블에서 anon·authenticated의 INSERT/UPDATE/DELETE 권한을 회수했다. review_checks는 SELECT 권한도 회수.
+- Storage 버킷은 파일 1MB 이하, JPEG·PNG·WebP만 받는다(HEIC는 브라우저에서 JPEG로 바꿔 올림).
+- 가입 트리거는 `raw_user_meta_data.nickname`(앞뒤 공백 제거)으로 profiles를 만든다. 닉네임이 없거나 중복이면 가입이 실패한다(가입 화면에서 오류 문구로 바꿈).
 - 테이블에 직접 INSERT/UPDATE/DELETE 정책을 열지 않는다(profiles 닉네임 수정만 예외로 본인 허용 가능).
 - publishable 키(비로그인)로 review_checks를 조회하면 0행 또는 거부되는지 테스트한다.
 

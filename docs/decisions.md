@@ -63,6 +63,7 @@
 | 2026-10-13 | `@playwright/test`는 1.56.1로 고정 | 클라우드 환경에 미리 깔린 Chromium(빌드 1194)과 맞는 마지막 버전이라 브라우저를 따로 내려받지 않음. 올릴 때는 클라우드 환경의 Chromium이 바뀌었는지 함께 확인 | 기본값 |
 | 2026-10-13 | ESLint는 9.x (10 쓰지 않음) | eslint-config-next가 쓰는 플러그인(react, import, jsx-a11y)이 ESLint 9까지만 지원 | 기본값 |
 | 2026-10-13 | 마이그레이션은 `npm run db:push`가 Management API `database/query`로 파일마다 트랜잭션 하나로 적용하고, 파일 이름의 버전을 `supabase_migrations.schema_migrations`에 기록 (SP5) | 클라우드에서 Docker·DB 직접 접속 없이 동작. 기록용 엔드포인트는 버전을 적용 시각으로 바꿔 Supabase CLI와 어긋남. 실패하면 SQL과 기록이 함께 취소됨 | 기본값 |
+| 2026-10-13 | 테이블 id는 bigint 자동 증가(`/socialings/12`처럼 짧은 주소), profiles.id만 auth 사용자 uuid. profiles는 id·닉네임만 공개 | 데모 주소를 읽기 쉽게. 회원 칸은 필요한 것만 공개 | 기본값 |
 | 2026-10-13 | 클라우드 환경 변수는 4개. `SUPABASE_DB_PASSWORD`는 넣지 않고 마이그레이션은 Management API가 기본. secret 키는 Claude 전용으로 새로 만들고, access token은 dev 프로젝트 하나·필요한 권한만·만료일 있는 범위 제한 토큰 | 클라우드 세션은 HTTPS로만 나가 DB 직접 접속을 못 하고, DB 비밀번호는 토큰 범위 제한을 받지 않음. 옛 토큰은 모든 프로젝트(나중의 demo 포함)에 접근 | 기본값 |
 
 ## 디자인
