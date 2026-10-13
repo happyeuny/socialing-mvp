@@ -41,9 +41,9 @@
 
 ### MS0. 준비 (사람)
 - [ ] H1 GitHub 저장소 `happyeuny/socialing-mvp`, Claude GitHub App 설치, 프로젝트 설정 Resources에 저장소 추가
-- [ ] H2 Supabase `socialing-mvp` (Seoul), Confirm email 끔
-- [ ] H4 클라우드 환경에 dev 환경 변수 4개(DB 비밀번호 제외, secret 키는 Claude 전용, access token은 dev 범위 제한), 네트워크 Limited + `*.supabase.co`, `*.supabase.com`
-- [ ] H3 Vercel Hobby에 저장소 연결, Preview·Production 모두 dev의 `NEXT_PUBLIC_` 2개
+- [x] H2 Supabase `socialing-mvp` (Seoul), Confirm email 끔
+- [x] H4 클라우드 환경에 dev 환경 변수 4개(DB 비밀번호 제외, secret 키는 Claude 전용, access token은 dev 범위 제한), 네트워크 Limited + `*.supabase.co`, `*.supabase.com`
+- [x] H3 Vercel Hobby에 저장소 연결, Preview·Production 모두 dev의 `NEXT_PUBLIC_` 2개
 - [x] H6 화면 시안 (Stitch → Figma 14화면)과 최종 DESIGN.md (2026-10-13)
 - [ ] H6-1 시안 PNG를 `docs/design/screens/`에 (화면 ID 이름, MS2 전까지)
 - [ ] H7 시드 대표 사진 10장 (Gemini, 사람·글자·로고 없음, 4:3). 없으면 카테고리 그림으로 시드
@@ -61,13 +61,13 @@
     - SP5 Docker 없이 Management API로 마이그레이션 적용, 타입 생성, Playwright 실행 (클라우드 환경). 실패 시 대시보드 SQL 편집기 또는 로컬 터미널
 - **스펙**: architecture 1~7장, spec 2·3·6·7장, M6·M7·M9, DESIGN.md
 - **완료 기준**
-  - [ ] PR 미리보기 URL에서 홈 화면이 열리고, Playwright 테스트가 클라우드 환경에서 통과한다
-  - [ ] Docker 없이 dev 프로젝트에 마이그레이션이 적용된다 (SP5). 막히면 다른 방법을 AGENTS.md에 적는다
-  - [ ] publishable 키(비로그인)로 review_checks를 조회하면 0행 또는 거부된다
-  - [ ] 시드: 날짜가 실행 시점 기준 상대값이고(SP4), 두 번 연속 실행해도 결과가 같고, 1분 안에 끝난다. B는 "새 호스트"가 아니고 다른 호스트 중 하나는 "새 호스트"다
-  - [ ] E2E: 비로그인으로 보호된 경로 접근 → 로그인 → 원래 주소로 복귀, 새로 고침해도 로그인 유지 (SP1)
-  - [ ] 정원 1자리에 두 사용자가 동시에 신청하면 하나만 참여 확정된다 (SP2)
-  - [ ] 비밀번호 최소 길이의 실제 값을 확인해 spec 6장에 맞춘다
+  - [x] PR 미리보기 URL에서 홈 화면이 열리고, Playwright 테스트가 클라우드 환경에서 통과한다
+  - [x] Docker 없이 dev 프로젝트에 마이그레이션이 적용된다 (SP5). 막히면 다른 방법을 AGENTS.md에 적는다
+  - [x] publishable 키(비로그인)로 review_checks를 조회하면 0행 또는 거부된다
+  - [x] 시드: 날짜가 실행 시점 기준 상대값이고(SP4), 두 번 연속 실행해도 결과가 같고, 1분 안에 끝난다. B는 "새 호스트"가 아니고 다른 호스트 중 하나는 "새 호스트"다
+  - [x] E2E: 비로그인으로 보호된 경로 접근 → 로그인 → 원래 주소로 복귀, 새로 고침해도 로그인 유지 (SP1)
+  - [x] 정원 1자리에 두 사용자가 동시에 신청하면 하나만 참여 확정된다 (SP2)
+  - [x] 비밀번호 최소 길이의 실제 값을 확인해 spec 6장에 맞춘다
   - [ ] **(사람 확인)** iPhone과 Android 실기기에서 사진 업로드 성공, 1MB 이하, 업로드 실패 때 입력 중인 글 유지 (SP3)
 
 ### MS2. 둘러보기
@@ -92,7 +92,7 @@
   - [ ] 호스트가 아닌 사용자에게 버튼이 보이지 않고 함수도 거부한다
 
 ### MS5. 후기
-- **범위**: `create_review`, 후기 쓰기 P09(글 10~500자, 사진 1장 선택, 비공개 질문 3개, 조건이 안 되면 상세로 보내고 이유, 글 임시 저장), 인증 후기 P10(최신순, 소셜링 상세로 이동, 로그인 없이)
+- **범위**: `create_review`, 후기 쓰기 P09(글 10~500자, 사진 1장 선택, 비공개 질문 3개, 조건이 안 되면 상세로 보내고 이유, 글 임시 저장), 인증 후기 P10(최신순, 소셜링 상세로 이동, 로그인 없이), SP3 임시 화면 `/dev/photo-upload`의 사진 E2E를 P09로 옮기고 그 화면 지우기
 - **스펙**: spec M9, M10, 6장
 - **완료 기준**
   - [ ] E2E 시나리오 8·9단계(피드 확인)

@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { PhotoUploadCheck } from "./photo-upload-check";
 
 // SP3 실기기 사진 업로드 확인용 임시 화면. Vercel 미리보기와 로컬에서만 열리고 운영(main)에서는 404.
-// MS5(후기 쓰기)·MS7(등록)에서 같은 photo-picker를 쓴다. 실기기 확인이 끝나면 이 화면은 지운다.
+// SP3 E2E(tests/e2e/sp3-photo.spec.ts)도 이 화면으로 photo-picker를 확인한다. MS5 후기 쓰기가 같은 부품을 쓰면
+// 테스트를 그 화면으로 옮기고 이 화면을 지운다.
 
 export const metadata: Metadata = { title: "사진 올리기 확인 · 문화소셜링", robots: { index: false } };
 
