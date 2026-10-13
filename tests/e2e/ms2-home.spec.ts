@@ -88,6 +88,22 @@ test.describe("MS2 홈 P00", () => {
     await expect(page.getByRole("heading", { level: 2, name: title! })).toBeVisible();
   });
 
+  test("P00-01: 390px보다 좁은 휴대폰(320·360px)에서도 홈이 옆으로 넘치지 않고 카테고리 5개가 화면 안에 있다", async ({
+    page,
+  }) => {
+    for (const width of [320, 360]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/");
+      const links = section(page, "카테고리").getByRole("link");
+      await expect(links).toHaveCount(5);
+      await expect(section(page, "곧 열리는 소셜링").getByRole("article").first()).toBeVisible();
+
+      await expectNoHorizontalScroll(page);
+      const last = await links.last().boundingBox();
+      expect(last!.x + last!.width).toBeLessThanOrEqual(width);
+    }
+  });
+
   test("P00-02·03·04: 신청할 수 있는 소셜링·후기가 없으면 히어로·후기 숨김, 곧 열리는 소셜링 빈 상태", async ({ page }) => {
     await page.goto("/?_state=empty");
 

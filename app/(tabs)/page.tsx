@@ -122,9 +122,10 @@ async function CategorySection() {
   return (
     <section aria-labelledby="home-categories" className="flex flex-col gap-md">
       <SectionHeader id="home-categories" title="카테고리" />
-      <ul className="flex justify-between">
+      {/* 다섯 칸을 화면 폭에 나눠 써서 좁은 휴대폰(320px)에서도 옆으로 넘치지 않게 */}
+      <ul className="grid grid-cols-5 gap-xxs">
         {categories.map((category) => (
-          <li key={category.slug}>
+          <li key={category.slug} className="min-w-0">
             <ShortcutCategory slug={category.slug} name={category.name} />
           </li>
         ))}
