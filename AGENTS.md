@@ -70,7 +70,7 @@ Next.js 16.3.x (App Router) · React 19 · TypeScript 6.0 · Supabase (Postgres,
 ## 보안과 환경
 - 환경 변수 4개는 architecture 7장. **값은 출력·커밋·로그·PR에 쓰지 않는다.** 있는지 이름만 확인한다.
 - Supabase 키는 새 방식만 쓴다: 앱은 publishable 키(`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`), 시드는 secret 키(`SUPABASE_SECRET_KEY`). 옛 `anon`·`service_role` 키와 그 이름은 쓰지 않는다(2026년 말 폐지 예정).
-- `SUPABASE_SECRET_KEY`는 `scripts/seed.ts`에서만 쓴다. `app/`, `components/`, `lib/`에서 import하지 않는다. secret 키는 브라우저에서 거부된다(401).
+- `SUPABASE_SECRET_KEY`는 `scripts/seed.mts`에서만 쓴다. `app/`, `components/`, `lib/`에서 import하지 않는다. secret 키는 브라우저에서 거부된다(401).
 - `.env*.local`은 커밋하지 않는다. **이 저장소는 공개 상태다.**
 - 클라우드 환경에는 dev(`socialing-mvp`) 키만 있다. 발표용 `socialing-demo`는 PM이 MS9에서 직접 다룬다.
 - Docker는 없다. 클라우드 세션은 HTTPS로만 나가므로 Postgres 직접 접속(`supabase db push`)은 쓰지 않는다. 마이그레이션은 Management API(`api.supabase.com`, `SUPABASE_ACCESS_TOKEN`)로 원격 dev에 적용한다. 토큰은 dev 프로젝트로 범위를 줄인 것이라 권한이 모자라면 우회하지 말고 PM에게 필요한 권한 이름을 알려 준다.
