@@ -139,7 +139,7 @@ erDiagram
 
 ## 6. 폴더 구조
 
-실제 구조. 아직 없는 폴더(`lib/format`, `scripts/seed-assets/`)는 처음 쓰는 마일스톤에서 만든다.
+실제 구조. 아직 없는 폴더(`scripts/seed-assets/`)는 처음 쓰는 마일스톤에서 만든다.
 
 ```
 /proxy.ts                 세션 갱신과 로그인 필요 주소 처리 (Next.js 16 proxy, 2장 세션)
@@ -153,8 +153,10 @@ erDiagram
   dev/photo-upload/       SP3 실기기 확인·E2E용 임시 화면 (미리보기·로컬만. MS5에서 테스트를 후기 쓰기로 옮기고 지움)
   (MS2~) past/  (tabs)/reviews/  socialings/[id]/ (+ manage/, edit/, review/), socialings/new/
 /components               DESIGN.md 이름의 컴포넌트: button, text-field, avatar-initial, photo-picker,
-                          header-main, header-sub, tab-bar (+ 뒤로 판단용 navigation-tracker)
-                          (MS2~ status-badge, application-chip, socialing-card, apply-bar 등)
+                          header-main, header-sub, tab-bar (+ 뒤로 판단용 navigation-tracker),
+                          status-badge, status-tag, socialing-card, category-art(사진 없을 때 카테고리 그림),
+                          skeleton, empty-state, error-state
+                          (MS2~ application-chip, apply-bar 등)
 /components/ui            shadcn/ui 원본 (생성된 코드. ui.shadcn.com 접속이 열리면 씀)
 /lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)
 /lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). 지금은 auth.ts
@@ -162,8 +164,9 @@ erDiagram
 /lib/photos               사진 줄이기 (compress.ts)
 /lib/routes.ts            로그인 필요 주소, `next` 검사
 /lib/in-app-history.ts    머리글 뒤로 버튼: 앱 안 이전 화면이 없으면 홈 (spec 8.7)
-/lib/queries              읽기 함수. viewer.ts(지금 보는 사람, 닉네임은 로그인 토큰에서)
-/lib/format               날짜(Asia/Seoul)·금액 표시 (MS2~)
+/lib/queries              읽기 함수. viewer.ts(지금 보는 사람, 닉네임은 로그인 토큰에서), socialings.ts(socialing_summaries 뷰)
+/lib/format               날짜(Asia/Seoul)·금액 표시
+/lib/simulated-state.ts   화면 상태 흉내 `?_state=empty|error|loading` (운영 주소에서는 무시, decisions.md)
 /supabase/migrations      테이블·enum·RLS·함수 SQL (파일 하나 = 변경 하나)
 /scripts/seed.mts         데모 시드 (secret 키는 여기서만), seed-data.mts는 데이터 정의
 /scripts/db-push.mts      마이그레이션 적용, db-types.mts 타입 생성, lib/management-api.mts 공용
