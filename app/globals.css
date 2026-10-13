@@ -153,6 +153,9 @@
   --spacing-page-x: 16px;
   --spacing-touch-min: 44px;
   --spacing-screen: 390px;
+
+  /* 그림자 (DESIGN.md Elevation): 화면 위에 뜨는 것에만. apply-bar는 아주 옅은 위쪽 그림자 */
+  --shadow-up: 0 -2px 8px rgb(0 0 0 / 0.04);
 }
 
 @layer base {
