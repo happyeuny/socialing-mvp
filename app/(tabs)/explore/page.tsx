@@ -6,7 +6,7 @@ import { buttonVariants } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorStateFull } from "@/components/error-state";
 import { SkeletonCardList } from "@/components/skeleton";
-import { SocialingCard } from "@/components/socialing-card";
+import { SocialingCardList } from "@/components/socialing-card";
 import { listCurrentSocialings, type SocialingCardData } from "@/lib/queries/socialings";
 import { readSimulatedState, type SimulatedState } from "@/lib/simulated-state";
 import { cn } from "@/lib/utils";
@@ -65,13 +65,9 @@ async function ExploreList({ simulated }: { simulated: SimulatedState | null }) 
   return (
     <>
       <p className="text-body-sm text-text-secondary">소셜링 {socialings.length}개</p>
-      <ul className="mt-sm flex flex-col gap-sm">
-        {socialings.map((socialing) => (
-          <li key={socialing.id}>
-            <SocialingCard socialing={socialing} />
-          </li>
-        ))}
-      </ul>
+      <div className="mt-sm">
+        <SocialingCardList socialings={socialings} />
+      </div>
       <Link href="/past" className={cn("mt-md", buttonVariants({ variant: "text-link", size: "inline" }))}>
         지난 소셜링 보기
         <ChevronRight className="-ml-1 size-4" aria-hidden />
