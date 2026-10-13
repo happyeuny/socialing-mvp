@@ -150,13 +150,15 @@ erDiagram
     me/                   P06 (지금은 닉네임·로그아웃만, MS3에서 채움)
   login/  signup/         P04 · P05 (page.tsx + 폼 클라이언트 컴포넌트). 하위 화면은 각자 header-sub
   past/                   P02 지난 소셜링 (하위 화면, header-sub)
+  socialings/[id]/        P03 상세 (page + loading + not-found)
   error.tsx               화면 전체 오류: "불러오지 못했어요" + 다시 시도 · 홈으로
   dev/photo-upload/       SP3 실기기 확인·E2E용 임시 화면 (미리보기·로컬만. MS5에서 테스트를 후기 쓰기로 옮기고 지움)
-  (MS2~) (tabs)/reviews/  socialings/[id]/ (+ manage/, edit/, review/), socialings/new/
+  (MS3~) socialings/[id]/ 아래 manage/ · edit/ · review/, socialings/new/, (tabs)/reviews/
 /components               DESIGN.md 이름의 컴포넌트: button, text-field, avatar-initial, photo-picker,
                           header-main, header-sub, tab-bar (+ 뒤로 판단용 navigation-tracker),
                           status-badge, status-tag, socialing-card, category-art(사진 없을 때 카테고리 그림),
-                          skeleton, empty-state, error-state
+                          skeleton, empty-state, error-state, host-profile-row, info-list, notice-box,
+                          intro-text(소개 5줄 접기)
                           (MS2~ application-chip, apply-bar 등)
 /components/ui            shadcn/ui 원본 (생성된 코드. ui.shadcn.com 접속이 열리면 씀)
 /lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)

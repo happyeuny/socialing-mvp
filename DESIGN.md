@@ -473,7 +473,7 @@ components:
 | verified-badge/default | surface-muted 바탕, text-secondary, 높이 22, 모서리 xs, "✓ 참여 인증" | 참여를 마친 사람이 쓴 후기 |
 | avatar-initial/default | surface-muted 원 안에 닉네임 첫 글자(text-secondary). 크기 20 · 32 · 40 · 48 | 카드 메타 20, 후기 카드 32, 신청자 행·상세 호스트 40, 내 소셜링 프로필 48. 프로필 사진은 없다 |
 | avatar-initial/strong | primary-strong 원 안에 흰 글자, 28 | 로그인한 머리글 오른쪽 |
-| host-profile-row/default | 높이 52. avatar-initial 40 + 닉네임(title-md) + 조건을 채운 호스트만 trust-label | 상세 제목 아래 호스트 한 줄 |
+| host-profile-row/default | 높이 52. avatar-initial 40 + "호스트"(body-md, text-secondary) + 닉네임(title-md) + 조건을 채운 호스트만 trust-label | 상세 제목 아래 호스트 한 줄 |
 | profile-row/default | avatar-initial 48 + 닉네임(title-md), 오른쪽 "로그아웃"(body-md, text-secondary, 누르는 영역 44) | 내 소셜링(P06) 맨 위 |
 
 **카드**
@@ -497,7 +497,7 @@ components:
 | host-stats/new-host | surface-muted 상자, "새 호스트 · 기록이 쌓이면 숫자로 보여 줘요" | 열린 소셜링 3회 미만 |
 | host-stats/ratio-hidden | normal과 같고 소개 일치 칸만 "응답 5건 이상부터 보여요" | 응답 5건 미만 |
 | host-stats/load-failed | "기록을 불러오지 못했어요" + text-link "다시 시도" | 기록만 실패 (상세와 신청은 그대로 동작) |
-| progress-steps/current-recruiting | 모집중 → 확정 → 종료 세 점, 지금 단계만 text-primary 굵게 | 상세·관리, 모집중 |
+| progress-steps/current-recruiting | 모집중 → 확정 → 종료 세 점, 지금 단계만 text-primary 굵게 | 소셜링 관리(P11), 모집중. 상세에는 쓰지 않고 status-badge만 (시안) |
 | progress-steps/current-confirmed | 확정이 지금 단계 | 호스트가 확정한 뒤 |
 | progress-steps/done-ended | 종료까지 모두 지남 | 호스트가 종료한 뒤 |
 | progress-steps/host-cancelled | 세 점 흐리게 + danger "호스트 취소" | 호스트 취소 |
@@ -572,6 +572,7 @@ components:
 | 카드 사진 4:3 | 카드는 96px 정사각, 상세 대표 사진만 4:3 | spec 8.5, 실제 시안도 정사각 |
 | 필터가 하위 화면 | bottom-sheet/filter-sheet (O01) | spec 8.2 |
 | 상세 아래 영역 5가지 | apply-bar 14가지 | spec 8.4 13줄 |
+| 상세(P03) 시안의 호스트 묶음에 trust-label이 두 번, 닉네임 없음 | 호스트 묶음은 avatar-initial + 닉네임, trust-label은 조건을 채운 호스트만 하나 | 등급 라벨은 기준을 채운 호스트에게 하나만 (spec M5) |
 | 지난 소셜링(P02) 시안의 배지가 네모에 가깝고 모집중이 연한 하늘 바탕, 카드 안 호스트 줄 위에 구분선 | 모든 목록이 같은 status-badge(알약, 모집중은 흰 바탕 + 테두리)와 같은 socialing-card | 배지 모양은 10-13 결정, 카드는 화면마다 같게 |
 
 ## Do's and Don'ts

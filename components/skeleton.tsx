@@ -22,3 +22,23 @@ export function SkeletonCardList() {
     </div>
   );
 }
+
+/** skeleton/detail: 4:3 사진 칸 + 제목 막대 + 정보 줄 */
+export function SkeletonDetail() {
+  return (
+    <div role="status" aria-busy className="flex flex-col motion-safe:animate-pulse">
+      <span className="sr-only">불러오는 중</span>
+      <div className="aspect-[4/3] w-full bg-surface-muted" />
+      <div className="flex flex-col gap-sm px-page-x py-lg">
+        <Bar className="h-6 w-24" />
+        <Bar className="h-7 w-4/5" />
+        <Bar className="h-10 w-1/2" />
+        <div className="mt-sm flex flex-col gap-sm">
+          {[0, 1, 2, 3, 4].map((key) => (
+            <Bar key={key} className="h-5 w-full" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

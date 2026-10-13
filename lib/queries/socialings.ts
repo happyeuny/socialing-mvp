@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Database } from "@/lib/supabase/database.types";
 import { supabaseUrl } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
@@ -55,6 +56,32 @@ export function listCurrentSocialings(): Promise<SocialingCardData[]> {
 export function listPastSocialings(): Promise<SocialingCardData[]> {
   return listByPast(true);
 }
+
+export type ClosedReason = "host_canceled" | "started" | "not_open" | "deadline" | "full";
+
+/** 상세(P03, spec M4)에 필요한 칸 */
+export type SocialingDetail = SocialingCardData & {
+  description: string;
+  host_id: string;
+  region_sido: string;
+  apply_deadline_at: string;
+  staff_count: number;
+  join_type: Enums["join_type"];
+  approval_criteria: string | null;
+  is_past: boolean;
+  can_apply: boolean;
+  closed_reason: ClosedReason | null;
+};
+
+const DETAIL_COLUMNS = `${CARD_COLUMNS}, description, host_id, region_sido, apply_deadline_at, staff_count, join_type, approval_criteria, is_past, can_apply, closed_reason`;
+
+/** 상세 하나. 없는 번호면 null. 화면과 제목(metadata)이 같이 부르므로 요청 안에서 한 번만 읽는다 */
+export const getSocialing = cache(async (id: number): Promise<SocialingDetail | null> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("socialing_summaries").select(DETAIL_COLUMNS).eq("id", id).maybeSingle();
+  if (error) throw new Error(`소셜링을 불러오지 못했습니다: ${error.message}`);
+  return data as SocialingDetail | null;
+});
 
 /** 대표 사진 주소 (Storage `socialing-photos`는 공개 읽기) */
 export function socialingPhotoUrl(path: string): string {
