@@ -9,11 +9,13 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
+    "seed": "node --env-file-if-exists=.env.local scripts/seed.mts",
     "db:push": "node --env-file-if-exists=.env.local scripts/db-push.mts",
     "db:types": "node --env-file-if-exists=.env.local scripts/db-types.mts"
   },
   "dependencies": {
     "@fontsource-variable/noto-sans-kr": "5.3.1",
+    "@supabase/supabase-js": "2.117.3",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "lucide-react": "1.55.0",

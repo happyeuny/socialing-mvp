@@ -29,13 +29,20 @@ test.describe("MS1 권한: 비로그인", () => {
     }
   });
 
-  for (const table of ["socialings", "categories", "regions", "venues", "reviews"]) {
+  // 시드한 dev 프로젝트 대상: 시드가 넣는 테이블은 행이 실제로 보여야 한다
+  for (const table of ["socialings", "categories", "regions", "venues"]) {
     test(`${table}는 읽을 수 있다`, async ({ request }) => {
       const response = await anonSelect(request, table, "id");
       expect(response.status()).toBe(200);
-      expect(Array.isArray(await response.json())).toBe(true);
+      expect((await response.json()).length).toBeGreaterThan(0);
     });
   }
+
+  test("reviews는 읽을 수 있다", async ({ request }) => {
+    const response = await anonSelect(request, "reviews", "id");
+    expect(response.status()).toBe(200);
+    expect(Array.isArray(await response.json())).toBe(true);
+  });
 
   test("profiles는 id·닉네임만 읽을 수 있다", async ({ request }) => {
     expect((await anonSelect(request, "profiles", "id,nickname")).status()).toBe(200);

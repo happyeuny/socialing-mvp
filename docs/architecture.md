@@ -130,7 +130,7 @@ erDiagram
 /lib/validation           zod 스키마
 /lib/format               날짜(Asia/Seoul)·금액 표시
 /supabase/migrations      테이블·enum·RLS·함수 SQL (파일 하나 = 변경 하나)
-/scripts/seed.ts          데모 시드 (secret 키는 여기서만)
+/scripts/seed.mts         데모 시드 (secret 키는 여기서만), seed-data.mts는 데이터 정의
 /scripts/seed-assets/     시드 대표 사진 + SOURCES.md
 /tests/e2e                Playwright
 /docs                     spec, architecture, tasks, decisions, screen-cases, design/
@@ -151,7 +151,7 @@ MS1에서 실제 구조를 확정하면 이 장을 고친다.
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | 앱 전체, Vercel |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 앱 화면, Vercel. publishable 키(`sb_publishable_…`). 공식 Next.js 가이드와 같은 이름 |
-| `SUPABASE_SECRET_KEY` | `scripts/seed.ts`만. 앱 코드에서 import 금지. secret 키(`sb_secret_…`). RLS를 무시하고 브라우저에서는 거부된다 |
+| `SUPABASE_SECRET_KEY` | `scripts/seed.mts`만. 앱 코드에서 import 금지. secret 키(`sb_secret_…`). RLS를 무시하고 브라우저에서는 거부된다 |
 | `SUPABASE_ACCESS_TOKEN` | 마이그레이션(Management API), 타입 생성. dev 프로젝트로 범위를 줄인 토큰(scoped personal access token) |
 
 - 클라우드 Claude Code 환경에는 dev 값만 있다. demo 키는 넣지 않는다.
@@ -163,6 +163,8 @@ MS1에서 실제 구조를 확정하면 이 장을 고친다.
 **마이그레이션**: Docker(로컬 Supabase)는 쓰지 않는다. SQL은 `supabase/migrations/`에 파일로 남긴다. 클라우드 세션은 HTTP/HTTPS로만 나가므로(Claude Code 공식 문서, 2026-10-13 시험에서 80·443 외 포트 막힘) Postgres 직접 접속인 `supabase db push`는 기대하지 않는다. 기본 방법은 Supabase Management API(HTTPS `api.supabase.com`, `SUPABASE_ACCESS_TOKEN`)로 원격 dev에 적용하는 것이다. SP5에서 정한 방법: `npm run db:push`(`scripts/db-push.mts`)가 `POST /database/query`로 파일 하나를 트랜잭션 하나로 적용하고, 같은 트랜잭션에서 `supabase_migrations.schema_migrations`에 파일 이름의 버전·이름을 남긴다. 적용 기록용 엔드포인트(`POST /database/migrations`)는 버전을 적용 시각으로 새로 붙여 파일 버전과 달라지고(Supabase CLI가 같은 파일을 다시 적용하려 함), API로 되돌리기도 막혀 있어(production 브랜치) 쓰지 않는다. 막히면 ② 대시보드 SQL 편집기 ③ PM의 로컬 터미널(`supabase link` + `db push`, `SUPABASE_DB_PASSWORD`) 순서이고, 기록 방식이 CLI와 같아서 ③으로 바꿔도 이미 적용한 파일을 다시 적용하지 않는다. 타입 생성은 `npm run db:types`(`GET /types/typescript`). 자세한 규칙은 AGENTS.md "보안과 환경".
 
 **시드**: `npm run seed` 한 번으로 데모 데이터 삭제 → 데모 계정 생성(관리자 API: `@supabase/supabase-js`의 `createClient`에 secret 키, auth 옵션 `persistSession`·`autoRefreshToken`·`detectSessionInUrl`은 false, 이메일 인증 완료 상태) → 지역·지점·카테고리 → 소셜링·신청·후기·비공개 응답 → 대표 사진 업로드. 날짜는 실행 시점 기준 상대값. 두 번 실행해도 결과가 같고 1분 안에 끝난다. 요구 조건은 spec 7장. 대표 사진은 `scripts/seed-assets/`(Gemini 생성 이미지, 출처는 `SOURCES.md`). 사진이 없으면 전부 카테고리 그림으로 둔다.
+- 데모 계정 이메일은 메일이 가지 않는 `@socialing.test` 주소이고, 시드는 이 도메인의 계정만 지우고 다시 만든다.
+- 데모 계정 비밀번호는 `DEMO_PASSWORD` 환경 변수. 없으면 시드가 새로 만들어 `.env.local`에 저장한다(공개 저장소라 코드에 두지 않음). E2E도 같은 값을 읽는다(`playwright.config.ts`가 `.env.local`을 읽음).
 
 **지역 데이터**: 행정안전부 법정동코드(공공데이터포털)에서 시·군·구 단위만 뽑아 시드 파일로 만든다(파일 형식·최신 개편 반영은 MS1에서 확인). 어려우면 서울 25개 구 + 다른 시·도 대표 몇 개로 시작하고 decisions.md에 적는다.
 
