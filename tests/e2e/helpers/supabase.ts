@@ -1,6 +1,6 @@
 import { expect, type APIRequestContext } from "@playwright/test";
 import { runQuery } from "../../../scripts/lib/management-api.mts";
-import { DEMO_USERS, type DemoUserKey } from "../../../scripts/seed-data.mts";
+import { DEMO_EMAIL_DOMAIN, DEMO_USERS, type DemoUserKey } from "../../../scripts/seed-data.mts";
 
 // E2E 도우미: Supabase REST를 데모 계정으로 부르고, 테스트 전용 소셜링을 만들고 지운다.
 // 테스트 데이터는 Management API(SUPABASE_ACCESS_TOKEN)로 만들고 지워서 시드 데이터는 건드리지 않는다.
@@ -132,4 +132,11 @@ export async function applyInDbHolding(socialingId: number, user: DemoUserKey, h
     const code = /\b(FULL|ALREADY_APPLIED|DEADLINE_PASSED|HOST_CANCELED|IS_HOST|NOT_OPEN)\b/.exec(message);
     return code ? code[1] : message;
   }
+}
+
+/** 가입 테스트가 만든 계정을 지운다. 데모 도메인 계정만 지운다 (profiles는 on delete cascade) */
+export async function deleteAuthUsers(emails: string[]) {
+  const targets = emails.filter((email) => email.endsWith(`@${DEMO_EMAIL_DOMAIN}`));
+  if (targets.length === 0) return;
+  await runQuery(`delete from auth.users where email in (${targets.map(sqlText).join(", ")});`);
 }
