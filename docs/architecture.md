@@ -177,6 +177,7 @@ erDiagram
 /lib/routes.ts            로그인 필요 주소, `next` 검사
 /lib/in-app-history.ts    머리글 뒤로 버튼: 앱 안 이전 화면이 없으면 홈 (spec 8.7)
 /lib/queries              읽기 함수. viewer.ts(지금 보는 사람, 닉네임은 로그인 토큰에서), socialings.ts(socialing_summaries 뷰),
+                          my-socialings.ts("나" 기준 뷰: 상세 아래 영역의 보는 사람·내 신청·승인 대기 건수),
                           catalog.ts(카테고리·스터디지점), reviews.ts(인증 후기)
 /lib/format               날짜(Asia/Seoul)·금액 표시
 /lib/simulated-state.ts   화면 상태 흉내 `?_state=empty|error|loading|partial` (운영 주소에서는 무시, decisions.md)
