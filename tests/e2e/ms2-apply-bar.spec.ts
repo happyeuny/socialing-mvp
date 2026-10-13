@@ -30,7 +30,8 @@ test.describe("MS2 상세 아래 고정 영역", () => {
       await submitLogin(page, "A");
 
       await expect(page).toHaveURL(`/socialings/${id}`);
-      await expect(bar(page).getByRole("link", { name: "신청하기" })).toBeVisible();
+      // 로그인한 사람은 12줄: 같은 모양의 "신청하기"가 이제 신청 확인 창을 연다 (MS3)
+      await expect(bar(page).getByRole("button", { name: "신청하기" })).toBeVisible();
       // 로그인만으로 신청되지 않는다 (참가자 0명 그대로)
       await expect(page.locator("dl > div").filter({ hasText: "인원" })).toContainText("참가자 0/2명");
     });

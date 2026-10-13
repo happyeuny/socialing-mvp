@@ -2,7 +2,9 @@ import { Check, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { ApplicationChip } from "@/components/application-chip";
 import { Button, buttonVariants } from "@/components/button";
+import { ConfirmApplySheet } from "@/components/confirm-apply-sheet";
 import { CountPill } from "@/components/count-pill";
+import { formatDateTime, formatFee } from "@/lib/format";
 import type { ApplyBarViewer } from "@/lib/queries/my-socialings";
 import type { ClosedReason, SocialingDetail } from "@/lib/queries/socialings";
 import { withNext } from "@/lib/routes";
@@ -10,9 +12,9 @@ import { cn } from "@/lib/utils";
 
 // DESIGN.md C4 apply-bar: 상세 맨 아래에 붙는 영역. spec 8.4 표의 위에서부터 먼저 맞는 줄 하나만 보인다.
 // 신청 가능 여부와 이유, 보는 사람의 신청·후기·승인 대기 건수는 DB(뷰)가 계산한 값을 그대로 쓴다.
-// 지금 있는 줄: 1(호스트), 2(호스트 취소), 3·4(종료 뒤 후기), 5·6(참여 확정 · 일시 지남), 8(승인 대기 · 일시 지남),
-// 11(신청하기 → 로그인 → 상세 복귀), 13(신청 마감·정원 마감·지난 소셜링).
-// 7·9·10·12줄(신청, 신청 취소, 다시 신청)은 MS3 다음 PR에서 이 순서 안에 끼운다. 그때까지 그런 사람은 11·13줄을 본다.
+// 지금 있는 줄: 1(호스트), 2(호스트 취소), 3·4(종료 뒤 후기), 5·6(참여 확정 · 일시 지남), 7(신청함, 일시 전),
+// 8(승인 대기 · 일시 지남), 11(비로그인 신청하기 → 로그인 → 상세 복귀), 12(신청하기 → O02), 13(신청 마감·정원 마감·지난 소셜링).
+// 7줄의 "신청 취소"와 9·10줄(거절·신청 취소 뒤)은 MS3 다음 PR에서 끼운다. 그때까지 거절·신청 취소한 사람은 12·13줄을 본다.
 
 const JOIN_GUIDE = {
   approval: "신청하면 호스트가 승인한 뒤 참여가 확정돼요",
@@ -123,6 +125,38 @@ export function ApplyBar({ socialing, viewer }: { socialing: SocialingDetail; vi
     );
   }
 
+  // 7줄: 승인 대기·참여 확정, 소셜링 일시 전 (신청 취소 버튼은 다음 PR)
+  if (application && (application.status === "pending" || application.status === "accepted")) {
+    return (
+      <Shell>
+        <ChipLine>
+          <ApplicationChip variant={application.status} />
+          {application.status === "accepted"
+            ? `${formatDateTime(socialing.starts_at)}에 만나요`
+            : "호스트가 승인하면 참여 확정돼요"}
+        </ChipLine>
+      </Shell>
+    );
+  }
+
+  // 12줄: 로그인한 사람의 신청하기 → 신청 확인 O02
+  if (viewer.kind === "member" && socialing.can_apply) {
+    return (
+      <Shell>
+        <Guide>{JOIN_GUIDE[socialing.join_type]}</Guide>
+        <ConfirmApplySheet
+          socialingId={socialing.id}
+          title={socialing.title}
+          startsAt={formatDateTime(socialing.starts_at)}
+          place={socialing.venue_type === "branch" ? `스터디지점 ${socialing.venue_name}` : socialing.venue_name}
+          fee={formatFee(socialing.fee)}
+          joinType={socialing.join_type}
+          approvalCriteria={socialing.approval_criteria}
+        />
+      </Shell>
+    );
+  }
+
   // 11줄: 비로그인 신청하기 → 로그인 → 상세로 돌아와 한 번 더 누른다 (자동 신청 없음, spec 8.9)
   if (socialing.can_apply) {
     return (
@@ -167,6 +201,15 @@ function Shell({ children }: { children: React.ReactNode }) {
 function StatusBox({ children }: { children: React.ReactNode }) {
   return (
     <p className="flex min-h-13 w-full flex-wrap items-center justify-center gap-xs rounded-lg bg-surface-muted px-md py-sm text-center text-body-lg text-text-primary">
+      {children}
+    </p>
+  );
+}
+
+/** 신청 칩 + 안내 한 줄 */
+function ChipLine({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="flex flex-wrap items-center justify-center gap-xs text-center text-body-sm text-text-secondary">
       {children}
     </p>
   );

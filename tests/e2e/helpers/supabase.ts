@@ -129,6 +129,24 @@ export async function addApplication(
   return id;
 }
 
+/**
+ * 테스트 소셜링을 바로 바꾼다. 창을 연 사이 다른 일이 생긴 경우(호스트 취소, 신청 마감)를 만든다.
+ * 테스트 전용 [E2E] 소셜링만 바꾼다.
+ */
+export async function updateFixtureSocialing(
+  socialingId: number,
+  change: { status?: "recruiting" | "confirmed" | "completed" | "canceled"; deadlineInHours?: number },
+) {
+  const sets = [
+    change.status ? `status = '${change.status}'` : null,
+    change.deadlineInHours !== undefined ? `apply_deadline_at = now() + interval '${change.deadlineInHours} hours'` : null,
+  ].filter(Boolean);
+  if (sets.length === 0) return;
+  await runQuery(
+    `update public.socialings set ${sets.join(", ")} where id = ${socialingId} and title like '[E2E]%';`,
+  );
+}
+
 /** 테스트 소셜링에 user의 인증 후기를 바로 넣는다 (소셜링을 지우면 함께 지워진다) */
 export async function addReview(socialingId: number, user: DemoUserKey) {
   await runQuery(`
