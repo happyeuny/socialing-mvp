@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { DEMO_USERS, demoSocialings } from "../../scripts/seed-data.mts";
+import { DEMO_USERS, demoSocialings, hostRecordFromSeed, seedSocialings } from "../../scripts/seed-data.mts";
 
-// SP4: 데모 계정 로그인과 상대 날짜 (tasks MS1 완료 기준). `npm run seed` 뒤에 돌린다.
+// 시드 (SP4 + 시드 전체): 데모 계정 로그인, 상대 날짜, spec 7장 시드 조건. `npm run seed` 뒤에 돌린다.
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
@@ -48,5 +48,84 @@ test.describe("SP4 시드", () => {
     expect(new Date(byKey("X").starts_at).getTime()).toBeLessThan(now); // 일시가 지난 확정 소셜링
     expect(new Date(byKey("APPROVAL").starts_at).getTime()).toBeGreaterThan(now); // 4~6단계는 미래
     expect(new Date(byKey("APPROVAL").apply_deadline_at).getTime()).toBeGreaterThan(now);
+  });
+});
+
+async function signIn(request: import("@playwright/test").APIRequestContext, email: string) {
+  const response = await request.post(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+    headers,
+    data: { email, password: process.env.DEMO_PASSWORD },
+  });
+  expect(response.status()).toBe(200);
+  return (await response.json()).access_token as string;
+}
+
+test.describe("시드 조건 (spec 7장)", () => {
+  const definitions = seedSocialings();
+
+  test("호스트 B는 새 호스트가 아니고 등급 조건을 채운다", () => {
+    const b = hostRecordFromSeed(definitions, "B");
+    expect(b.isNewHost).toBe(false);
+    expect(b.opened).toBeGreaterThanOrEqual(5);
+    expect(b.canceled).toBe(0);
+    expect(b.responses).toBeGreaterThanOrEqual(5);
+    expect(b.isTrusted).toBe(true);
+  });
+
+  test("다른 호스트 중 하나는 새 호스트, 하나는 기록 숫자만 있고 등급 없음", () => {
+    expect(hostRecordFromSeed(definitions, "C").isNewHost).toBe(true);
+    const d = hostRecordFromSeed(definitions, "D");
+    expect(d.isNewHost).toBe(false);
+    expect(d.isTrusted).toBe(false);
+  });
+
+  test("상태별 소셜링과 카테고리·술·장소 조건이 정의에 모두 있다", () => {
+    const now = Date.now();
+    const accepted = (s: (typeof definitions)[number]) => s.applications.filter((a) => a.status === "accepted").length;
+    const future = (s: (typeof definitions)[number]) => new Date(s.starts_at).getTime() > now;
+    const has = (label: string, predicate: (s: (typeof definitions)[number]) => boolean) =>
+      expect(definitions.some(predicate), label).toBe(true);
+
+    has("모집중(미래)", (s) => s.status === "recruiting" && future(s) && new Date(s.apply_deadline_at).getTime() > now);
+    has("확정(미래)", (s) => s.status === "confirmed" && future(s));
+    has("신청 마감", (s) => s.status === "recruiting" && future(s) && new Date(s.apply_deadline_at).getTime() < now);
+    has("정원 마감", (s) => s.status === "recruiting" && future(s) && accepted(s) === s.capacity);
+    has("종료", (s) => s.status === "completed");
+    has("호스트 취소", (s) => s.status === "canceled");
+    has("확정 안 된 채 일시 지남", (s) => s.status === "recruiting" && !future(s));
+    has("파티·사교(취소 아님)", (s) => s.category === "party" && s.status !== "canceled");
+    has("술 있음", (s) => s.has_alcohol);
+    has("외부 장소", (s) => ["yeonnam_cafe", "seongsu_studio", "yeoksam_lounge", "jamsil_court"].includes(s.venue));
+
+    const learning = definitions.filter((s) => s.category === "learning").length;
+    expect(learning, "배움 위주").toBeGreaterThan(definitions.length / 2);
+    expect(new Set(definitions.map((s) => s.category)).size).toBe(5);
+    for (const s of definitions) {
+      expect(accepted(s), `${s.title}: 참여 확정 인원 ≤ 정원`).toBeLessThanOrEqual(s.capacity);
+      expect(new Date(s.apply_deadline_at) <= new Date(s.starts_at), `${s.title}: 마감 ≤ 일시`).toBe(true);
+    }
+  });
+
+  test("DB에 정의한 만큼 들어가 있다", async ({ request }) => {
+    const socialings = await (await request.get(`${supabaseUrl}/rest/v1/socialings?select=id`, { headers })).json();
+    expect(socialings.length).toBe(definitions.length);
+
+    const reviews = await (await request.get(`${supabaseUrl}/rest/v1/reviews?select=id`, { headers })).json();
+    expect(reviews.length).toBe(definitions.flatMap((s) => s.reviews ?? []).length);
+
+    // 정원 마감 소셜링: 호스트로 로그인하면 신청을 볼 수 있고, 참여 확정 인원이 정원과 같다
+    const full = definitions.find((s) => s.key === "D_FULL")!;
+    const token = await signIn(request, DEMO_USERS.D.email);
+    const [row] = await (
+      await request.get(`${supabaseUrl}/rest/v1/socialings?select=id,capacity&title=eq.${encodeURIComponent(full.title)}`, {
+        headers,
+      })
+    ).json();
+    const acceptedRows = await (
+      await request.get(`${supabaseUrl}/rest/v1/applications?select=id&status=eq.accepted&socialing_id=eq.${row.id}`, {
+        headers: { ...headers, Authorization: `Bearer ${token}` },
+      })
+    ).json();
+    expect(acceptedRows.length).toBe(row.capacity);
   });
 });

@@ -15,7 +15,7 @@ import {
   DEMO_USERS,
   REGIONS,
   VENUES,
-  demoSocialings,
+  seedSocialings,
   type DemoUserKey,
 } from "./seed-data.mts";
 
@@ -114,51 +114,82 @@ async function main() {
   );
   const venueId = Object.fromEntries(VENUES.map((v) => [v.key, venues.find((row) => row.name === v.name)!.id]));
 
-  const socialings = demoSocialings(now);
-  for (const s of socialings) {
-    const { data: inserted, error: insertError } = await supabase
+  const socialings = seedSocialings(now);
+  const titles = new Set(socialings.map((s) => s.title));
+  if (titles.size !== socialings.length) throw new Error("시드 소셜링 제목이 겹칩니다(제목으로 행을 찾음).");
+
+  const insertedSocialings = check(
+    "소셜링",
+    await supabase
       .from("socialings")
-      .insert({
-        host_id: userIds[s.host],
-        title: s.title,
-        description: s.description,
-        category_id: categoryId[s.category],
-        has_alcohol: s.has_alcohol,
-        venue_id: venueId[s.venue],
-        starts_at: s.starts_at,
-        apply_deadline_at: s.apply_deadline_at,
-        fee: s.fee,
-        capacity: s.capacity,
-        staff_count: s.staff_count,
-        join_type: s.join_type,
-        approval_criteria: s.approval_criteria ?? null,
-        status: s.status,
-        confirmed_at: s.confirmed_at ?? null,
-        completed_at: s.completed_at ?? null,
-        canceled_at: s.canceled_at ?? null,
-      })
-      .select("id")
-      .single();
-    if (insertError) throw new Error(`소셜링 ${s.key}: ${insertError.message}`);
-    if (s.applications.length > 0) {
-      ok(
-        `소셜링 ${s.key} 신청`,
-        await supabase.from("applications").insert(
-          s.applications.map((a) => ({
-            socialing_id: inserted.id,
-            user_id: userIds[a.user],
-            status: a.status,
-            created_at: a.created_at,
-            decided_at: a.status === "pending" ? null : a.created_at,
-          })),
-        ),
-      );
-    }
-  }
+      .insert(
+        socialings.map((s) => ({
+          host_id: userIds[s.host],
+          title: s.title,
+          description: s.description,
+          category_id: categoryId[s.category],
+          has_alcohol: s.has_alcohol,
+          venue_id: venueId[s.venue],
+          starts_at: s.starts_at,
+          apply_deadline_at: s.apply_deadline_at,
+          fee: s.fee,
+          capacity: s.capacity,
+          staff_count: s.staff_count,
+          join_type: s.join_type,
+          approval_criteria: s.approval_criteria ?? null,
+          status: s.status,
+          confirmed_at: s.confirmed_at ?? null,
+          completed_at: s.completed_at ?? null,
+          canceled_at: s.canceled_at ?? null,
+        })),
+      )
+      .select("id, title"),
+  );
+  const socialingId = Object.fromEntries(insertedSocialings.map((row) => [row.title, row.id]));
+
+  const applications = socialings.flatMap((s) =>
+    s.applications.map((a) => ({
+      socialing_id: socialingId[s.title],
+      user_id: userIds[a.user],
+      status: a.status,
+      created_at: a.created_at,
+      decided_at: a.status === "pending" ? null : a.created_at,
+      canceled_at: a.status === "canceled" ? a.created_at : null,
+    })),
+  );
+  ok("신청", await supabase.from("applications").insert(applications));
+
+  const reviewRows = socialings.flatMap((s) => (s.reviews ?? []).map((r) => ({ socialing: s, review: r })));
+  const insertedReviews = check(
+    "후기",
+    await supabase
+      .from("reviews")
+      .insert(
+        reviewRows.map(({ socialing, review }) => ({
+          socialing_id: socialingId[socialing.title],
+          user_id: userIds[review.user],
+          body: review.body,
+          created_at: review.created_at,
+        })),
+      )
+      .select("id, socialing_id, user_id"),
+  );
+  ok(
+    "비공개 응답",
+    await supabase.from("review_checks").insert(
+      reviewRows.map(({ socialing, review }) => {
+        const row = insertedReviews.find(
+          (r) => r.socialing_id === socialingId[socialing.title] && r.user_id === userIds[review.user],
+        )!;
+        const [members_match, extra_money, content_match] = review.checks;
+        return { review_id: row.id, members_match, extra_money, content_match };
+      }),
+    ),
+  );
 
   const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
   console.log(
-    `시드 완료 (${seconds}초): 데모 계정 ${Object.keys(userIds).length}개, 카테고리 ${categories.length}개, 지역 ${regions.length}개, 장소 ${venues.length}개, 소셜링 ${socialings.length}개`,
+    `시드 완료 (${seconds}초): 데모 계정 ${Object.keys(userIds).length}개, 카테고리 ${categories.length}개, 지역 ${regions.length}개, 장소 ${venues.length}개, 소셜링 ${socialings.length}개, 신청 ${applications.length}개, 후기 ${insertedReviews.length}개`,
   );
 }
 
