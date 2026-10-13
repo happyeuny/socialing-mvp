@@ -25,7 +25,7 @@ export async function signIn(request: APIRequestContext, user: DemoUserKey): Pro
   return (await response.json()).access_token;
 }
 
-export type RpcResult = { status: number; body: { status?: string; message?: string; code?: string } };
+export type RpcResult = { status: number; body: { id?: number; status?: string; message?: string; code?: string } };
 
 export async function rpc(
   request: APIRequestContext,
@@ -108,6 +108,45 @@ export async function deleteFixtureSocialings(ids: number[]) {
   if (ids.length === 0) return;
   // applications는 on delete cascade로 함께 지워진다
   await runQuery(`delete from public.socialings where id in (${ids.join(", ")}) and title like '[E2E]%';`);
+}
+
+/** 테스트 소셜링에 신청 행을 바로 넣고 id를 돌려준다. 함수로는 만들 수 없는 상태(거절, 일시 지난 신청 등)를 준비할 때 쓴다 */
+export async function addApplication(
+  socialingId: number,
+  user: DemoUserKey,
+  status: "pending" | "accepted" | "rejected" | "canceled",
+): Promise<number> {
+  const rows = await runQuery<{ id: number }>(`
+    insert into public.applications (socialing_id, user_id, status, decided_at, canceled_at)
+    select ${socialingId}, id, '${status}',
+      case when '${status}' in ('accepted', 'rejected') then now() end,
+      case when '${status}' = 'canceled' then now() end
+    from auth.users where email = ${sqlText(DEMO_USERS[user].email)}
+    returning id;
+  `);
+  const id = rows[0]?.id;
+  if (!id) throw new Error("테스트 신청을 만들지 못했습니다.");
+  return id;
+}
+
+/** 테스트 소셜링에 user의 인증 후기를 바로 넣는다 (소셜링을 지우면 함께 지워진다) */
+export async function addReview(socialingId: number, user: DemoUserKey) {
+  await runQuery(`
+    insert into public.reviews (socialing_id, user_id, body)
+    select ${socialingId}, id, '자동 테스트가 넣은 인증 후기입니다.'
+    from auth.users where email = ${sqlText(DEMO_USERS[user].email)};
+  `);
+}
+
+/** 로그인한 user 권한으로 뷰를 읽는다. 상태 코드와 행을 돌려준다 */
+export async function readAs<T>(
+  request: APIRequestContext,
+  path: string,
+  accessToken?: string,
+): Promise<{ status: number; rows: T[] }> {
+  const response = await request.get(`${supabaseUrl}/rest/v1/${path}`, { headers: apiHeaders(accessToken) });
+  const body = await response.json();
+  return { status: response.status(), rows: Array.isArray(body) ? body : [] };
 }
 
 export async function applicationsOf(socialingId: number) {

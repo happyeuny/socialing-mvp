@@ -99,6 +99,13 @@ erDiagram
 
 뷰는 `security_invoker`라 보는 사람 권한으로 읽는다. 비로그인은 applications를 못 읽으므로 참여 확정 인원만 SECURITY DEFINER 함수 `socialing_accepted_count(socialing_id)`가 숫자로 돌려준다. 누가 신청했는지는 이 경로로 나가지 않는다.
 
+"나" 기준 읽기는 뷰 두 개다(MS3). 둘 다 `socialing_summaries`의 칸을 그대로 두고 칸을 더하며, `security_invoker`이고 로그인한 사람만 읽는다. 상세 아래 영역(spec 8.4)과 내 소셜링(P06)이 같이 쓴다.
+
+| 뷰 | 행 | 더한 칸 |
+|---|---|---|
+| `my_applied_socialings` | 내가 신청한 소셜링마다 **가장 최근 신청** 하나 (거절·신청 취소 뒤 다시 신청하면 새 행) | `application_id`, `application_status`(호스트 취소돼도 그대로), `applied_at`, `has_review`(내가 후기를 썼는지) |
+| `my_hosted_socialings` | 내가 호스트인 소셜링 | `pending_count`(승인 대기 건수. applications는 호스트가 읽을 수 있어 함수 없이 센다) |
+
 ## 4. 권한 (RLS)
 
 | 데이터 | 읽기 | 쓰기 |
@@ -109,6 +116,7 @@ erDiagram
 | review_checks | 아무도 직접 못 읽음 | `create_review` 함수로만 |
 | 호스트 기록 | 모두 (집계 함수) | 계산 값 |
 | `socialing_summaries` 뷰 (목록·상세) | 모두 (참여 확정 인원은 숫자만) | 없음 (SELECT 권한만) |
+| `my_applied_socialings`, `my_hosted_socialings` 뷰 | 로그인한 본인 행만 (비로그인 거부) | 없음 (SELECT 권한만) |
 | profiles | 닉네임·id는 모두, 나머지는 본인 | 본인 |
 | Storage `socialing-photos`, `review-photos` | 공개 읽기 | 로그인 사용자가 자기 폴더(`사용자id/`)에만 업로드 |
 
@@ -128,7 +136,7 @@ erDiagram
 | 함수 | 호출 화면 | 검사 |
 |---|---|---|
 | `apply_to_socialing(socialing_id)` | P03 → O02 | 로그인, 호스트 아님, 신청 가능, 유효한 신청 없음, 정원(소셜링 행 `FOR UPDATE` 잠금). 선착순 → accepted, 승인 → pending |
-| `cancel_application(application_id)` | P03 → O05 | 본인, pending·accepted, 소셜링 일시 전 |
+| `cancel_application(application_id)` | P03 → O05 | 본인(남의 신청은 없는 신청처럼 `INVALID_INPUT`), pending·accepted(아니면 `ALREADY_PROCESSED`), 호스트 취소 아님(`HOST_CANCELED`), 소셜링 일시 전(`STARTED`). 소셜링 행 → 신청 행 순서로 잠금. 성공하면 바뀐 신청 행 |
 | `decide_application(application_id, approve)` | P11 | 호스트 본인, pending, 소셜링 일시 전, 승인 시 정원(잠금) |
 | `confirm_socialing(id)` | P11 → O04 | 호스트 본인, recruiting, 소셜링 일시 전 |
 | `complete_socialing(id)` | P11 → O04 | 호스트 본인, confirmed, 소셜링 일시 이후 |
