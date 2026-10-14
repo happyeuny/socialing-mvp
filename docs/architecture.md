@@ -160,9 +160,10 @@ erDiagram
   login/  signup/         P04 · P05 (page.tsx + 폼 클라이언트 컴포넌트). 하위 화면은 각자 header-sub
   past/                   P02 지난 소셜링 (하위 화면, header-sub)
   socialings/[id]/        P03 상세 (page + loading + not-found)
+    manage/               P11 소셜링 관리 (page + loading + not-found). 호스트가 아니면 상세 + `?notice=host-only`
   error.tsx               화면 전체 오류: "불러오지 못했어요" + 다시 시도 · 홈으로
   dev/photo-upload/       SP3 실기기 확인·E2E용 임시 화면 (미리보기·로컬만. MS5에서 테스트를 후기 쓰기로 옮기고 지움)
-  (MS4~) socialings/[id]/ 아래 manage/ · edit/ · review/, socialings/new/, (tabs)/reviews/
+  (MS5~) socialings/[id]/ 아래 edit/ · review/, socialings/new/, (tabs)/reviews/
 /components               DESIGN.md 이름의 컴포넌트: button, text-field, avatar-initial, photo-picker,
                           password-field, header-main, header-sub, header-login-link, tab-bar (+ 뒤로 판단용
                           navigation-tracker), top-tabs, status-badge, status-tag, application-chip, count-pill,
@@ -171,16 +172,21 @@ erDiagram
                           apply-bar(spec 8.4 순서표 13줄), hero-card, section-header, shortcut-category,
                           shortcut-branch, review-card, toast(짧은 안내),
                           bottom-sheet · dialog(Radix Dialog 위, decisions.md), confirm-apply-sheet(O02),
-                          confirm-cancel-application-sheet(O05)
+                          confirm-cancel-application-sheet(O05), url-notice(다른 화면이 남긴 안내),
+                          manage-summary, progress-steps, manage-status-actions(상태 버튼과 O04),
+                          segmented(건수 탭), applicant-row, applicant-actions(승인·거절과 O04)
 /lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)
-/lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). auth.ts, applications.ts(신청·신청 취소)
+/lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). auth.ts, applications.ts(신청·신청 취소),
+                          manage.ts(승인·거절, 확정·종료·호스트 취소)
 /lib/validation           zod 스키마 (폼과 서버 액션이 같이 씀)
 /lib/photos               사진 줄이기 (compress.ts)
 /lib/routes.ts            로그인 필요 주소, `next` 검사
+/lib/notices.ts           다른 화면으로 보내며 남기는 짧은 안내 `?notice=` (예: "호스트만 볼 수 있어요")
 /lib/in-app-history.ts    머리글 뒤로 버튼: 앱 안 이전 화면이 없으면 홈 (spec 8.7)
 /lib/queries              읽기 함수. viewer.ts(지금 보는 사람, 닉네임은 로그인 토큰에서), socialings.ts(socialing_summaries 뷰),
                           my-socialings.ts("나" 기준 뷰: 상세 아래 영역의 보는 사람, 내 소셜링 두 탭 목록),
-                          catalog.ts(카테고리·스터디지점), reviews.ts(인증 후기)
+                          catalog.ts(카테고리·스터디지점), reviews.ts(인증 후기),
+                          manage.ts(P11: my_hosted_socialings 관리 칸, hosted_socialing_applicants)
 /lib/format               날짜(Asia/Seoul)·금액 표시
 /lib/simulated-state.ts   화면 상태 흉내 `?_state=empty|error|loading|partial` (운영 주소에서는 무시, decisions.md)
 /supabase/migrations      테이블·enum·RLS·함수 SQL (파일 하나 = 변경 하나)

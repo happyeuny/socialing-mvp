@@ -100,12 +100,11 @@ test.describe("MS2 읽기 뷰 socialing_summaries", () => {
   });
 
   test("C03~C10: 상태 배지·꼬리표 조합과 신청 가능·불가 이유를 DB가 계산한다", async ({ request }) => {
-    const ids: number[] = [];
-    for (const { options } of CASES) {
-      const id = await createFixtureSocialing({ host: "B", capacity: 2, ...options });
-      ids.push(id);
-      created.push(id);
-    }
+    // 10개를 하나씩 만들면 전체 E2E 중에는 30초 제한에 가까워져서 한꺼번에 만든다 (순서는 CASES 그대로)
+    const ids = await Promise.all(
+      CASES.map(({ options }) => createFixtureSocialing({ host: "B", capacity: 2, ...options })),
+    );
+    created.push(...ids);
 
     const summaries = await readSummaries(request, ids);
     CASES.forEach(({ name, options, expected }, index) => {
