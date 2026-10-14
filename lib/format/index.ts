@@ -28,6 +28,21 @@ export function formatMonthDay(value: string | Date): string {
   return `${parts.month}/${parts.day}`;
 }
 
+const SEOUL_OFFSET_MS = 9 * 60 * 60 * 1000; // 한국은 일광 절약 시간이 없어 언제나 UTC+9
+const SEOUL_INPUT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
+/** 일시 → 날짜·시간 고르기 칸(`datetime-local`) 값. 한국 시간, 분까지. 예: `2026-10-24T19:30` */
+export function toSeoulInput(value: string | Date): string {
+  return new Date(new Date(value).getTime() + SEOUL_OFFSET_MS).toISOString().slice(0, 16);
+}
+
+/** 날짜·시간 고르기 칸 값(한국 시간) → ISO 문자열. 형식이 아니면 null */
+export function seoulInputToIso(value: string): string | null {
+  if (!SEOUL_INPUT.test(value)) return null;
+  const ms = Date.parse(`${value}:00+09:00`);
+  return Number.isNaN(ms) ? null : new Date(ms).toISOString();
+}
+
 const wonFormat = new Intl.NumberFormat("ko-KR");
 
 /** 총 참가비. 예: `15,000원`, 0원이면 `무료` */

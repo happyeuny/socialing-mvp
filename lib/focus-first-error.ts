@@ -7,6 +7,8 @@ export function focusFirstError(
   if (!form || !fieldErrors) return;
   const first = order.find((name) => fieldErrors[name]);
   if (!first) return;
-  const input = form.elements.namedItem(first);
-  if (input instanceof HTMLInputElement) input.focus();
+  const field = form.elements.namedItem(first);
+  // 라디오 묶음(카테고리 칩 등)은 첫 칸, 그 밖에는 입력·고르기·글 칸
+  const target = field instanceof RadioNodeList ? field[0] : field;
+  if (target instanceof HTMLElement) target.focus();
 }

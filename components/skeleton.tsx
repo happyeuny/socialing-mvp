@@ -128,3 +128,22 @@ export function SkeletonReviewWrite() {
     </div>
   );
 }
+
+/** 소셜링 등록·수정(P07·P08) 로딩: 사진 칸 + 라벨·입력 칸 묶음 4개 */
+export function SkeletonSocialingForm() {
+  return (
+    <div role="status" aria-busy className="flex flex-col gap-xl px-page-x pt-lg motion-safe:animate-pulse">
+      <span className="sr-only">불러오는 중</span>
+      <div className="flex flex-col gap-xs">
+        <Bar className="h-6 w-32" />
+        <Bar className="size-24" />
+      </div>
+      {[0, 1, 2, 3].map((key) => (
+        <div key={key} className="flex flex-col gap-xs">
+          <Bar className="h-6 w-20" />
+          <Bar className="h-12 w-full" />
+        </div>
+      ))}
+    </div>
+  );
+}

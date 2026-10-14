@@ -37,11 +37,24 @@ type PhotoPickerProps = {
   onSkip?: () => void;
   /** 올리는 중인지 (올리는 동안 폼 제출을 막을 때) */
   onUploadingChange?: (uploading: boolean) => void;
+  /** 올리기에 실패한 채인지 (실패한 채 제출하면 사진 없이 저장하고 알릴 때, P07) */
+  onFailedChange?: (failed: boolean) => void;
+  /** 실패 칸의 두 번째 버튼 글자. 기본 "사진 없이 올리기"(P09) */
+  skipLabel?: string;
 };
 
 const EXTENSIONS: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
-export function PhotoPicker({ bucket, userId, name, onChange, onSkip, onUploadingChange }: PhotoPickerProps) {
+export function PhotoPicker({
+  bucket,
+  userId,
+  name,
+  onChange,
+  onSkip,
+  onUploadingChange,
+  onFailedChange,
+  skipLabel = "사진 없이 올리기",
+}: PhotoPickerProps) {
   const [state, setState] = useState<PickerState>({ kind: "empty" });
   const inputRef = useRef<HTMLInputElement>(null);
   const previewUrl = state.kind === "selected" ? state.previewUrl : null;
@@ -56,6 +69,7 @@ export function PhotoPicker({ bucket, userId, name, onChange, onSkip, onUploadin
     setState(next);
     onChange?.(next.kind === "selected" ? next.photo : null);
     onUploadingChange?.(next.kind === "uploading");
+    onFailedChange?.(next.kind === "failed");
   }
 
   async function onPick(event: React.ChangeEvent<HTMLInputElement>) {
@@ -162,7 +176,7 @@ export function PhotoPicker({ bucket, userId, name, onChange, onSkip, onUploadin
                 onSkip?.();
               }}
             >
-              사진 없이 올리기
+              {skipLabel}
             </Button>
           </div>
         </div>
