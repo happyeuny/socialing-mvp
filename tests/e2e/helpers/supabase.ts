@@ -160,12 +160,22 @@ export async function updateFixtureSocialing(
 }
 
 /** 테스트 소셜링에 user의 인증 후기를 바로 넣는다 (소셜링을 지우면 함께 지워진다) */
-export async function addReview(socialingId: number, user: DemoUserKey) {
+export async function addReview(
+  socialingId: number,
+  user: DemoUserKey,
+  { body = "자동 테스트가 넣은 인증 후기입니다.", photoPath }: { body?: string; photoPath?: string } = {},
+) {
   await runQuery(`
-    insert into public.reviews (socialing_id, user_id, body)
-    select ${socialingId}, id, '자동 테스트가 넣은 인증 후기입니다.'
+    insert into public.reviews (socialing_id, user_id, body, photo_path)
+    select ${socialingId}, id, ${sqlText(body)}, ${photoPath ? sqlText(photoPath) : "null"}
     from auth.users where email = ${sqlText(DEMO_USERS[user].email)};
   `);
+}
+
+/** 테스트 소셜링의 제목 ("[E2E] 테스트 소셜링 …") */
+export async function titleOf(socialingId: number): Promise<string> {
+  const rows = await runQuery<{ title: string }>(`select title from public.socialings where id = ${socialingId};`);
+  return rows[0].title;
 }
 
 /** 로그인한 user 권한으로 뷰를 읽는다. 상태 코드와 행을 돌려준다 */

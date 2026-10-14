@@ -83,3 +83,25 @@ export function SkeletonManage() {
     </div>
   );
 }
+
+/** 인증 후기(P10) 로딩: 후기 줄 모양 2개 (원 + 닉네임, 제목, 글 2줄) */
+export function SkeletonReviewList() {
+  return (
+    <div role="status" aria-busy className="flex flex-col divide-y divide-border-divider motion-safe:animate-pulse">
+      <span className="sr-only">불러오는 중</span>
+      {[0, 1].map((key) => (
+        <div key={key} className="flex flex-col gap-md py-lg">
+          <div className="flex items-center gap-sm">
+            <div className="size-8 shrink-0 rounded-full bg-surface-muted" />
+            <Bar className="h-5 w-24" />
+          </div>
+          <Bar className="h-5 w-3/5" />
+          <div className="flex flex-col gap-xs">
+            <Bar className="h-4 w-full" />
+            <Bar className="h-4 w-4/5" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
