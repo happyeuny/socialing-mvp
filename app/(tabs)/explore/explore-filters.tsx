@@ -85,14 +85,26 @@ export function ExploreFilters({
     setSection(target);
   }
 
+  /** 시트 안에서 그 항목을 맨 위로 */
+  function scrollBodyTo(target: Exclude<Section, "all">) {
+    const element = bodyRef.current?.querySelector<HTMLElement>(`[data-section="${target}"]`);
+    if (bodyRef.current && element) bodyRef.current.scrollTop = element.offsetTop - 20;
+    return element;
+  }
+
   // 칩에서 열면 그 항목이 시트 맨 위에 오게 (spec 8.9 P01)
   function scrollToSection(event: Event) {
-    if (section === "all" || !section || !bodyRef.current) return;
-    const target = bodyRef.current.querySelector<HTMLElement>(`[data-section="${section}"]`);
-    if (!target) return;
+    if (section === "all" || !section) return;
+    const element = scrollBodyTo(section);
+    if (!element) return;
     event.preventDefault();
-    bodyRef.current.scrollTop = target.offsetTop - 20;
-    target.querySelector<HTMLElement>("input")?.focus({ preventScroll: true });
+    element.querySelector<HTMLElement>("input")?.focus({ preventScroll: true });
+  }
+
+  // 시·도 ↔ 구 목록을 바꾸면 장소 묶음 맨 위로 (구 목록 맨 위 "‹ 시·도"가 보이게)
+  function showSido(code: string | null) {
+    setSidoView(code);
+    requestAnimationFrame(() => scrollBodyTo("place"));
   }
 
   function apply() {
@@ -236,7 +248,7 @@ export function ExploreFilters({
                     key={s.code}
                     label={s.sido}
                     sub={draftRegion?.startsWith(s.code) && draft.place ? placeLabel(draft.place, catalog) : null}
-                    onClick={() => setSidoView(s.code)}
+                    onClick={() => showSido(s.code)}
                   />
                 ))}
               </>
@@ -244,7 +256,7 @@ export function ExploreFilters({
               <>
                 <RadioRowBack
                   label={sidoOptions(catalog).find((s) => s.code === sidoView)?.sido ?? "시·도"}
-                  onClick={() => setSidoView(null)}
+                  onClick={() => showSido(null)}
                 />
                 <RadioRow
                   name="filter-place"

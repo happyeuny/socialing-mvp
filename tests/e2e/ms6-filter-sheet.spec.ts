@@ -66,8 +66,8 @@ test.describe("MS6 필터 칩과 필터 시트", () => {
     await expect(sheet(page).getByRole("radio", { name: "전국" })).toBeChecked();
     await sheet(page).getByRole("button", { name: "서울특별시" }).click();
 
-    // 구 목록: 맨 위 "‹ 서울특별시"(시·도로 돌아감), "서울특별시 전체", 구 25곳
-    await expect(sheet(page).getByRole("button", { name: "서울특별시" })).toBeVisible();
+    // 구 목록: 맨 위 "‹ 서울특별시"(시·도로 돌아감, 목록을 바꾸면 장소 묶음 맨 위로), "서울특별시 전체", 구 25곳
+    await expect(sheet(page).getByRole("button", { name: "서울특별시" })).toBeInViewport();
     await expect(sheet(page).getByRole("radio")).toHaveCount(4 + 2 + 1 + 25); // 날짜 4칸 + 장소 갈래 2칸 + 서울특별시 전체 + 구
     await sheet(page).getByText("마포구", { exact: true }).click();
     await expect(sheet(page).getByRole("radio", { name: "마포구" })).toBeChecked();
@@ -86,6 +86,7 @@ test.describe("MS6 필터 칩과 필터 시트", () => {
     await chips(page).getByRole("button", { name: "장소 마포구" }).click();
     await expect(sheet(page).getByRole("radio", { name: "마포구" })).toBeChecked();
     await sheet(page).getByRole("button", { name: "서울특별시" }).click();
+    await expect(sheet(page).getByText("전국", { exact: true })).toBeInViewport();
     await expect(sheet(page).getByRole("button", { name: /^서울특별시\s*마포구$/ })).toBeVisible();
     await sheet(page).getByRole("button", { name: /^서울특별시/ }).click();
     await sheet(page).getByText("서울특별시 전체").click();
