@@ -776,6 +776,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_host_record: {
+        Args: { p_host_id: string }
+        Returns: {
+          canceled_count: number
+          is_new_host: boolean
+          match_rate: number
+          opened_count: number
+          response_count: number
+          review_count: number
+        }[]
+      }
       socialing_accepted_count: {
         Args: { p_socialing_id: number }
         Returns: number

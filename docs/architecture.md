@@ -85,7 +85,7 @@ erDiagram
 | 호스트 기록 | 최근 6개월(starts_at 기준): 열린 소셜링 수(completed + accepted 1명 이상), 호스트 취소 수(canceled 중 pending·accepted 신청이 있던 것), 소개 일치 비율(review_checks 중 members_match = true, extra_money = false, content_match = true 비율, 응답 5건 이상일 때만), 후기 수 |
 | 새 호스트 / 등급 | 열린 소셜링 3회 미만 → 새 호스트. 5회 이상 + 호스트 취소 0 + 일치 90% 이상 → "믿고 가는 호스트" |
 
-호스트 기록은 `get_host_record(host_id)` 같은 SECURITY DEFINER 함수가 집계값만 돌려준다. 개별 응답은 어떤 경로로도 나가지 않는다.
+호스트 기록은 SECURITY DEFINER 함수 `get_host_record(p_host_id)`가 집계값만 돌려준다(MS6). 칸: `opened_count`, `canceled_count`, `review_count`, `response_count`(비공개 응답 수), `match_rate`(0~1, 반올림 안 함, 응답 5건 미만이면 null), `is_new_host`. "최근 6개월"은 소셜링 일시가 6개월 전 이후인 소셜링(앞으로 열릴 소셜링 포함)이고, 시드 쪽 `hostRecordFromSeed`와 같은 규칙이다. 비로그인도 부를 수 있다. 개별 응답은 어떤 경로로도 나가지 않는다.
 
 목록·상세는 뷰 `socialing_summaries` 하나를 읽는다(MS2). 소셜링 칸에 호스트 닉네임·카테고리·장소·지역을 붙이고, 위 표를 계산한 칸을 더한다.
 
@@ -115,7 +115,7 @@ erDiagram
 | applications | 본인, 그 소셜링의 호스트 | 함수로만 |
 | reviews | 모두 | 함수로만 |
 | review_checks | 아무도 직접 못 읽음 | `create_review` 함수로만 |
-| 호스트 기록 | 모두 (집계 함수) | 계산 값 |
+| 호스트 기록 | 모두 (집계 함수 `get_host_record`) | 계산 값 |
 | `socialing_summaries` 뷰 (목록·상세) | 모두 (참여 확정 인원은 숫자만) | 없음 (SELECT 권한만) |
 | `my_applied_socialings`, `my_hosted_socialings`, `hosted_socialing_applicants` 뷰 | 로그인한 본인 행만, 신청자 목록은 그 소셜링의 호스트만 (비로그인 거부) | 없음 (SELECT 권한만) |
 | profiles | 닉네임·id는 모두, 나머지는 본인 | 본인 |
