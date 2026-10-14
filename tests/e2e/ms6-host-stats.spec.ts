@@ -134,11 +134,13 @@ test.describe("MS6 상세 호스트 기록", () => {
     await expect(hostSection(page).getByRole("button", { name: "다시 시도" })).toBeVisible();
     await expect(hostSection(page).locator("dl")).toHaveCount(0);
 
-    // 비로그인 신청하기 → 로그인 → 같은 주소로 돌아와 신청 (기록 칸은 여전히 실패)
+    // 비로그인 신청하기 → 로그인 → 상세로 돌아옴. 복귀 주소에는 경로만 담겨 흉내 값이 빠지니 다시 켜고 신청
     const bar = page.getByRole("region", { name: "신청" });
     await bar.getByRole("link", { name: "신청하기" }).click();
     await submitLogin(page, "A");
-    await expect(page).toHaveURL(`/socialings/${id}?_state=partial`);
+    await expect(page).toHaveURL(`/socialings/${id}`);
+    await page.goto(`/socialings/${id}?_state=partial`);
+    await expect(hostSection(page).getByRole("alert")).toContainText("기록을 불러오지 못했어요");
     await bar.getByRole("button", { name: "신청하기" }).click();
     const sheet = page.getByRole("dialog", { name: "신청할까요?" });
     await sheet.getByRole("button", { name: "신청하기" }).click();
