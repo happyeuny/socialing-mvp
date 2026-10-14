@@ -155,7 +155,7 @@ test.describe("MS5 인증 후기 P10", () => {
     await expect(page.getByRole("heading", { level: 1, name: "인증 후기" })).toBeVisible();
 
     await page.goto("/reviews?_state=error");
-    await expect(page.getByRole("alert")).toContainText("불러오지 못했어요");
+    await expect(page.getByRole("alert").filter({ hasText: "불러오지 못했어요" })).toBeVisible();
     await expect(page.getByRole("button", { name: "다시 시도" })).toBeEnabled();
     await page.getByRole("link", { name: "홈으로" }).click();
     await expect(page).toHaveURL("/");

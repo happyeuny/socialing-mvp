@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { DEMO_USERS, demoSocialings, hostRecordFromSeed, seedSocialings } from "../../scripts/seed-data.mts";
+import {
+  DEMO_USERS,
+  REGIONS,
+  VENUES,
+  demoSocialings,
+  hostRecordFromSeed,
+  seedSocialings,
+} from "../../scripts/seed-data.mts";
 
 // 시드 (SP4 + 시드 전체): 데모 계정 로그인, 상대 날짜, spec 7장 시드 조건. `npm run seed` 뒤에 돌린다.
 
@@ -135,5 +142,26 @@ test.describe("시드 조건 (spec 7장)", () => {
       })
     ).json();
     expect(acceptedRows.length).toBe(row.capacity);
+  });
+
+  test("지역은 전국 시·도 16개 > 시·군·구 256곳이고, 장소는 정의한 구에 있다 (MS6 지역 필터)", async ({ request }) => {
+    const regions: { code: string; sido: string; sigungu: string }[] = await (
+      await request.get(`${supabaseUrl}/rest/v1/regions?select=code,sido,sigungu`, { headers })
+    ).json();
+    expect(regions).toHaveLength(256);
+    expect(new Set(regions.map((r) => r.sido)).size).toBe(16);
+    expect(new Set(regions.map((r) => r.code)).size).toBe(256);
+    // 일반구가 있는 시는 "시 구"로 (시만 있는 행은 없다)
+    expect(regions.find((r) => r.code === "41117")).toMatchObject({ sido: "경기도", sigungu: "수원시 영통구" });
+    expect(regions.some((r) => r.sido === "경기도" && r.sigungu === "수원시")).toBe(false);
+
+    const venues: { name: string; type: string; regions: { sido: string; sigungu: string } }[] = await (
+      await request.get(`${supabaseUrl}/rest/v1/venues?select=name,type,regions(sido,sigungu)`, { headers })
+    ).json();
+    for (const venue of VENUES) {
+      const row = venues.find((v) => v.name === venue.name);
+      const expected = REGIONS.find((r) => r.code === venue.region)!;
+      expect(row?.regions, venue.name).toEqual({ sido: expected.sido, sigungu: expected.sigungu });
+    }
   });
 });
