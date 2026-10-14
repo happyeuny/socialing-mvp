@@ -123,7 +123,7 @@ erDiagram
 | profiles | 닉네임·id는 모두, 나머지는 본인 | 본인 |
 | Storage `socialing-photos`, `review-photos` | 공개 읽기 | 로그인 사용자가 자기 폴더(`사용자id/`)에만 업로드 |
 
-- 쓰기 함수는 `SECURITY DEFINER` + `auth.uid()` 검사 + `search_path` 고정.
+- 쓰기 함수는 `SECURITY DEFINER` + `auth.uid()` 검사 + `search_path` 고정. 여러 함수가 같이 쓰는 검사(등록·수정의 입력 범위·장소·사진)는 API로 열리지 않는 `private` 스키마에 두고 실행 권한을 회수한다(MS7).
 - profiles는 열 권한으로 `id`, `nickname`만 공개한다. 코드에서 profiles를 읽을 때 `select('*')` 대신 `select('id, nickname')`처럼 칸을 적는다(`role` 등을 넣으면 거부됨).
 - 모든 테이블에서 anon·authenticated의 INSERT/UPDATE/DELETE 권한을 회수했다. review_checks는 SELECT 권한도 회수.
 - Storage 버킷은 파일 1MB 이하, JPEG·PNG·WebP만 받는다(HEIC는 브라우저에서 JPEG로 바꿔 올림).
@@ -134,7 +134,7 @@ erDiagram
 
 ## 5. 쓰기 함수 (RPC)
 
-모든 함수는 실패할 때 **정해진 오류 코드**를 돌려주고, 서버 액션이 그것을 spec 8.4·8.6·8.8의 문구로 바꾼다. 방식(SP2에서 정함): `raise exception using errcode = 'P0001', message = 'FULL'`처럼 오류 코드를 message에 넣는다. supabase-js에서는 `error.message`가 오류 코드다. 성공하면 바뀐 행을 돌려준다(`apply_to_socialing`은 만든 `applications` 행). 오류 코드 예: `NOT_AUTHENTICATED`, `NOT_HOST`, `IS_HOST`, `NOT_OPEN`(신청 불가), `DEADLINE_PASSED`, `FULL`, `HOST_CANCELED`, `ALREADY_APPLIED`, `STARTED`(소셜링 일시 지남), `NOT_STARTED`, `INVALID_STATE`, `ALREADY_PROCESSED`, `NOT_ELIGIBLE`(후기 조건), `ALREADY_REVIEWED`, `LOCKED_FIELD`, `INVALID_INPUT`.
+모든 함수는 실패할 때 **정해진 오류 코드**를 돌려주고, 서버 액션이 그것을 spec 8.4·8.6·8.8의 문구로 바꾼다. 방식(SP2에서 정함): `raise exception using errcode = 'P0001', message = 'FULL'`처럼 오류 코드를 message에 넣는다. supabase-js에서는 `error.message`가 오류 코드다. 성공하면 바뀐 행을 돌려준다(`apply_to_socialing`은 만든 `applications` 행). 오류 코드 예: `NOT_AUTHENTICATED`, `NOT_HOST`, `IS_HOST`, `NOT_OPEN`(신청 불가), `DEADLINE_PASSED`, `FULL`, `HOST_CANCELED`, `ALREADY_APPLIED`, `STARTED`(소셜링 일시 지남), `NOT_STARTED`, `INVALID_STATE`, `ALREADY_PROCESSED`, `NOT_ELIGIBLE`(후기 조건), `ALREADY_REVIEWED`, `LOCKED_FIELD`, `BELOW_ACCEPTED`(정원 < 참여 확정 인원), `INVALID_INPUT`.
 
 | 함수 | 호출 화면 | 검사 |
 |---|---|---|
@@ -144,8 +144,8 @@ erDiagram
 | `confirm_socialing(id)` | P11 → O04 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), recruiting(`INVALID_STATE`), 소셜링 일시 전(`STARTED`). 소셜링 행 잠금. 성공하면 바뀐 소셜링 행 |
 | `complete_socialing(id)` | P11 → O04 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), confirmed(`INVALID_STATE`, 모집중에서 바로 종료 불가), 소셜링 일시 이후(`NOT_STARTED`). 소셜링 행 잠금. 성공하면 바뀐 소셜링 행 |
 | `cancel_socialing(id)` | P11 → O04 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), completed·canceled 아님(`INVALID_STATE`). 일시가 지나도 종료 전이면 된다. 신청 상태는 바꾸지 않는다. 소셜링 행 잠금. 성공하면 바뀐 소셜링 행 |
-| `create_socialing(...)` | P07 | 입력 범위(spec 6장), 대표 사진 경로(선택). host_id = auth.uid() |
-| `update_socialing(id, ...)` | P08 | 호스트 본인, 종료·호스트 취소 아님, 참여 확정자가 있으면 starts_at·venue_id·fee 변경 불가, capacity ≥ 참여 확정 인원 |
+| `create_socialing(title, description, category_id, has_alcohol, branch_id, region_code, place_name, starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, cover_photo_path)` | P07 | 로그인(`NOT_AUTHENTICATED`), 입력 범위(spec 6장, 글은 앞뒤 공백을 빼고 셈), 신청 마감 ≤ 소셜링 일시, 소셜링 일시 > now(), 장소는 스터디지점 id 하나 또는 지역(시·군·구 코드 5자리) + 장소 이름(외부 장소 행을 새로 만든다), 대표 사진은 null이거나 쓰는 사람 폴더에 실제로 올라간 `socialing-photos` 파일. 모두 아니면 `INVALID_INPUT`. 승인 기준은 호스트 승인일 때만 남기고 비면 null. host_id = auth.uid(), status = recruiting. 성공하면 만든 소셜링 행 |
+| `update_socialing(id, …등록과 같은 입력)` | P08 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), 종료·호스트 취소 아님(`INVALID_STATE`), 입력 범위는 등록과 같음(소셜링 일시 > now()는 바꿀 때만). 소셜링 행을 잠근 뒤 센다: 참여 확정자가 있으면 소셜링 일시·장소·총 참가비 변경, 승인 대기가 있으면 모집 방식 변경 `LOCKED_FIELD`, 정원 < 참여 확정 인원 `BELOW_ACCEPTED`. 일시는 같은 분이면 바꾸지 않은 것으로 보고 지금 값을 둔다. 장소는 같으면(외부 장소는 지역·이름이 같으면) 그대로, 바뀐 외부 장소는 새 행. 사진은 지금 경로 그대로 · null(지움) · 쓰는 사람 폴더의 새 파일. 성공하면 바뀐 소셜링 행 |
 | `create_review(socialing_id, body, photo_path, members_match, extra_money, content_match)` | P09 | 없는 소셜링 `INVALID_INPUT`, 그 소셜링의 참여 확정자(`NOT_ELIGIBLE`, 호스트 본인 포함), completed(`INVALID_STATE`), 미작성(`ALREADY_REVIEWED`, 동시에 두 번 올려도 유니크 제약이 막음), 글은 앞뒤 공백·줄바꿈을 뺀 10~500자, 질문 3개 모두, 사진은 null이거나 쓰는 사람 폴더(`사용자id/파일명`)에 실제로 올라간 `review-photos` 파일(아니면 `INVALID_INPUT`). 후기와 `review_checks`를 함께 저장하고, 성공하면 만든 후기 행(비공개 응답 없음) |
 
 ## 6. 폴더 구조
