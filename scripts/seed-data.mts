@@ -218,7 +218,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
     {
       key: "B_RECRUITING_SOON",
       host: "B",
-      title: "아침 7시 영어 일기 쓰기 모임",
+      title: "아침 7시 영어 일기 쓰기",
       description: "출근 전에 영어로 짧은 일기를 쓰고, 서로 한 문장씩 고쳐 줘요.\n노트북이나 공책을 챙겨 오세요.",
       category: "learning",
       has_alcohol: false,
