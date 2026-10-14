@@ -188,11 +188,27 @@ export async function applicationsOf(socialingId: number) {
   `);
 }
 
+/** 소셜링의 지금 상태와 상태가 바뀐 시각 (호스트 함수가 바꾼 결과를 본다) */
+export async function socialingStateOf(socialingId: number) {
+  const rows = await runQuery<{
+    status: string;
+    confirmed_at: string | null;
+    completed_at: string | null;
+    canceled_at: string | null;
+  }>(`select status, confirmed_at, completed_at, canceled_at from public.socialings where id = ${socialingId};`);
+  return rows[0];
+}
+
 /**
  * DB 안에서 user로 apply_to_socialing을 부르고, 커밋하기 전에 holdSeconds만큼 붙잡고 있는다.
  * 두 신청이 확실히 겹치게 만들어 잠금이 정원을 지키는지 본다. 성공하면 "OK", 실패하면 오류 코드.
  */
 export async function applyInDbHolding(socialingId: number, user: DemoUserKey, holdSeconds: number): Promise<string> {
+  return callInDbHolding(user, `public.apply_to_socialing(${socialingId})`, holdSeconds);
+}
+
+/** applyInDbHolding과 같게, user로 함수 호출 하나(`public.fn(...)`)를 부르고 커밋 전에 붙잡고 있는다 */
+export async function callInDbHolding(user: DemoUserKey, call: string, holdSeconds: number): Promise<string> {
   try {
     await runQuery(`
       begin;
@@ -200,14 +216,14 @@ export async function applyInDbHolding(socialingId: number, user: DemoUserKey, h
         json_build_object('sub', (select id from auth.users where email = ${sqlText(DEMO_USERS[user].email)}), 'role', 'authenticated')::text,
         true);
       set local role authenticated;
-      select public.apply_to_socialing(${socialingId});
+      select ${call};
       select pg_sleep(${holdSeconds});
       commit;
     `);
     return "OK";
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    const code = /\b(FULL|ALREADY_APPLIED|DEADLINE_PASSED|HOST_CANCELED|IS_HOST|NOT_OPEN)\b/.exec(message);
+    const code = /\b(FULL|ALREADY_APPLIED|ALREADY_PROCESSED|DEADLINE_PASSED|HOST_CANCELED|IS_HOST|NOT_OPEN)\b/.exec(message);
     return code ? code[1] : message;
   }
 }

@@ -366,6 +366,55 @@ export type Database = {
       }
     }
     Views: {
+      hosted_socialing_applicants: {
+        Row: {
+          application_id: number | null
+          applied_at: string | null
+          canceled_at: string | null
+          decided_at: string | null
+          nickname: string | null
+          socialing_id: number | null
+          status: Database["public"]["Enums"]["application_status"] | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_socialing_id_fkey"
+            columns: ["socialing_id"]
+            isOneToOne: false
+            referencedRelation: "my_applied_socialings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_socialing_id_fkey"
+            columns: ["socialing_id"]
+            isOneToOne: false
+            referencedRelation: "my_hosted_socialings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_socialing_id_fkey"
+            columns: ["socialing_id"]
+            isOneToOne: false
+            referencedRelation: "socialing_summaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_socialing_id_fkey"
+            columns: ["socialing_id"]
+            isOneToOne: false
+            referencedRelation: "socialings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       my_applied_socialings: {
         Row: {
           accepted_count: number | null
@@ -433,13 +482,23 @@ export type Database = {
           accepted_count: number | null
           apply_deadline_at: string | null
           approval_criteria: string | null
+          approve_blocked_reason: string | null
           can_apply: boolean | null
+          can_approve: boolean | null
+          can_cancel: boolean | null
+          can_complete: boolean | null
+          can_confirm: boolean | null
+          can_decide: boolean | null
+          can_edit: boolean | null
           capacity: number | null
           category_id: number | null
           category_is_party: boolean | null
           category_name: string | null
           category_slug: string | null
+          closed_count: number | null
           closed_reason: string | null
+          complete_blocked_reason: string | null
+          confirm_blocked_reason: string | null
           cover_photo_path: string | null
           description: string | null
           fee: number | null
@@ -563,6 +622,120 @@ export type Database = {
       }
       cancel_application: {
         Args: { p_application_id: number }
+        Returns: {
+          canceled_at: string | null
+          created_at: string
+          decided_at: string | null
+          id: number
+          socialing_id: number
+          status: Database["public"]["Enums"]["application_status"]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "applications"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      cancel_socialing: {
+        Args: { p_socialing_id: number }
+        Returns: {
+          apply_deadline_at: string
+          approval_criteria: string | null
+          canceled_at: string | null
+          capacity: number
+          category_id: number
+          completed_at: string | null
+          confirmed_at: string | null
+          cover_photo_path: string | null
+          created_at: string
+          description: string
+          fee: number
+          has_alcohol: boolean
+          host_id: string
+          id: number
+          join_type: Database["public"]["Enums"]["join_type"]
+          staff_count: number
+          starts_at: string
+          status: Database["public"]["Enums"]["socialing_status"]
+          title: string
+          updated_at: string
+          venue_id: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "socialings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      complete_socialing: {
+        Args: { p_socialing_id: number }
+        Returns: {
+          apply_deadline_at: string
+          approval_criteria: string | null
+          canceled_at: string | null
+          capacity: number
+          category_id: number
+          completed_at: string | null
+          confirmed_at: string | null
+          cover_photo_path: string | null
+          created_at: string
+          description: string
+          fee: number
+          has_alcohol: boolean
+          host_id: string
+          id: number
+          join_type: Database["public"]["Enums"]["join_type"]
+          staff_count: number
+          starts_at: string
+          status: Database["public"]["Enums"]["socialing_status"]
+          title: string
+          updated_at: string
+          venue_id: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "socialings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      confirm_socialing: {
+        Args: { p_socialing_id: number }
+        Returns: {
+          apply_deadline_at: string
+          approval_criteria: string | null
+          canceled_at: string | null
+          capacity: number
+          category_id: number
+          completed_at: string | null
+          confirmed_at: string | null
+          cover_photo_path: string | null
+          created_at: string
+          description: string
+          fee: number
+          has_alcohol: boolean
+          host_id: string
+          id: number
+          join_type: Database["public"]["Enums"]["join_type"]
+          staff_count: number
+          starts_at: string
+          status: Database["public"]["Enums"]["socialing_status"]
+          title: string
+          updated_at: string
+          venue_id: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "socialings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      decide_application: {
+        Args: { p_application_id: number; p_approve: boolean }
         Returns: {
           canceled_at: string | null
           created_at: string
