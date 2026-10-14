@@ -7,7 +7,9 @@ import { ApplicantRow } from "@/components/applicant-row";
 import { buttonVariants } from "@/components/button";
 import { ErrorStateFull } from "@/components/error-state";
 import { HeaderSub } from "@/components/header-sub";
+import { ManageStatusActions } from "@/components/manage-status-actions";
 import { ManageSummary } from "@/components/manage-summary";
+import { NoticeBox } from "@/components/notice-box";
 import { ProgressSteps } from "@/components/progress-steps";
 import { SegmentedWithCounts } from "@/components/segmented";
 import { SkeletonManage } from "@/components/skeleton";
@@ -21,7 +23,7 @@ import { readSimulatedState } from "@/lib/simulated-state";
 // 위에 요약 카드와 "상세 보기 ›", 소셜링 상태(진행 단계), 신청자 목록.
 // 호스트 승인 방식은 탭 "승인 대기 · 참여 확정 · 거절·취소"(`?tab=accepted|closed`), 선착순은 참여 확정 목록만.
 // 버튼을 보일지·막을지는 뷰(my_hosted_socialings)가 계산한 값을 쓴다.
-// 승인 대기 건에 승인·거절(PR 3). 종료·호스트 취소 뒤에는 목록 보기만.
+// 상태 버튼(확정하기 · 종료하기 · 수정 · 호스트 취소)과 승인 대기 건의 승인·거절. 종료·호스트 취소 뒤에는 안내와 목록 보기만.
 
 export const metadata: Metadata = { title: "소셜링 관리 · 문화소셜링" };
 
@@ -99,6 +101,25 @@ export default async function ManagePage({ params, searchParams }: Props) {
             소셜링 상태
           </h2>
           <ProgressSteps status={socialing.status} />
+          {socialing.status === "recruiting" || socialing.status === "confirmed" ? (
+            <ManageStatusActions
+              socialingId={socialing.id}
+              status={socialing.status}
+              canConfirm={socialing.can_confirm}
+              confirmBlockedReason={socialing.confirm_blocked_reason}
+              canComplete={socialing.can_complete}
+              completeBlockedReason={socialing.complete_blocked_reason}
+              canCancel={socialing.can_cancel}
+              canEdit={socialing.can_edit}
+            />
+          ) : (
+            // 종료·호스트 취소 뒤: 상태 버튼 대신 안내 (spec 8.8, screen-cases P11-05·06)
+            <NoticeBox>
+              {socialing.status === "completed"
+                ? "종료한 소셜링이에요 · 참여자가 후기를 쓸 수 있어요"
+                : "호스트 취소한 소셜링이에요"}
+            </NoticeBox>
+          )}
         </section>
 
         <section aria-labelledby="manage-applicants" className="flex flex-col gap-md">
@@ -185,7 +206,7 @@ function ApprovalApplicants({
         }
       />
       {note && (
-        <p id={APPROVE_NOTE_ID} className="text-body-sm text-text-secondary">
+        <p id={APPROVE_NOTE_ID} className="text-body-sm break-keep text-text-secondary">
           {note}
         </p>
       )}
