@@ -509,7 +509,7 @@ components:
 | progress-steps/done-ended | 종료까지 모두 지남 | 호스트가 종료한 뒤 |
 | progress-steps/host-cancelled | 세 점 흐리게 + danger "호스트 취소" | 호스트 취소 |
 | applicant-row/pending | surface, 아래 구분선, 높이 72. avatar-initial 40, "서윤", "10/12 오전 8:40 신청", sm secondary "거절" + sm primary "승인" | 소셜링 관리 승인 대기 탭 |
-| applicant-row/approve-disabled | 승인 버튼 disabled + 이유: "정원이 차서 승인할 수 없어요" 또는 "소셜링 일시가 지나 승인할 수 없어요" | 승인할 수 없을 때 |
+| applicant-row/approve-disabled | 승인 버튼 disabled(일시가 지나면 거절도) + 이유: "정원이 차서 승인할 수 없어요" 또는 "소셜링 일시가 지나 승인할 수 없어요". 이유는 줄마다가 아니라 승인 대기 목록 아래 한 줄(body-sm, text-secondary), 승인할 수 있으면 그 자리에 "남은 자리 4 · 정원이 차면 승인할 수 없어요"(시안) | 승인할 수 없을 때 |
 | applicant-row/accepted | 높이 64, application-chip/accepted | 참여 확정 탭 |
 | applicant-row/rejected | 높이 64, application-chip/rejected 또는 withdrawn | 거절·취소 탭 |
 | info-list/default | 라벨·값 행, 행 사이 border-divider 1px. 소셜링 일시 · 신청 마감 · 장소 · 총 참가비 · 모집 방식 · 인원("참가자 4/8명 · 스태프 1명" + "스태프는 정원에 세지 않아요") | 상세 정보 |
