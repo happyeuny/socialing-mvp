@@ -156,6 +156,7 @@ erDiagram
   (tabs)/                 메인 탭 화면 묶음. layout.tsx가 header-main + tab-bar를 둔다 (주소에는 안 나타남)
     page.tsx              P00 홈
     explore/              P01 탐색
+    reviews/              P10 인증 후기
     me/                   P06 내 소셜링 (page: 닉네임·로그아웃·top-tabs, applied-socialings·hosted-socialings: 탭 내용)
   login/  signup/         P04 · P05 (page.tsx + 폼 클라이언트 컴포넌트). 하위 화면은 각자 header-sub
   past/                   P02 지난 소셜링 (하위 화면, header-sub)
@@ -163,7 +164,7 @@ erDiagram
     manage/               P11 소셜링 관리 (page + loading + not-found). 호스트가 아니면 상세 + `?notice=host-only`
   error.tsx               화면 전체 오류: "불러오지 못했어요" + 다시 시도 · 홈으로
   dev/photo-upload/       SP3 실기기 확인·E2E용 임시 화면 (미리보기·로컬만. MS5에서 테스트를 후기 쓰기로 옮기고 지움)
-  (MS5~) socialings/[id]/ 아래 edit/ · review/, socialings/new/, (tabs)/reviews/
+  (MS5~) socialings/[id]/review/ (P09), (MS7~) socialings/[id]/edit/, socialings/new/
 /components               DESIGN.md 이름의 컴포넌트: button, text-field, avatar-initial, photo-picker,
                           password-field, header-main, header-sub, header-login-link, tab-bar (+ 뒤로 판단용
                           navigation-tracker), top-tabs, status-badge, status-tag, application-chip, count-pill,

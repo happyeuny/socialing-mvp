@@ -474,7 +474,7 @@ components:
 
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
-| verified-badge/default | surface-muted 바탕, text-secondary, 높이 22, 모서리 xs, "✓ 참여 인증" | 참여를 마친 사람이 쓴 후기 |
+| verified-badge/default | surface-muted 바탕, border-default 1px, text-secondary, 높이 22, 모서리 xs, "참여 인증" (시안) | 참여를 마친 사람이 쓴 후기. 후기 줄 오른쪽 끝 |
 | avatar-initial/default | surface-muted 원 안에 닉네임 첫 글자(text-secondary). 크기 20 · 32 · 40 · 48 | 카드 메타 20, 후기 카드 32, 신청자 행·상세 호스트 40, 내 소셜링 프로필 48. 프로필 사진은 없다 |
 | avatar-initial/strong | primary-strong 원 안에 흰 글자, 28 | 로그인한 머리글 오른쪽 |
 | host-profile-row/default | 높이 52. avatar-initial 40 + "호스트"(body-md, text-secondary) + 닉네임(title-md) + 조건을 채운 호스트만 trust-label | 상세 제목 아래 호스트 한 줄 |
@@ -490,7 +490,7 @@ components:
 | socialing-card/host | photo 카드 + 카드 아래 옅은 구분선, 왼쪽 "승인 대기" + count-pill(0이면 없음), 오른쪽 "소셜링 관리 ›"(body-md, primary-strong). 카드 전체가 P11로 가는 링크 | 내 소셜링 "호스트인 소셜링" 탭 |
 | hero-card/default | 대표 사진 전체, 아래쪽 어두운 그라데이션 위 흰 글자, 모서리 2xl, 여백 20, 최소 높이 280. 왼쪽 위 작은 라벨 "지금 신청할 수 있는 가장 가까운 소셜링", 아래 status-badge, 제목, 일시 · 장소, 호스트 · 참가자 · 총 참가비 | 홈 맨 위 1개. 넘기는 배너가 아니다. 카드 아래 기준 문구(body-sm) |
 | review-card/compact | surface, border-default 1px, 모서리 lg, 여백 14·16. "닉네임 · 날짜 · 소셜링 제목" + 글 2줄 | 홈 "최근 인증 후기" |
-| review-card/full-no-photo | surface, 모서리 xl, 여백 16. avatar-initial 32, 닉네임, 날짜, verified-badge, 소셜링 제목 링크 "주말 아침 독서 토론 ›", 글(body-long) | 인증 후기 목록 |
+| review-card/full-no-photo | 목록 한 줄(시안): surface 바탕 화면에서 위아래 여백 20, 줄 사이 border-divider. avatar-initial 32 + 닉네임(title-md) + 날짜(body-sm, text-muted), 오른쪽 끝 verified-badge, 소셜링 제목 링크 "주말 아침 독서 토론 ›"(body-lg), 글(body-long, 줄바꿈 그대로) | 인증 후기(P10) 목록 |
 | review-card/full-with-photo | full-no-photo + 4:3 사진(모서리 lg) | 사진이 있는 후기 |
 | shortcut-category/default | 56px 원(surface, border-default 1px) 안 카테고리 선 아이콘 24(primary-strong) + 아래 이름(label, text-primary, 가운뎃점 뒤에서 줄바꿈). 5개가 한 줄을 똑같이 나눠 쓰고, 칸이 56px보다 좁은 화면에서는 원이 칸 폭에 맞춰 줄어든다 | 홈 카테고리 바로가기 5개 (시안) |
 | shortcut-branch/default | surface, border-default 1px, 모서리 lg, 여백 12, 가운데 정렬. 지점 이름(title-md) + 지역 "서울 강남구"(body-sm, text-secondary). 3개가 한 줄을 나눠 씀 | 홈 스터디지점 바로가기 3개 (시안) |
