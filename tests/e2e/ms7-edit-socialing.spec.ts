@@ -12,7 +12,7 @@ import {
   type FixtureOptions,
 } from "./helpers/supabase";
 
-// MS7 소셜링 수정 P08 (spec M8, 8.6, 8.7 · screen-cases P08-01~07, E05·E06 · tasks MS7 완료 기준 "수정 잠금")
+// MS7 소셜링 수정 P08 (spec M8, 8.6, 8.7 · screen-cases P08-01~09, E05·E06 · tasks MS7 완료 기준 "수정 잠금")
 // 잠금·정원 하한을 DB가 다시 확인하는 것은 ms7-socialing-functions. 여기서는 화면 동작을 본다.
 // 시드 데이터는 건드리지 않고 호스트 C(하린)의 테스트 소셜링을 쓴다. 바꾼 외부 장소도 "[E2E]" 이름이라 함께 지운다.
 
@@ -199,7 +199,7 @@ test.describe("MS7 소셜링 수정 P08", () => {
     expect(toSeoulInput(after.starts_at)).toBe(toSeoulInput(before.starts_at));
   });
 
-  test("승인 대기 신청이 있으면 모집 방식이 잠긴다 (일시·장소·참가비는 열림)", async ({ page }) => {
+  test("P08-08: 승인 대기 신청이 있으면 모집 방식이 잠긴다 (일시·장소·참가비는 열림)", async ({ page }) => {
     const id = await fixture({ joinType: "approval" });
     await addApplication(id, "A", "pending");
     await loginAs(page, "C", editPath(id));
@@ -214,7 +214,7 @@ test.describe("MS7 소셜링 수정 P08", () => {
     await expect(feeField(page)).toBeEnabled();
   });
 
-  test("그사이 참여 확정자가 생기면 결과 창 → 확인 → 잠긴 칸이 지금 값으로 돌아가고, 다시 저장하면 다른 칸은 저장된다", async ({
+  test("P08-09: 그사이 참여 확정자가 생기면 결과 창 → 확인 → 잠긴 칸이 지금 값으로 돌아가고, 다시 저장하면 다른 칸은 저장된다", async ({
     page,
   }) => {
     const id = await fixture();
