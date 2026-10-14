@@ -10,7 +10,8 @@ type EmptyStateProps = {
   icon: LucideIcon;
   title: string;
   description?: string;
-  action: { href: string; label: string };
+  /** replace: 주소를 바꿔 끼운다(뒤로 가기에 쌓이지 않음. 탐색 "필터 초기화") */
+  action: { href: string; label: string; replace?: boolean };
   tone?: "default" | "filter";
 };
 
@@ -31,6 +32,7 @@ export function EmptyState({ icon: Icon, title, description, action, tone = "def
       </div>
       <Link
         href={action.href}
+        replace={action.replace}
         className={cn(
           "mt-xs",
           buttonVariants({ variant: tone === "filter" ? "secondary" : "primary", size: "md" }),

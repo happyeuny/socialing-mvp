@@ -48,9 +48,27 @@ async function listByPast(past: boolean): Promise<SocialingCardData[]> {
   return data as SocialingCardData[];
 }
 
-/** 탐색(P01): 소셜링 일시가 지나지 않은 소셜링, 가까운 일시 순 */
-export function listCurrentSocialings(): Promise<SocialingCardData[]> {
-  return listByPast(false);
+/** 탐색(P01) 카드 + 필터로 거르는 칸 (lib/explore-filter.ts) */
+export type ExploreSocialing = SocialingCardData & {
+  venue_id: number;
+  category_is_party: boolean;
+  region_sido: string;
+};
+
+/**
+ * 탐색(P01): 소셜링 일시가 지나지 않은 소셜링 전부, 가까운 일시 순. 필터는 화면이 lib/explore-filter.ts로 거른다
+ * (필터 시트의 "소셜링 N개 보기"와 같은 함수로 거르려고. 현재 소셜링은 수십 개라 한 번에 읽는다)
+ */
+export async function listExploreSocialings(): Promise<ExploreSocialing[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("socialing_summaries")
+    .select(`${CARD_COLUMNS}, venue_id, category_is_party, region_sido`)
+    .eq("is_past", false)
+    .order("starts_at", { ascending: true })
+    .order("id", { ascending: true });
+  if (error) throw new Error(`소셜링 목록을 불러오지 못했습니다: ${error.message}`);
+  return data as ExploreSocialing[];
 }
 
 /** 지난 소셜링(P02): 소셜링 일시가 지난 소셜링, 최근 순 */
