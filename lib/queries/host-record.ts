@@ -1,7 +1,9 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
 // 호스트 기록 (spec M5·6장, architecture 3.2). 집계 함수 get_host_record가 합계만 돌려준다.
 // 상세(P03)는 이 값을 소셜링 본문과 따로 읽어서, 실패해도 그 칸만 다시 시도하게 한다(Q3).
+// 상세의 등급 라벨 두 곳과 호스트 기록 칸이 같이 쓰므로, 한 요청 안에서는 한 번만 읽는다(React cache).
 
 export type HostRecord = {
   openedCount: number;
@@ -15,7 +17,7 @@ export type HostRecord = {
   isTrustedHost: boolean;
 };
 
-export async function getHostRecord(hostId: string): Promise<HostRecord> {
+export const getHostRecord = cache(async (hostId: string): Promise<HostRecord> => {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("get_host_record", { p_host_id: hostId }).single();
   if (error) throw new Error(`호스트 기록을 불러오지 못했습니다: ${error.message}`);
@@ -29,4 +31,4 @@ export async function getHostRecord(hostId: string): Promise<HostRecord> {
     isNewHost: data.is_new_host,
     isTrustedHost: data.is_trusted_host,
   };
-}
+});

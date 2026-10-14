@@ -10,6 +10,8 @@ type BottomSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
+  /** 제목 왼쪽에 붙는 것 (O03의 trust-label) */
+  titleLeading?: React.ReactNode;
   /** 제목 바로 아래 한 줄(요약). 읽기 프로그램이 창 설명으로 읽는다 */
   description?: React.ReactNode;
   children?: React.ReactNode;
@@ -17,9 +19,21 @@ type BottomSheetProps = {
   footer: React.ReactNode;
   /** 처리 중에는 뒤 배경·Esc로 닫히지 않게 */
   locked?: boolean;
+  /** 닫은 뒤 포커스를 돌려줄 곳 (창을 연 버튼). Radix Dialog.Trigger를 쓰지 않아 직접 알려 준다 */
+  returnFocusRef?: React.RefObject<HTMLElement | null>;
 };
 
-export function BottomSheet({ open, onOpenChange, title, description, children, footer, locked }: BottomSheetProps) {
+export function BottomSheet({
+  open,
+  onOpenChange,
+  title,
+  titleLeading,
+  description,
+  children,
+  footer,
+  locked,
+  returnFocusRef,
+}: BottomSheetProps) {
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(next) => (locked && !next ? undefined : onOpenChange(next))}>
       <DialogPrimitive.Portal>
@@ -27,6 +41,11 @@ export function BottomSheet({ open, onOpenChange, title, description, children, 
         <DialogPrimitive.Content
           // 설명 줄이 없으면 Radix가 설명을 찾지 않게 한다
           {...(description ? {} : { "aria-describedby": undefined })}
+          onCloseAutoFocus={(event) => {
+            if (!returnFocusRef?.current) return;
+            event.preventDefault();
+            returnFocusRef.current.focus();
+          }}
           className={cn(
             "fixed inset-x-0 bottom-0 z-40 mx-auto flex max-h-[90dvh] w-full max-w-(--spacing-screen) flex-col rounded-t-2xl bg-surface outline-none",
             "motion-safe:data-[state=open]:animate-in motion-safe:data-[state=open]:slide-in-from-bottom",
@@ -37,7 +56,14 @@ export function BottomSheet({ open, onOpenChange, title, description, children, 
           </div>
           <div className="flex flex-col gap-md overflow-y-auto px-lg pt-xs pb-md">
             <div className="flex flex-col gap-xxs">
-              <DialogPrimitive.Title className="text-title-lg text-text-primary">{title}</DialogPrimitive.Title>
+              {titleLeading ? (
+                <div className="flex flex-wrap items-center gap-xs">
+                  {titleLeading}
+                  <DialogPrimitive.Title className="text-title-lg text-text-primary">{title}</DialogPrimitive.Title>
+                </div>
+              ) : (
+                <DialogPrimitive.Title className="text-title-lg text-text-primary">{title}</DialogPrimitive.Title>
+              )}
               {description ? (
                 <DialogPrimitive.Description className="text-body-md text-text-secondary">
                   {description}
