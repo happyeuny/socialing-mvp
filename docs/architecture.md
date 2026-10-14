@@ -33,7 +33,7 @@ flowchart LR
 - **읽기**: 서버 컴포넌트가 Supabase에서 바로 읽는다. 비로그인도 목록·상세·피드를 읽을 수 있게 RLS를 연다. 동적 페이지가 기본이다.
 - **쓰기**: 버튼 하나 = 서버 액션 하나 = Postgres 함수(RPC) 하나. 상태 전환·권한·정원 검사는 **DB 함수 안에만** 둔다. 서버 액션은 입력을 zod로 검사하고 함수를 부른 뒤, 결과를 화면 문구로 바꾸고 관련 경로를 재검증(revalidate)한다.
 - **사진**: 브라우저에서 1MB 이하로 축소 → Storage에 직접 업로드(`사용자id/파일명`) → 경로를 함수에 넘긴다. 업로드가 실패하면 경로 없이 제출한다(Q4).
-  - SP3에서 정한 것: `components/photo-picker.tsx`가 사진을 고르는 즉시 줄여서 올리고, 올린 경로를 폼의 숨은 칸으로 넘긴다(실패하거나 지우면 빈 값). 줄이기는 `lib/photos/compress.ts`: 긴 변 1600px, 목표 0.9MB, JPEG로 저장(버킷 한도 1MB에 여유). 라이브러리의 웹 워커는 외부 CDN(jsdelivr)에서 코드를 받아 와서 쓰지 않는다(`useWebWorker: false`).
+  - SP3에서 정한 것: `components/photo-picker.tsx`가 사진을 고르는 즉시 줄여서 올리고, 올린 경로를 onChange로 넘긴다(실패하거나 지우면 null. `name`을 주면 폼의 숨은 칸으로도). 후기 쓰기(P09)는 올리는 동안 "후기 올리기"를 잠근다(onUploadingChange). 줄이기는 `lib/photos/compress.ts`: 긴 변 1600px, 목표 0.9MB, JPEG로 저장(버킷 한도 1MB에 여유). 라이브러리의 웹 워커는 외부 CDN(jsdelivr)에서 코드를 받아 와서 쓰지 않는다(`useWebWorker: false`).
   - 파일 고르기는 `accept="image/*"`. iPhone은 이때 HEIC 사진을 JPEG로 바꿔 넘긴다. 브라우저가 열지 못하는 형식(예: Android Chrome의 HEIC)은 "사진을 올리지 못했어요" + "JPEG로 골라 주세요".
   - 경로는 `<사용자 id>/<무작위 uuid>.jpg`. 고른 뒤 제출하지 않고 나간 사진은 버킷에 남는다(MVP에서는 정리하지 않음). `npm run seed`가 두 버킷을 비운다.
 - **시간**: 현재/지난, 신청 가능, 버튼 가능 여부는 조회할 때 `now()`로 계산한다. 예약 작업(cron)은 없다. DB는 `timestamptz`, 화면 표시와 날짜 필터 계산은 Asia/Seoul로 고정한다(서버가 UTC여도 같은 결과).
@@ -162,9 +162,9 @@ erDiagram
   past/                   P02 지난 소셜링 (하위 화면, header-sub)
   socialings/[id]/        P03 상세 (page + loading + not-found)
     manage/               P11 소셜링 관리 (page + loading + not-found). 호스트가 아니면 상세 + `?notice=host-only`
+    review/               P09 후기 쓰기 (page + review-form + loading + not-found). 작성 조건이 안 맞으면 상세 + `?notice=review-…`
   error.tsx               화면 전체 오류: "불러오지 못했어요" + 다시 시도 · 홈으로
-  dev/photo-upload/       SP3 실기기 확인·E2E용 임시 화면 (미리보기·로컬만. MS5에서 테스트를 후기 쓰기로 옮기고 지움)
-  (MS5~) socialings/[id]/review/ (P09), (MS7~) socialings/[id]/edit/, socialings/new/
+  (MS7~) socialings/[id]/edit/, socialings/new/
 /components               DESIGN.md 이름의 컴포넌트: button, text-field, avatar-initial, photo-picker,
                           password-field, header-main, header-sub, header-login-link, tab-bar (+ 뒤로 판단용
                           navigation-tracker), top-tabs, status-badge, status-tag, application-chip, count-pill,
@@ -175,10 +175,11 @@ erDiagram
                           bottom-sheet · dialog(Radix Dialog 위, decisions.md), confirm-apply-sheet(O02),
                           confirm-cancel-application-sheet(O05), url-notice(다른 화면이 남긴 안내),
                           manage-summary, progress-steps, manage-status-actions(상태 버튼과 O04),
-                          segmented(건수 탭), applicant-row, applicant-actions(승인·거절과 O04)
+                          segmented(건수 탭), applicant-row, applicant-actions(승인·거절과 O04),
+                          textarea, question-block(비공개 질문 예/아니오), review-summary
 /lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)
 /lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). auth.ts, applications.ts(신청·신청 취소),
-                          manage.ts(승인·거절, 확정·종료·호스트 취소)
+                          manage.ts(승인·거절, 확정·종료·호스트 취소), reviews.ts(후기 올리기)
 /lib/validation           zod 스키마 (폼과 서버 액션이 같이 씀)
 /lib/photos               사진 줄이기 (compress.ts)
 /lib/routes.ts            로그인 필요 주소, `next` 검사

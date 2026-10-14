@@ -3,6 +3,10 @@
 
 export const NOTICES = {
   "host-only": "호스트만 볼 수 있어요",
+  // 후기 쓰기(P09) 작성 조건이 안 맞음 → 상세 (spec 8.7, screen-cases E07~09)
+  "review-not-participant": "참여 확정자만 쓸 수 있어요",
+  "review-not-completed": "호스트가 종료한 뒤 쓸 수 있어요",
+  "review-done": "이미 후기를 썼어요",
 } as const;
 
 export type NoticeKey = keyof typeof NOTICES;
