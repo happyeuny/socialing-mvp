@@ -176,7 +176,8 @@ erDiagram
                           confirm-cancel-application-sheet(O05), url-notice(다른 화면이 남긴 안내),
                           manage-summary, progress-steps, manage-status-actions(상태 버튼과 O04),
                           segmented(건수 탭), applicant-row, applicant-actions(승인·거절과 O04),
-                          textarea, question-block(비공개 질문 예/아니오), review-summary
+                          textarea, question-block(비공개 질문 예/아니오), review-summary,
+                          host-stats(상세 호스트 기록, 기록만 실패하면 그 칸만 다시 시도)
 /lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)
 /lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). auth.ts, applications.ts(신청·신청 취소),
                           manage.ts(승인·거절, 확정·종료·호스트 취소), reviews.ts(후기 올리기)
@@ -188,9 +189,11 @@ erDiagram
 /lib/queries              읽기 함수. viewer.ts(지금 보는 사람, 닉네임은 로그인 토큰에서), socialings.ts(socialing_summaries 뷰),
                           my-socialings.ts("나" 기준 뷰: 상세 아래 영역의 보는 사람, 내 소셜링 두 탭 목록),
                           catalog.ts(카테고리·스터디지점), reviews.ts(인증 후기),
-                          manage.ts(P11: my_hosted_socialings 관리 칸, hosted_socialing_applicants)
+                          manage.ts(P11: my_hosted_socialings 관리 칸, hosted_socialing_applicants),
+                          host-record.ts(get_host_record. 상세가 본문과 따로 읽는다)
 /lib/format               날짜(Asia/Seoul)·금액 표시
-/lib/simulated-state.ts   화면 상태 흉내 `?_state=empty|error|loading|partial` (운영 주소에서는 무시, decisions.md)
+/lib/simulated-state.ts   화면 상태 흉내 `?_state=empty|error|loading|partial` (운영 주소에서는 무시, decisions.md).
+                          partial = 묶음 하나만 실패: 홈은 최근 인증 후기, 상세는 호스트 기록
 /supabase/migrations      테이블·enum·RLS·함수 SQL (파일 하나 = 변경 하나)
 /scripts/seed.mts         데모 시드 (secret 키는 여기서만), seed-data.mts는 데이터 정의
 /scripts/db-push.mts      마이그레이션 적용, db-types.mts 타입 생성, lib/management-api.mts 공용
