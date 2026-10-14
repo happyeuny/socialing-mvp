@@ -99,12 +99,13 @@ erDiagram
 
 뷰는 `security_invoker`라 보는 사람 권한으로 읽는다. 비로그인은 applications를 못 읽으므로 참여 확정 인원만 SECURITY DEFINER 함수 `socialing_accepted_count(socialing_id)`가 숫자로 돌려준다. 누가 신청했는지는 이 경로로 나가지 않는다.
 
-"나" 기준 읽기는 뷰 두 개다(MS3). 둘 다 `socialing_summaries`의 칸을 그대로 두고 칸을 더하며, `security_invoker`이고 로그인한 사람만 읽는다. 상세 아래 영역(spec 8.4)과 내 소셜링(P06)이 같이 쓴다.
+"나" 기준 읽기는 뷰 두 개다(MS3). 관리 화면(MS4)은 그중 `my_hosted_socialings`에 칸을 더하고 신청자 목록 뷰를 하나 더 쓴다. 둘 다 `socialing_summaries`의 칸을 그대로 두고 칸을 더하며, `security_invoker`이고 로그인한 사람만 읽는다. 상세 아래 영역(spec 8.4)과 내 소셜링(P06)이 같이 쓴다.
 
 | 뷰 | 행 | 더한 칸 |
 |---|---|---|
 | `my_applied_socialings` | 내가 신청한 소셜링마다 **가장 최근 신청** 하나 (거절·신청 취소 뒤 다시 신청하면 새 행) | `application_id`, `application_status`(호스트 취소돼도 그대로), `applied_at`, `has_review`(내가 후기를 썼는지) |
-| `my_hosted_socialings` | 내가 호스트인 소셜링 | `pending_count`(승인 대기 건수. applications는 호스트가 읽을 수 있어 함수 없이 센다) |
+| `my_hosted_socialings` | 내가 호스트인 소셜링 | `pending_count`(승인 대기 건수. applications는 호스트가 읽을 수 있어 함수 없이 센다). MS4 관리 화면(P11) 칸: `closed_count`(거절·취소 탭 건수, 사람마다 가장 최근 신청 기준), `can_confirm` · `confirm_blocked_reason`(`started`), `can_complete` · `complete_blocked_reason`(`confirm_first` 모집중·일시 전 / `not_confirmed` 모집중·일시 지남 / `not_started` 확정·일시 전), `can_cancel`, `can_edit`, `can_decide`(승인·거절), `can_approve` · `approve_blocked_reason`(`started` / `full`). 함수와 같은 조건이다 |
+| `hosted_socialing_applicants` | 내가 호스트인 소셜링의 신청자마다 **가장 최근 신청** 하나 (MS4, P11 신청자 목록) | `socialing_id`, `application_id`, `nickname`, `status`(호스트 취소돼도 그대로), `applied_at`, `decided_at`, `canceled_at`. 신청자 본인에게는 비어 보인다 |
 
 ## 4. 권한 (RLS)
 
@@ -116,7 +117,7 @@ erDiagram
 | review_checks | 아무도 직접 못 읽음 | `create_review` 함수로만 |
 | 호스트 기록 | 모두 (집계 함수) | 계산 값 |
 | `socialing_summaries` 뷰 (목록·상세) | 모두 (참여 확정 인원은 숫자만) | 없음 (SELECT 권한만) |
-| `my_applied_socialings`, `my_hosted_socialings` 뷰 | 로그인한 본인 행만 (비로그인 거부) | 없음 (SELECT 권한만) |
+| `my_applied_socialings`, `my_hosted_socialings`, `hosted_socialing_applicants` 뷰 | 로그인한 본인 행만, 신청자 목록은 그 소셜링의 호스트만 (비로그인 거부) | 없음 (SELECT 권한만) |
 | profiles | 닉네임·id는 모두, 나머지는 본인 | 본인 |
 | Storage `socialing-photos`, `review-photos` | 공개 읽기 | 로그인 사용자가 자기 폴더(`사용자id/`)에만 업로드 |
 
@@ -137,10 +138,10 @@ erDiagram
 |---|---|---|
 | `apply_to_socialing(socialing_id)` | P03 → O02 | 로그인, 호스트 아님, 신청 가능, 유효한 신청 없음, 정원(소셜링 행 `FOR UPDATE` 잠금). 선착순 → accepted, 승인 → pending |
 | `cancel_application(application_id)` | P03 → O05 | 본인(남의 신청은 없는 신청처럼 `INVALID_INPUT`), pending·accepted(아니면 `ALREADY_PROCESSED`), 호스트 취소 아님(`HOST_CANCELED`), 소셜링 일시 전(`STARTED`). 소셜링 행 → 신청 행 순서로 잠금. 성공하면 바뀐 신청 행 |
-| `decide_application(application_id, approve)` | P11 | 호스트 본인, pending, 소셜링 일시 전, 승인 시 정원(잠금) |
-| `confirm_socialing(id)` | P11 → O04 | 호스트 본인, recruiting, 소셜링 일시 전 |
-| `complete_socialing(id)` | P11 → O04 | 호스트 본인, confirmed, 소셜링 일시 이후 |
-| `cancel_socialing(id)` | P11 → O04 | 호스트 본인, completed·canceled 아님 |
+| `decide_application(application_id, approve)` | P11 (거절은 O04) | 없는 신청 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), 종료·호스트 취소 아님(`INVALID_STATE`), pending(`ALREADY_PROCESSED`), 소셜링 일시 전(`STARTED`), 승인이면 정원(`FULL`). 소셜링 행 → 신청 행 순서로 잠금. 성공하면 바뀐 신청 행 |
+| `confirm_socialing(id)` | P11 → O04 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), recruiting(`INVALID_STATE`), 소셜링 일시 전(`STARTED`). 소셜링 행 잠금. 성공하면 바뀐 소셜링 행 |
+| `complete_socialing(id)` | P11 → O04 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), confirmed(`INVALID_STATE`, 모집중에서 바로 종료 불가), 소셜링 일시 이후(`NOT_STARTED`). 소셜링 행 잠금. 성공하면 바뀐 소셜링 행 |
+| `cancel_socialing(id)` | P11 → O04 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), completed·canceled 아님(`INVALID_STATE`). 일시가 지나도 종료 전이면 된다. 신청 상태는 바꾸지 않는다. 소셜링 행 잠금. 성공하면 바뀐 소셜링 행 |
 | `create_socialing(...)` | P07 | 입력 범위(spec 6장), 대표 사진 경로(선택). host_id = auth.uid() |
 | `update_socialing(id, ...)` | P08 | 호스트 본인, 종료·호스트 취소 아님, 참여 확정자가 있으면 starts_at·venue_id·fee 변경 불가, capacity ≥ 참여 확정 인원 |
 | `create_review(socialing_id, body, photo_path, members_match, extra_money, content_match)` | P09 | 참여 확정자, completed, 미작성, 글 10~500자, 질문 3개 모두 |
