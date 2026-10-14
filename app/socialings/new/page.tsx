@@ -57,7 +57,7 @@ export default async function NewSocialingPage({ searchParams }: Props) {
     <>
       <HeaderSub title="소셜링 등록" />
       <main>
-        <SocialingForm userId={viewer.id} catalog={catalog} minDateTime={toSeoulInput(new Date())} />
+        <SocialingForm mode="create" userId={viewer.id} catalog={catalog} minDateTime={toSeoulInput(new Date())} />
       </main>
     </>
   );

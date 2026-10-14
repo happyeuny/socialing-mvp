@@ -4,13 +4,19 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { Button } from "@/components/button";
 import { ChoiceChip } from "@/components/choice-chip";
+import { Dialog } from "@/components/dialog";
 import { PhotoPicker } from "@/components/photo-picker";
 import { SegmentedChoice } from "@/components/segmented";
 import { SelectField } from "@/components/select-field";
 import { FieldMessage, TextField, fieldLabelClass } from "@/components/text-field";
 import { Textarea } from "@/components/textarea";
 import { showToast } from "@/components/toast";
-import { createSocialing, type SaveSocialingResult } from "@/lib/actions/socialings";
+import {
+  createSocialing,
+  updateSocialing,
+  type SaveSocialingResult,
+  type UpdateSocialingResult,
+} from "@/lib/actions/socialings";
 import { focusFirstError } from "@/lib/focus-first-error";
 import { shortSido } from "@/lib/format";
 import type { SocialingFormCatalog } from "@/lib/queries/catalog";
@@ -25,13 +31,17 @@ import {
   type SocialingFormValues,
 } from "@/lib/validation/socialing";
 
-// 소셜링 등록(P07) 양식 (spec M8, 8.6, 8.7, 시안 P07): 대표 사진 → 제목 → 카테고리 → 술 여부 → 소개 → 장소 →
-// 소셜링 일시 → 신청 마감 일시 → 총 참가비 → 정원 → 스태프 인원 → 모집 방식 → 승인 기준(호스트 승인일 때만),
-// 아래 고정 "소셜링 열기". 제출하면 칸마다 이유를 보이고 첫 오류 칸으로 간다.
-// 글 입력은 열기 전까지 이 브라우저에 계정별로 임시 저장한다(사진 제외). 다시 오면 채우고, 열면 지운다.
+// 소셜링 등록(P07)·수정(P08) 양식 (spec M8, 8.6, 8.7, 시안 P07): 대표 사진 → 제목 → 카테고리 → 술 여부 → 소개 →
+// 장소 → 소셜링 일시 → 신청 마감 일시 → 총 참가비 → 정원 → 스태프 인원 → 모집 방식 → 승인 기준(호스트 승인일 때만),
+// 아래 고정 "소셜링 열기"(등록) · "저장하기"(수정). 제출하면 칸마다 이유를 보이고 첫 오류 칸으로 간다.
+// 등록: 글 입력은 열기 전까지 이 브라우저에 계정별로 임시 저장한다(사진 제외). 다시 오면 채우고, 열면 지운다.
+// 수정: 지금 값을 채운다. 참여 확정자가 있으면 일시·장소·참가비, 승인 대기 신청이 있으면 모집 방식이 잠긴다.
+// 잠긴 칸은 언제나 지금 값을 보이고 그 값을 보낸다. 정원은 참여 확정 인원보다 적게 할 수 없다.
 
 const L = SOCIALING_LIMITS;
 const PHOTO_FAILED_NOTICE = "사진은 올리지 못했어요. 관리하기 → 수정에서 다시 올려 주세요";
+const LOCKED_BY_ACCEPTED = "참여 확정자가 있어 바꿀 수 없어요";
+const LOCKED_BY_PENDING = "승인 대기 신청이 있어 바꿀 수 없어요";
 
 const ALCOHOL_OPTIONS = [
   { value: "no", label: "없음" },
@@ -93,16 +103,35 @@ function clearDraft(key: string) {
 
 // 양식 ------------------------------------------------------------------------------------------------
 
-type SocialingFormProps = {
+type CommonProps = {
   userId: string;
   catalog: SocialingFormCatalog;
   /** 날짜·시간 고르기 칸의 가장 이른 값(지금, 한국 시간) */
   minDateTime: string;
 };
 
+/** 수정(P08)에만 있는 값 */
+export type SocialingEditTarget = {
+  socialingId: number;
+  /** 지금 저장된 값 */
+  original: SocialingFormValues;
+  coverPhoto: { path: string; url: string } | null;
+  acceptedCount: number;
+  pendingCount: number;
+};
+
+export type SocialingFormProps = CommonProps & ({ mode: "create" } | ({ mode: "edit" } & SocialingEditTarget));
+
 const subscribeNothing = () => () => {};
 
 export function SocialingForm(props: SocialingFormProps) {
+  if (props.mode === "edit") {
+    return <SocialingFormFields {...props} edit={props} draftKey={null} initialValues={props.original} />;
+  }
+  return <CreateSocialingForm {...props} />;
+}
+
+function CreateSocialingForm(props: CommonProps) {
   const draftKey = `socialing-draft:${props.userId}`;
   // 브라우저 저장소는 서버에서 읽을 수 없어, 서버와 첫 화면은 빈 양식으로 그리고
   // 브라우저에서는 임시 저장을 채운 양식으로 바꿔 그린다(key가 바뀌어 새로 만든다)
@@ -111,9 +140,9 @@ export function SocialingForm(props: SocialingFormProps) {
     <SocialingFormFields
       key={inBrowser ? "browser" : "server"}
       {...props}
-      draftKey={draftKey}
+      edit={null}
+      draftKey={inBrowser ? draftKey : null}
       initialValues={(inBrowser ? readDraft(draftKey) : null) ?? EMPTY_SOCIALING_FORM}
-      saveDraft={inBrowser}
     />
   );
 }
@@ -128,6 +157,33 @@ function feeDisplay(value: string) {
   return value === "" ? "" : Number(value).toLocaleString("ko-KR");
 }
 
+/** 잠긴 칸은 지금 저장된 값으로 (수정 P08) */
+function withLockedValues(values: SocialingFormValues, edit: SocialingEditTarget | null): SocialingFormValues {
+  if (!edit) return values;
+  const { original } = edit;
+  const next = { ...values };
+  if (edit.acceptedCount > 0) {
+    next.startsAt = original.startsAt;
+    next.placeKind = original.placeKind;
+    next.branchId = original.branchId;
+    next.sido = original.sido;
+    next.regionCode = original.regionCode;
+    next.placeName = original.placeName;
+    next.fee = original.fee;
+  }
+  if (edit.pendingCount > 0) next.joinType = original.joinType;
+  return next;
+}
+
+/** 제출할 때 칸 검사. 수정은 소셜링 일시를 바꿀 때만 지금 이후, 정원은 참여 확정 인원 이상 */
+function validate(values: SocialingFormValues, edit: SocialingEditTarget | null) {
+  return socialingFieldErrors(values, {
+    now: Date.now(),
+    originalStartsAt: edit?.original.startsAt,
+    acceptedCount: edit?.acceptedCount,
+  });
+}
+
 /** 글자 수: "120 / 1000 · 20자 이상", 넘으면 "1020 / 1000" (DESIGN textarea) */
 function counterText(length: number, max: number, min?: number) {
   return length > max || min === undefined ? `${length} / ${max}` : `${length} / ${max} · ${min}자 이상`;
@@ -137,26 +193,39 @@ function SocialingFormFields({
   userId,
   catalog,
   minDateTime,
+  edit,
   draftKey,
   initialValues,
-  saveDraft,
-}: SocialingFormProps & { draftKey: string; initialValues: SocialingFormValues; saveDraft: boolean }) {
+}: CommonProps & {
+  edit: SocialingEditTarget | null;
+  /** 임시 저장 키. null이면 저장하지 않는다(수정, 서버 첫 화면) */
+  draftKey: string | null;
+  initialValues: SocialingFormValues;
+}) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const [values, setValues] = useState(initialValues);
+  const [typed, setValues] = useState(initialValues);
+  // 그사이 참여 확정·승인 대기가 생겨 새로 고치면 잠긴 칸이 지금 값으로 바뀐다
+  const values = withLockedValues(typed, edit);
   const [errors, setErrors] = useState<SocialingFieldErrors>({});
-  const [photoPath, setPhotoPath] = useState<string | null>(null);
+  const savedPhotoPath = edit?.coverPhoto?.path ?? null;
+  const [photoPath, setPhotoPath] = useState<string | null>(savedPhotoPath);
   const [uploading, setUploading] = useState(false);
   /** 사진 올리기가 실패했고 그 뒤로 사진을 올리지 못했다 */
   const [photoFailed, setPhotoFailed] = useState(false);
   const [retry, setRetry] = useState(false);
+  /** 수정: 그사이 잠금·정원 하한이 바뀌어 저장하지 못함 → 결과 창 */
+  const [conflict, setConflict] = useState(false);
   // 연 뒤 상세로 옮겨 가는 동안에도 잠가 두고, 임시 저장도 더 하지 않는다
   const [leaving, setLeaving] = useState(false);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
-    if (saveDraft && !leaving) writeDraft(draftKey, values);
-  }, [draftKey, saveDraft, leaving, values]);
+    if (draftKey && !leaving) writeDraft(draftKey, typed);
+  }, [draftKey, leaving, typed]);
+
+  const lockedByAccepted = edit && edit.acceptedCount > 0 ? LOCKED_BY_ACCEPTED : undefined;
+  const lockedByPending = edit && edit.pendingCount > 0 ? LOCKED_BY_PENDING : undefined;
 
   /** 칸 값을 바꾸고 그 칸(과 함께 묶인 칸)의 오류를 지운다 */
   function change(patch: Partial<SocialingFormValues>, clear: SocialingField[] = []) {
@@ -171,7 +240,7 @@ function SocialingFormFields({
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending || leaving || uploading) return;
-    const fieldErrors = socialingFieldErrors(values, { now: Date.now() });
+    const fieldErrors = validate(values, edit);
     setErrors(fieldErrors);
     if (Object.keys(fieldErrors).length > 0) {
       setRetry(false);
@@ -180,19 +249,25 @@ function SocialingFormFields({
     }
 
     startTransition(async () => {
-      let result: SaveSocialingResult | undefined;
+      let result: SaveSocialingResult | UpdateSocialingResult | undefined;
       try {
-        result = await createSocialing(values, photoPath);
+        result = edit
+          ? await updateSocialing(edit.socialingId, values, photoPath)
+          : await createSocialing(values, photoPath);
       } catch {
         setRetry(true);
         return;
       }
-      // 로그인 화면으로 보낸 경우. 글은 임시 저장돼 있어 돌아오면 채워진다
+      // 로그인 화면(또는 상세·관리)으로 보낸 경우. 등록 글은 임시 저장돼 있어 돌아오면 채워진다
       if (!result) return;
 
-      if (result.ok) {
+      if (result.ok && edit) {
         setLeaving(true);
-        clearDraft(draftKey);
+        showToast({ message: "저장했어요" });
+        router.replace(`/socialings/${edit.socialingId}/manage`);
+      } else if (result.ok && "id" in result) {
+        setLeaving(true);
+        if (draftKey) clearDraft(draftKey);
         // 사진이 실패해 사진 없이 열었으면(실패 안내 그대로 또는 "사진 없이 열기") 수정에서 다시 올리라고 알린다
         // (spec 8.6 P07, screen-cases P07-13)
         showToast({ message: photoFailed && !photoPath ? PHOTO_FAILED_NOTICE : "소셜링을 열었어요" });
@@ -202,10 +277,20 @@ function SocialingFormFields({
         setErrors(result.fieldErrors);
         setRetry(false);
         focusFirstError(formRef.current, result.fieldErrors, SOCIALING_FIELD_ORDER);
+      } else if ("conflict" in result) {
+        setRetry(false);
+        setConflict(true);
       } else {
         setRetry(true);
       }
     });
+  }
+
+  /** 결과 창 "확인": 지금 잠금·참여 확정 인원으로 다시 그린다 */
+  function closeConflict() {
+    setConflict(false);
+    setErrors({});
+    router.refresh();
   }
 
   const sidoOptions = [...new Set(catalog.regions.map((region) => region.sido))].map((sido) => ({
@@ -228,18 +313,26 @@ function SocialingFormFields({
             <PhotoPicker
               bucket="socialing-photos"
               userId={userId}
+              initialPhoto={edit?.coverPhoto}
               onChange={(photo) => {
                 setPhotoPath(photo?.path ?? null);
                 if (photo) setPhotoFailed(false);
               }}
               onUploadingChange={setUploading}
               onFailedChange={(failed) => {
-                if (failed) setPhotoFailed(true);
+                if (!failed) return;
+                setPhotoFailed(true);
+                // 수정에서 새 사진이 실패하면 저장된 사진을 그대로 둔다. "사진 없이 저장"을 누르면 지운다
+                if (edit) setPhotoPath(savedPhotoPath);
               }}
-              skipLabel="사진 없이 열기"
+              skipLabel={edit ? "사진 없이 저장" : "사진 없이 열기"}
             />
             <p className="min-w-40 flex-1 pt-xs text-body-sm break-keep text-text-secondary">
-              사진을 올리지 않아도 글은 그대로 남아요
+              {edit?.coverPhoto
+                ? "지우고 다시 고르면 사진이 바뀌어요"
+                : edit
+                  ? "사진을 올리지 못해도 다른 내용은 저장돼요"
+                  : "사진을 올리지 않아도 글은 그대로 남아요"}
             </p>
           </div>
         </div>
@@ -316,6 +409,8 @@ function SocialingFormFields({
             options={PLACE_OPTIONS}
             value={values.placeKind}
             onChange={(placeKind) => change({ placeKind }, ["branchId", "sido", "regionCode", "placeName"])}
+            disabled={Boolean(lockedByAccepted)}
+            describedBy={lockedByAccepted ? (values.placeKind === "branch" ? "field-branchId-helper" : "field-placeName-helper") : undefined}
           />
           {values.placeKind === "branch" ? (
             <SelectField
@@ -327,6 +422,7 @@ function SocialingFormFields({
               onChange={(event) => change({ branchId: event.target.value })}
               error={errors.branchId}
               helper={branch ? `${shortSido(branch.sido)} ${branch.sigungu} 스터디지점` : undefined}
+              locked={lockedByAccepted}
             />
           ) : (
             <>
@@ -339,6 +435,7 @@ function SocialingFormFields({
                   value={values.sido}
                   onChange={(event) => change({ sido: event.target.value, regionCode: "" })}
                   error={errors.sido}
+                  disabled={Boolean(lockedByAccepted)}
                 />
                 <SelectField
                   name="regionCode"
@@ -348,7 +445,7 @@ function SocialingFormFields({
                   value={values.regionCode}
                   onChange={(event) => change({ regionCode: event.target.value })}
                   error={errors.regionCode}
-                  disabled={values.sido === ""}
+                  disabled={values.sido === "" || Boolean(lockedByAccepted)}
                 />
               </div>
               <TextField
@@ -358,6 +455,7 @@ function SocialingFormFields({
                 value={values.placeName}
                 onChange={(event) => change({ placeName: event.target.value })}
                 error={errors.placeName}
+                locked={lockedByAccepted}
                 autoComplete="off"
               />
             </>
@@ -373,6 +471,7 @@ function SocialingFormFields({
           value={values.startsAt}
           onChange={(event) => change({ startsAt: event.target.value }, ["applyDeadlineAt"])}
           error={errors.startsAt}
+          locked={lockedByAccepted}
         />
 
         <TextField
@@ -380,7 +479,8 @@ function SocialingFormFields({
           label="신청 마감 일시"
           labelTone="form"
           type="datetime-local"
-          min={minDateTime}
+          // 수정에서는 이미 지난 마감 일시를 그대로 둘 수 있다
+          min={edit ? undefined : minDateTime}
           value={values.applyDeadlineAt}
           onChange={(event) => change({ applyDeadlineAt: event.target.value })}
           error={errors.applyDeadlineAt}
@@ -397,6 +497,7 @@ function SocialingFormFields({
           value={feeDisplay(values.fee)}
           onChange={(event) => change({ fee: digitsOnly(event.target.value, 7) })}
           error={errors.fee}
+          locked={lockedByAccepted}
           autoComplete="off"
         />
 
@@ -409,7 +510,11 @@ function SocialingFormFields({
           value={values.capacity}
           onChange={(event) => change({ capacity: digitsOnly(event.target.value, 2) })}
           error={errors.capacity}
-          helper={`${L.capacityMin}~${L.capacityMax}명`}
+          helper={
+            edit && edit.acceptedCount > 0
+              ? `${L.capacityMin}~${L.capacityMax}명 · 참여 확정 ${edit.acceptedCount}명보다 적게 할 수 없어요`
+              : `${L.capacityMin}~${L.capacityMax}명`
+          }
           autoComplete="off"
         />
 
@@ -435,7 +540,10 @@ function SocialingFormFields({
             options={JOIN_OPTIONS}
             value={values.joinType}
             onChange={(joinType) => change({ joinType }, ["approvalCriteria"])}
+            disabled={Boolean(lockedByPending)}
+            describedBy={lockedByPending ? "field-joinType-helper" : undefined}
           />
+          <FieldMessage id="field-joinType-helper" locked={lockedByPending} />
         </div>
 
         {values.joinType === "approval" ? (
@@ -461,15 +569,28 @@ function SocialingFormFields({
       >
         {retry && !pending ? (
           <p role="alert" className="text-center text-body-sm break-keep text-danger">
-            소셜링을 열지 못했어요. 연결을 확인하고 다시 시도해 주세요
+            {edit ? "저장하지 못했어요" : "소셜링을 열지 못했어요"}. 연결을 확인하고 다시 시도해 주세요
           </p>
         ) : uploading ? (
           <p className="text-center text-body-sm text-text-secondary">사진을 올리는 중이에요</p>
         ) : null}
         <Button type="submit" size="lg" className="w-full" disabled={uploading} loading={pending || leaving}>
-          {retry && !pending ? "다시 시도" : "소셜링 열기"}
+          {retry && !pending ? "다시 시도" : edit ? "저장하기" : "소셜링 열기"}
         </Button>
       </div>
+
+      <Dialog
+        open={conflict}
+        onOpenChange={(open) => (open ? undefined : closeConflict())}
+        title="저장하지 못했어요"
+        footer={
+          <Button size="lg" className="flex-1" onClick={closeConflict}>
+            확인
+          </Button>
+        }
+      >
+        그사이 참여 확정자나 승인 대기 신청이 생겨 바꿀 수 없는 칸이 있어요. 바뀐 내용을 확인하고 다시 저장해 주세요
+      </Dialog>
     </form>
   );
 }
