@@ -160,6 +160,16 @@ test.describe("MS3 신청 O02", () => {
         await expect(bar(page).getByText("승인 대기", { exact: true })).toBeVisible();
       },
     },
+    {
+      // 호스트에게는 1줄이 먼저라 신청 버튼이 없다. 창을 연 사이 호스트가 바뀐 경우로 함수의 IS_HOST 문구를 본다
+      name: "본인 호스트",
+      options: { host: "C" },
+      meanwhile: (id) => updateFixtureSocialing(id, { host: "P1" }),
+      reason: "내가 연 소셜링에는 신청할 수 없어요",
+      after: async (page) => {
+        await expect(bar(page)).toContainText("내가 연 소셜링이에요");
+      },
+    },
   ];
 
   for (const { name, options, meanwhile, reason, after } of failures) {
