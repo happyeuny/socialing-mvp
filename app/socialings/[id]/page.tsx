@@ -14,6 +14,7 @@ import { SkeletonDetail } from "@/components/skeleton";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusTag } from "@/components/status-tag";
 import { AvatarInitial } from "@/components/avatar-initial";
+import { TrustLabelButton, type TrustCriteriaValues } from "@/components/trust-criteria-sheet";
 import { UrlNotice } from "@/components/url-notice";
 import { formatDateTime, formatFee, formatVenue } from "@/lib/format";
 import { noticeMessage } from "@/lib/notices";
@@ -24,7 +25,9 @@ import { readSimulatedState, type SimulatedState } from "@/lib/simulated-state";
 
 // P03 소셜링 상세 본문 (spec M4, 8.6, 8.7, 8.9). 로그인 없이 본다.
 // 맨 아래 apply-bar(spec 8.4)가 붙는다. 호스트 기록(spec M5)은 본문과 따로 읽어서, 실패해도 그 칸만 다시 시도한다(Q3).
-// 화면 상태 흉내 `?_state=partial`은 호스트 기록만 실패시킨다. 등급 라벨은 MS8.
+// 화면 상태 흉내 `?_state=partial`은 호스트 기록만 실패시킨다.
+// 등급 라벨 "믿고 가는 호스트"(spec M5)는 호스트 기록의 등급 칸으로 정해 제목 아래 호스트 줄과 호스트 묶음 닉네임 아래에 붙고,
+// 누르면 O03이 열린다. 기록을 못 읽으면 라벨도 보이지 않는다.
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -92,7 +95,14 @@ export default async function SocialingPage({ params, searchParams }: Props) {
               </span>
             </div>
             <h2 className="text-title-xl break-words text-text-primary">{socialing.title}</h2>
-            <HostProfileRow nickname={socialing.host_nickname} />
+            <HostProfileRow
+              nickname={socialing.host_nickname}
+              trustLabel={
+                <Suspense fallback={null}>
+                  <HostTrustLabel hostId={socialing.host_id} simulated={simulated} />
+                </Suspense>
+              }
+            />
           </section>
 
           <div className="border-t border-border-divider pt-xxs">
@@ -110,12 +120,15 @@ export default async function SocialingPage({ params, searchParams }: Props) {
 
           <section className="flex flex-col gap-sm">
             <h3 className="text-title-md text-text-primary">호스트</h3>
-            <div className="flex items-center gap-sm">
-              <AvatarInitial nickname={socialing.host_nickname} size={48} />
-              <p className="text-title-md text-text-primary">{socialing.host_nickname}</p>
-            </div>
-            <Suspense fallback={<HostStatsSkeleton />}>
-              <HostRecordSection hostId={socialing.host_id} simulated={simulated} />
+            <Suspense
+              fallback={
+                <>
+                  <HostIdentity nickname={socialing.host_nickname} />
+                  <HostStatsSkeleton />
+                </>
+              }
+            >
+              <HostRecordSection hostId={socialing.host_id} nickname={socialing.host_nickname} simulated={simulated} />
             </Suspense>
           </section>
         </div>
@@ -127,17 +140,70 @@ export default async function SocialingPage({ params, searchParams }: Props) {
   );
 }
 
+/** 호스트 기록. 화면 상태 흉내 `?_state=partial`이면 실패한다 */
+async function loadHostRecord(hostId: string, simulated: SimulatedState | null): Promise<HostRecord> {
+  if (simulated === "partial") throw new Error("화면 상태 흉내: 호스트 기록만 실패");
+  return getHostRecord(hostId);
+}
+
+/** 등급을 채운 호스트면 O03에 보일 값, 아니면 null (판단은 DB 함수의 is_trusted_host) */
+function trustValues(record: HostRecord): TrustCriteriaValues | null {
+  if (!record.isTrustedHost || record.matchRate === null) return null;
+  return {
+    openedCount: record.openedCount,
+    canceledCount: record.canceledCount,
+    matchRate: record.matchRate,
+    responseCount: record.responseCount,
+  };
+}
+
+/** 제목 아래 호스트 줄의 등급 라벨. 기록을 못 읽으면 라벨 없이 (오류 안내는 호스트 묶음이 한다) */
+async function HostTrustLabel({ hostId, simulated }: { hostId: string; simulated: SimulatedState | null }) {
+  const values = await loadHostRecord(hostId, simulated).then(trustValues, () => null);
+  return values ? <TrustLabelButton values={values} /> : null;
+}
+
+/** 호스트 묶음 맨 위: avatar-initial 48 + 닉네임, 그 아래 등급 라벨 (와이어프레임 04_detail) */
+function HostIdentity({ nickname, trust }: { nickname: string; trust?: TrustCriteriaValues | null }) {
+  return (
+    <div className="flex items-center gap-sm">
+      <AvatarInitial nickname={nickname} size={48} />
+      <div className="flex min-w-0 flex-col items-start gap-xxs">
+        <p className="max-w-full truncate text-title-md text-text-primary">{nickname}</p>
+        {trust && <TrustLabelButton values={trust} />}
+      </div>
+    </div>
+  );
+}
+
 /** 호스트 기록. 못 읽으면 이 칸만 "기록을 불러오지 못했어요" + 다시 시도, 상세와 신청은 그대로 (spec 5장 Q3, 8.6) */
-async function HostRecordSection({ hostId, simulated }: { hostId: string; simulated: SimulatedState | null }) {
+async function HostRecordSection({
+  hostId,
+  nickname,
+  simulated,
+}: {
+  hostId: string;
+  nickname: string;
+  simulated: SimulatedState | null;
+}) {
   let record: HostRecord;
   try {
-    if (simulated === "partial") throw new Error("화면 상태 흉내: 호스트 기록만 실패");
-    record = await getHostRecord(hostId);
+    record = await loadHostRecord(hostId, simulated);
   } catch (error) {
     if (simulated !== "partial") console.error(error);
-    return <HostStatsFailed />;
+    return (
+      <>
+        <HostIdentity nickname={nickname} />
+        <HostStatsFailed />
+      </>
+    );
   }
-  return <HostStats record={record} />;
+  return (
+    <>
+      <HostIdentity nickname={nickname} trust={trustValues(record)} />
+      <HostStats record={record} />
+    </>
+  );
 }
 
 function CoverPhoto({ socialing }: { socialing: SocialingDetail }) {
