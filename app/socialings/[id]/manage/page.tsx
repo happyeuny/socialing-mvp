@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ApplicantActions } from "@/components/applicant-actions";
 import { ApplicantRow } from "@/components/applicant-row";
 import { buttonVariants } from "@/components/button";
 import { ErrorStateFull } from "@/components/error-state";
@@ -20,6 +21,7 @@ import { readSimulatedState } from "@/lib/simulated-state";
 // 위에 요약 카드와 "상세 보기 ›", 소셜링 상태(진행 단계), 신청자 목록.
 // 호스트 승인 방식은 탭 "승인 대기 · 참여 확정 · 거절·취소"(`?tab=accepted|closed`), 선착순은 참여 확정 목록만.
 // 버튼을 보일지·막을지는 뷰(my_hosted_socialings)가 계산한 값을 쓴다.
+// 승인 대기 건에 승인·거절(PR 3). 종료·호스트 취소 뒤에는 목록 보기만.
 
 export const metadata: Metadata = { title: "소셜링 관리 · 문화소셜링" };
 
@@ -125,6 +127,18 @@ function inTab(applicant: Applicant, tab: ApplicantTab) {
   return applicant.status === tab;
 }
 
+const APPROVE_NOTE_ID = "approve-note";
+
+/** 승인 대기 탭 아래 한 줄: 남은 자리, 또는 승인이 막힌 이유 (spec 8.8, screen-cases P11-12·13) */
+function approveNote(socialing: ManagedSocialing): string | null {
+  if (socialing.approve_blocked_reason === "started") return "소셜링 일시가 지나 승인할 수 없어요";
+  if (socialing.approve_blocked_reason === "full") return "정원이 차서 승인할 수 없어요";
+  if (socialing.can_approve) {
+    return `남은 자리 ${socialing.capacity - socialing.accepted_count} · 정원이 차면 승인할 수 없어요`;
+  }
+  return null;
+}
+
 /** 호스트 승인 방식: 탭 3개 (screen-cases P11-07·09~11) */
 function ApprovalApplicants({
   socialing,
@@ -137,6 +151,10 @@ function ApprovalApplicants({
   tab: ApplicantTab;
   managePath: string;
 }) {
+  const rows = applicants.filter((a) => inTab(a, tab));
+  const note = tab === "pending" && rows.length > 0 ? approveNote(socialing) : null;
+  // 종료·호스트 취소 뒤에는 approve_blocked_reason도 비어 있어 버튼 없이 보기만
+  const decidable = socialing.can_decide || socialing.approve_blocked_reason !== null;
   return (
     <>
       <SegmentedWithCounts
@@ -148,7 +166,29 @@ function ApprovalApplicants({
           { key: "closed", label: "거절·취소", count: socialing.closed_count, href: `${managePath}?tab=closed` },
         ]}
       />
-      <ApplicantList applicants={applicants.filter((a) => inTab(a, tab))} empty={EMPTY[tab]} />
+      <ApplicantList
+        applicants={rows}
+        empty={EMPTY[tab]}
+        actions={
+          decidable
+            ? (applicant) => (
+                <ApplicantActions
+                  socialingId={socialing.id}
+                  applicationId={applicant.application_id}
+                  nickname={applicant.nickname}
+                  canDecide={socialing.can_decide}
+                  canApprove={socialing.can_approve}
+                  describedBy={note ? APPROVE_NOTE_ID : undefined}
+                />
+              )
+            : undefined
+        }
+      />
+      {note && (
+        <p id={APPROVE_NOTE_ID} className="text-body-sm text-text-secondary">
+          {note}
+        </p>
+      )}
     </>
   );
 }
@@ -163,7 +203,16 @@ function FirstComeApplicants({ applicants }: { applicants: Applicant[] }) {
   );
 }
 
-function ApplicantList({ applicants, empty }: { applicants: Applicant[]; empty: string }) {
+function ApplicantList({
+  applicants,
+  empty,
+  actions,
+}: {
+  applicants: Applicant[];
+  empty: string;
+  /** 승인 대기 행의 버튼 */
+  actions?: (applicant: Applicant) => React.ReactNode;
+}) {
   if (applicants.length === 0) {
     return <p className="py-xl text-center text-body-md text-text-secondary">{empty}</p>;
   }
@@ -175,6 +224,7 @@ function ApplicantList({ applicants, empty }: { applicants: Applicant[]; empty: 
           nickname={applicant.nickname}
           appliedAt={applicant.applied_at}
           status={applicant.status}
+          actions={applicant.status === "pending" ? actions?.(applicant) : undefined}
         />
       ))}
     </ul>

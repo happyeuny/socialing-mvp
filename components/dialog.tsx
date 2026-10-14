@@ -4,6 +4,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 
 // DESIGN.md dialog. surface, 모서리 xl, 여백 20, 뒤 dim, 화면 가운데.
 // dialog/result: 결과 안내 + primary "확인" 하나 ("신청하지 못했어요 · 방금 정원이 찼어요").
+// dialog/confirm · confirm-danger: 호스트 동작 확인(O04). 네트워크 오류 문구는 alert로 받아 버튼 위에 보인다.
 // 버튼은 footer로 받는다. 바텀시트 위에도 뜰 수 있게 바텀시트보다 위(z-50)에 놓는다.
 
 type DialogProps = {
@@ -11,10 +12,12 @@ type DialogProps = {
   onOpenChange: (open: boolean) => void;
   title: string;
   children?: React.ReactNode;
+  /** 버튼 위 오류 문구(body-sm, danger). 예: "처리하지 못했어요. 연결을 확인하고 다시 시도해 주세요" */
+  alert?: React.ReactNode;
   footer: React.ReactNode;
 };
 
-export function Dialog({ open, onOpenChange, title, children, footer }: DialogProps) {
+export function Dialog({ open, onOpenChange, title, children, alert, footer }: DialogProps) {
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -29,6 +32,11 @@ export function Dialog({ open, onOpenChange, title, children, footer }: DialogPr
               <DialogPrimitive.Description className="text-body-md text-text-secondary">
                 {children}
               </DialogPrimitive.Description>
+            ) : null}
+            {alert ? (
+              <p role="alert" className="text-body-sm text-danger">
+                {alert}
+              </p>
             ) : null}
           </div>
           <div className="flex gap-xs">{footer}</div>
