@@ -58,9 +58,12 @@ function splitByPast<T extends { is_past: boolean }>(rows: T[]): SplitByPast<T> 
 
 export async function listMyAppliedSocialings(): Promise<SplitByPast<MyAppliedSocialing>> {
   const supabase = await createClient();
+  // 내가 신청 취소한 소셜링은 목록에서 뺀다(spec M11). 다시 신청하면 가장 최근 신청이 새 행이라 다시 보인다.
+  // 호스트 취소는 신청 상태를 바꾸지 않으므로(spec 3.3) 여기 걸리지 않고 "호스트 취소"로 남는다
   const { data, error } = await supabase
     .from("my_applied_socialings")
     .select(`${CARD_COLUMNS}, is_past, application_status, has_review`)
+    .neq("application_status", "canceled")
     .order("starts_at", { ascending: true })
     .order("id", { ascending: true });
   if (error) throw new Error(`신청한 소셜링을 불러오지 못했습니다: ${error.message}`);

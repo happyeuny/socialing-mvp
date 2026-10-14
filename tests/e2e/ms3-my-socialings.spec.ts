@@ -41,12 +41,15 @@ async function loginAs(page: Page, user: "C" | "P1", next: string) {
 }
 
 test.describe("MS3 내 소셜링: 신청한 소셜링", () => {
-  test("시나리오 6단계·P06-01~07: 다가오는 → 지난 순서, 상태 배지 + 신청 칩, 후기 쓰기", async ({ page }) => {
-    const [pending, confirmed, rejected, withdrawn, hostCanceled, reviewable, reviewed] = await Promise.all([
+  test("시나리오 6단계·P06-01~07: 다가오는 → 지난 순서, 상태 배지 + 신청 칩, 내가 취소한 신청은 없음, 후기 쓰기", async ({
+    page,
+  }) => {
+    const [pending, confirmed, rejected, withdrawn, reapplied, hostCanceled, reviewable, reviewed] = await Promise.all([
       fixture({ host: "C", joinType: "approval", deadlineInHours: 20, startsInHours: 30 }),
       fixture({ host: "C", joinType: "approval", status: "confirmed", startsInHours: 60, accepted: ["P1"] }),
       fixture({ host: "C", joinType: "approval", startsInHours: 70 }),
       fixture({ host: "C", startsInHours: 80 }),
+      fixture({ host: "C", joinType: "approval", startsInHours: 85 }),
       fixture({ host: "C", status: "canceled", startsInHours: 90, accepted: ["P1"] }),
       fixture({ host: "C", status: "completed", deadlineInHours: -30, startsInHours: -24, accepted: ["P1"] }),
       fixture({ host: "C", status: "completed", deadlineInHours: -60, startsInHours: -48, accepted: ["P1"] }),
@@ -55,6 +58,7 @@ test.describe("MS3 내 소셜링: 신청한 소셜링", () => {
       addApplication(pending, "P1", "pending"),
       addApplication(rejected, "P1", "rejected"),
       addApplication(withdrawn, "P1", "canceled"),
+      addApplication(reapplied, "P1", "canceled").then(() => addApplication(reapplied, "P1", "pending")),
       addReview(reviewed, "P1"),
     ]);
     await loginAs(page, "P1", "/me");
@@ -66,19 +70,21 @@ test.describe("MS3 내 소셜링: 신청한 소셜링", () => {
     await expect(section(page, "다가오는 소셜링")).toContainText("가까운 일시 순");
     await expect(section(page, "지난 소셜링")).toContainText("최근 순");
     expect(
-      await orderIn(page, "다가오는 소셜링", [pending, confirmed, rejected, withdrawn, hostCanceled].map(detail)),
-    ).toEqual([pending, confirmed, rejected, withdrawn, hostCanceled].map(detail));
+      await orderIn(page, "다가오는 소셜링", [pending, confirmed, rejected, withdrawn, reapplied, hostCanceled].map(detail)),
+    ).toEqual([pending, confirmed, rejected, reapplied, hostCanceled].map(detail));
     expect(await orderIn(page, "지난 소셜링", [reviewable, reviewed].map(detail))).toEqual(
       [reviewable, reviewed].map(detail),
     );
 
-    // P06-02~06: 상태 배지가 앞, 신청 칩이 뒤. 호스트 취소는 배지 하나만
+    // P06-02~05: 상태 배지가 앞, 신청 칩이 뒤. 호스트 취소는 배지 하나만
     const pills = (id: number) => card(page, detail(id)).locator("h2").locator("xpath=preceding-sibling::div[1]");
     await expect(pills(pending)).toHaveText(/^모집중\s*승인 대기$/);
     // 시나리오 6단계: 참여 확정과 확정 상태
     await expect(pills(confirmed)).toHaveText(/^확정\s*참여 확정$/);
     await expect(pills(rejected)).toHaveText(/^모집중\s*거절$/);
-    await expect(pills(withdrawn)).toHaveText(/^모집중\s*신청 취소$/);
+    // P06-06: 내가 신청 취소한 소셜링은 없고, 취소 뒤 다시 신청했으면 새 신청으로 보인다
+    await expect(card(page, detail(withdrawn))).toHaveCount(0);
+    await expect(pills(reapplied)).toHaveText(/^모집중\s*승인 대기$/);
     await expect(pills(hostCanceled)).toHaveText(/^호스트 취소$/);
 
     // P06-07: 후기를 쓸 수 있는 카드에만 "후기 쓰기"
