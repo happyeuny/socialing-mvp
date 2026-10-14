@@ -499,10 +499,10 @@ components:
 
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
-| host-stats/normal | 위 문구 "최근 6개월 기록 · 별점이나 점수로 합치지 않아요", 2×2 칸(surface, border-default, 모서리 lg): 열린 소셜링 · 호스트 취소 · 소개 일치(응답 수) · 후기 | 상세의 호스트 영역 |
-| host-stats/new-host | surface-muted 상자, "새 호스트 · 기록이 쌓이면 숫자로 보여 줘요" | 열린 소셜링 3회 미만 |
+| host-stats/normal | 위 문구 "최근 6개월 기록 · 별점이나 점수로 합치지 않아요"(body-sm, text-secondary), 2×2 칸(surface, border-default, 모서리 lg, 여백 16, 사이 8): 칸 이름(body-sm, text-secondary) + 값(title-xl) "6회" · "0회" · "92%"와 아래 "응답 12건"(body-sm, text-muted) · "12개" (시안) | 상세의 호스트 영역 |
+| host-stats/new-host | 위 문구는 normal과 같고, 칸 대신 surface-muted 상자(모서리 lg, 여백 16) "새 호스트 · 기록이 쌓이면 숫자로 보여 줘요" | 열린 소셜링 3회 미만 |
 | host-stats/ratio-hidden | normal과 같고 소개 일치 칸만 "응답 5건 이상부터 보여요" | 응답 5건 미만 |
-| host-stats/load-failed | "기록을 불러오지 못했어요" + text-link "다시 시도" | 기록만 실패 (상세와 신청은 그대로 동작) |
+| host-stats/load-failed | error-state/inline 틀(surface-muted, 점선 테두리, 모서리 lg) 안에 "기록을 불러오지 못했어요" + text-link "다시 시도" | 기록만 실패 (상세와 신청은 그대로 동작) |
 | manage-summary/default | surface, border-default 1px, 모서리 xl, 여백 20. status-badge(+status-tag), 제목(title-lg), "10/14(화) 오후 7:30 · 스터디지점 강남점 · 호스트 승인"(body-md, text-secondary), "참가자 **4/8명** · 스태프 1명 · 승인 대기" + count-pill(body-md, text-primary. 스태프는 있을 때, 승인 대기는 1건 이상일 때) | 소셜링 관리(P11) 맨 위 요약 (시안) |
 | review-summary/default | manage-summary/default와 같은 카드. status-badge "종료" + application-chip "참여 확정", 제목(title-lg), "10/11(토) 오전 10:00 · 스터디지점 홍대점 · 호스트 도현"(body-md, text-secondary) | 후기 쓰기(P09) 맨 위 요약 (시안) |
 | manage-status-actions/recruiting | button/primary/lg "확정하기"(전체 폭) + 설명 body-sm text-secondary, 그 아래 button/secondary/md "수정" · button/danger/md "호스트 취소"(반씩), 그 아래 막힌 button/primary/lg "종료하기" + 이유. 막히면 버튼 disabled + 이유 한 줄 | 소셜링 관리(P11) 진행 단계 아래, 모집중 (시안) |

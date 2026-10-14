@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { ApplyBar } from "@/components/apply-bar";
 import { CategoryArt } from "@/components/category-art";
 import { ErrorStateFull } from "@/components/error-state";
 import { HeaderSub } from "@/components/header-sub";
 import { HostProfileRow } from "@/components/host-profile-row";
+import { HostStats, HostStatsFailed, HostStatsSkeleton } from "@/components/host-stats";
 import { InfoList } from "@/components/info-list";
 import { IntroText } from "@/components/intro-text";
 import { NoticeBox } from "@/components/notice-box";
@@ -15,12 +17,14 @@ import { AvatarInitial } from "@/components/avatar-initial";
 import { UrlNotice } from "@/components/url-notice";
 import { formatDateTime, formatFee, formatVenue } from "@/lib/format";
 import { noticeMessage } from "@/lib/notices";
+import { getHostRecord, type HostRecord } from "@/lib/queries/host-record";
 import { getApplyBarViewer, type ApplyBarViewer } from "@/lib/queries/my-socialings";
 import { getSocialing, socialingPhotoUrl, type SocialingDetail } from "@/lib/queries/socialings";
-import { readSimulatedState } from "@/lib/simulated-state";
+import { readSimulatedState, type SimulatedState } from "@/lib/simulated-state";
 
 // P03 소셜링 상세 본문 (spec M4, 8.6, 8.7, 8.9). 로그인 없이 본다.
-// 맨 아래 apply-bar(spec 8.4)가 붙는다. 호스트 기록 숫자는 MS6, 등급 라벨은 MS8.
+// 맨 아래 apply-bar(spec 8.4)가 붙는다. 호스트 기록(spec M5)은 본문과 따로 읽어서, 실패해도 그 칸만 다시 시도한다(Q3).
+// 화면 상태 흉내 `?_state=partial`은 호스트 기록만 실패시킨다. 등급 라벨은 MS8.
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -106,11 +110,13 @@ export default async function SocialingPage({ params, searchParams }: Props) {
 
           <section className="flex flex-col gap-sm">
             <h3 className="text-title-md text-text-primary">호스트</h3>
-            {/* 호스트 기록(host-stats)은 MS6에서 이 아래에 붙는다 */}
             <div className="flex items-center gap-sm">
               <AvatarInitial nickname={socialing.host_nickname} size={48} />
               <p className="text-title-md text-text-primary">{socialing.host_nickname}</p>
             </div>
+            <Suspense fallback={<HostStatsSkeleton />}>
+              <HostRecordSection hostId={socialing.host_id} simulated={simulated} />
+            </Suspense>
           </section>
         </div>
       </main>
@@ -119,6 +125,19 @@ export default async function SocialingPage({ params, searchParams }: Props) {
       <UrlNotice message={noticeMessage(query.notice)} />
     </div>
   );
+}
+
+/** 호스트 기록. 못 읽으면 이 칸만 "기록을 불러오지 못했어요" + 다시 시도, 상세와 신청은 그대로 (spec 5장 Q3, 8.6) */
+async function HostRecordSection({ hostId, simulated }: { hostId: string; simulated: SimulatedState | null }) {
+  let record: HostRecord;
+  try {
+    if (simulated === "partial") throw new Error("화면 상태 흉내: 호스트 기록만 실패");
+    record = await getHostRecord(hostId);
+  } catch (error) {
+    if (simulated !== "partial") console.error(error);
+    return <HostStatsFailed />;
+  }
+  return <HostStats record={record} />;
 }
 
 function CoverPhoto({ socialing }: { socialing: SocialingDetail }) {
