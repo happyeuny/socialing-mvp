@@ -734,6 +734,30 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_review: {
+        Args: {
+          p_body: string
+          p_content_match: boolean
+          p_extra_money: boolean
+          p_members_match: boolean
+          p_photo_path: string
+          p_socialing_id: number
+        }
+        Returns: {
+          body: string
+          created_at: string
+          id: number
+          photo_path: string | null
+          socialing_id: number
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "reviews"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       decide_application: {
         Args: { p_application_id: number; p_approve: boolean }
         Returns: {
