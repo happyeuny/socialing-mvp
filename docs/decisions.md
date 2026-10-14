@@ -82,6 +82,7 @@
 | 2026-10-13 | 목록·상세 읽기는 뷰 `socialing_summaries` 하나(security_invoker). 신청 가능·꼬리표·신청 불가 이유를 뷰가 계산하고, 참여 확정 인원은 SECURITY DEFINER 함수가 숫자만 돌려준다 | 화면이 규칙을 다시 계산하지 않게(AGENTS.md 코드 규칙). 비로그인도 "4/8명"을 봐야 하지만 신청 행은 공개하지 않음 | 기본값 |
 | 2026-10-13 | 화면 상태 흉내: 주소에 `?_state=empty|error|loading|partial`을 붙이면 빈 결과·오류·로딩·묶음 하나 실패(홈은 후기 묶음)를 그대로 보여 준다(`lib/simulated-state.ts`). 운영 주소(`VERCEL_ENV=production`)에서는 무시 | 시드 데이터를 지우지 않고 E2E와 미리보기에서 빈 상태·오류 화면을 확인. MS6 호스트 기록 실패 흉내(Q3)에도 씀 | 기본값 |
 | 2026-10-14 | 호스트 함수 4개(`decide_application`, `confirm_socialing`, `complete_socialing`, `cancel_socialing`)는 신청 함수처럼 소셜링 행을 `FOR UPDATE`로 잠그고 오류 코드를 돌려준다. 관리 화면(P11)의 버튼 가능 여부와 막힌 이유는 `my_hosted_socialings`에 더한 칸이 계산하고, 신청자 목록(`hosted_socialing_applicants`)은 사람마다 가장 최근 신청 하나만 보인다 (architecture 3.2·5장) | 규칙을 함수와 뷰 두 곳에만 두어 화면이 다시 계산하지 않게. 거절된 사람이 다시 신청하면 한 사람이 두 탭에 겹쳐 보이지 않게(내 소셜링과 같은 규칙) | 기본값 (MS4) |
+| 2026-10-14 | 인증 후기는 `create_review` 함수 하나로 쓴다. 작성 조건 오류는 셋으로 나눈다: 참여 확정자가 아님(호스트 포함) `NOT_ELIGIBLE`, 종료 전 `INVALID_STATE`, 이미 씀 `ALREADY_REVIEWED`. 글 길이는 앞뒤 공백·줄바꿈을 뺀 글자 수로 센다. 사진 경로는 쓰는 사람 폴더에 실제로 올라간 `review-photos` 파일만 받는다 (architecture 5장) | spec 8.7의 이유 문구 세 가지와 하나씩 맞춤. 공백만 채워 10자를 넘기지 않게. 남이 올린 사진을 자기 후기에 붙일 수 없게 | 기본값 (MS5) |
 
 ## 디자인
 

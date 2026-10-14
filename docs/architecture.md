@@ -144,7 +144,7 @@ erDiagram
 | `cancel_socialing(id)` | P11 → O04 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), completed·canceled 아님(`INVALID_STATE`). 일시가 지나도 종료 전이면 된다. 신청 상태는 바꾸지 않는다. 소셜링 행 잠금. 성공하면 바뀐 소셜링 행 |
 | `create_socialing(...)` | P07 | 입력 범위(spec 6장), 대표 사진 경로(선택). host_id = auth.uid() |
 | `update_socialing(id, ...)` | P08 | 호스트 본인, 종료·호스트 취소 아님, 참여 확정자가 있으면 starts_at·venue_id·fee 변경 불가, capacity ≥ 참여 확정 인원 |
-| `create_review(socialing_id, body, photo_path, members_match, extra_money, content_match)` | P09 | 참여 확정자, completed, 미작성, 글 10~500자, 질문 3개 모두 |
+| `create_review(socialing_id, body, photo_path, members_match, extra_money, content_match)` | P09 | 없는 소셜링 `INVALID_INPUT`, 그 소셜링의 참여 확정자(`NOT_ELIGIBLE`, 호스트 본인 포함), completed(`INVALID_STATE`), 미작성(`ALREADY_REVIEWED`, 동시에 두 번 올려도 유니크 제약이 막음), 글은 앞뒤 공백·줄바꿈을 뺀 10~500자, 질문 3개 모두, 사진은 null이거나 쓰는 사람 폴더(`사용자id/파일명`)에 실제로 올라간 `review-photos` 파일(아니면 `INVALID_INPUT`). 후기와 `review_checks`를 함께 저장하고, 성공하면 만든 후기 행(비공개 응답 없음) |
 
 ## 6. 폴더 구조
 
