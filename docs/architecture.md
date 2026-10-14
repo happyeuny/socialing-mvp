@@ -196,6 +196,7 @@ erDiagram
                           partial = 묶음 하나만 실패: 홈은 최근 인증 후기, 상세는 호스트 기록
 /supabase/migrations      테이블·enum·RLS·함수 SQL (파일 하나 = 변경 하나)
 /scripts/seed.mts         데모 시드 (secret 키는 여기서만), seed-data.mts는 데이터 정의
+/scripts/regions.mts      전국 시·군·구 목록(자동 생성, build-regions.mts가 공공데이터포털 법정동 CSV에서 만든다)
 /scripts/db-push.mts      마이그레이션 적용, db-types.mts 타입 생성, lib/management-api.mts 공용
 /scripts/seed-assets/     시드 대표 사진 + SOURCES.md (사진이 준비되면)
 /tests/e2e                Playwright. helpers/에 로그인·테스트 데이터 도우미
@@ -230,7 +231,7 @@ erDiagram
 - 데모 계정 이메일은 메일이 가지 않는 `@socialing.test` 주소이고, 시드는 이 도메인의 계정만 지우고 다시 만든다.
 - 데모 계정 비밀번호는 `DEMO_PASSWORD` 환경 변수. 없으면 시드가 새로 만들어 `.env.local`에 저장한다(공개 저장소라 코드에 두지 않음). E2E도 같은 값을 읽는다(`playwright.config.ts`가 `.env.local`을 읽음).
 
-**지역 데이터**: 행정안전부 법정동코드(공공데이터포털)에서 시·군·구 단위만 뽑아 시드 파일로 만든다(파일 형식·최신 개편 반영은 MS1에서 확인). 어려우면 서울 25개 구 + 다른 시·도 대표 몇 개로 시작하고 decisions.md에 적는다. **지금은 이 대안으로 시작했다**(`scripts/seed-data.mts`의 `REGIONS`, 2026-10-13).
+**지역 데이터**: 공공데이터포털 "국토교통부_전국 법정동" CSV(https://www.data.go.kr/data/15063424/fileData.do)에서 시·군·구만 뽑은 `scripts/regions.mts`(시·도 16개, 시·군·구 256곳, 2026-07-29 기준, MS6). 다시 만들 때는 파일을 내려받아 `node scripts/build-regions.mts <CSV 경로>`를 돌린다(CSV는 저장소에 넣지 않음). 시·군·구 행 = 법정동코드 끝 5자리가 00000이고 읍면동명이 빈 행, 코드는 앞 5자리. 일반구가 있는 시(수원시 등 13곳)는 시 행을 빼고 "수원시 영통구"처럼 구로 둔다. MS1~MS5에는 서울 25개 구 + 다른 시·도 대표 1곳씩(42곳)이었다.
 
 **테스트**: E2E는 시드를 넣은 dev 프로젝트를 대상으로 돌린다. main에 합치기 전에 전체 E2E를 실행한다(GitHub Actions 자동 실행은 Should).
 
