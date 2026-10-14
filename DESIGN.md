@@ -420,9 +420,10 @@ components:
 |---|---|---|
 | filter-chip/default | surface 바탕, text-primary, border-default 1px, 높이 36, 모서리 full, "카테고리 ⌄" | 탐색 필터 칩 (값 없음) |
 | filter-chip/selected | primary-soft 바탕, primary-strong 글자와 테두리 1.5px, 고른 값 표시 "강남점 ⌄" | 값이 적용된 필터 칩 |
+| filter-chip/all | 지름 36 동그라미, surface 바탕, border-default 1px, 필터 아이콘(줄 3개)만 | 칩 줄 맨 앞 "전체 필터" (시안 P01). 칩은 모두 보이는 높이 36, 누르는 영역은 위아래로 넓혀 44 |
 | choice-chip/off | surface 바탕, text-secondary, border-default 1px | 여러 개 고르는 칩 (카테고리) |
 | choice-chip/on | primary-soft 바탕, primary-strong 글자와 테두리 1.5px | 고른 칩 |
-| segmented/date-filter/selected | surface-muted 틀(모서리 md, 높이 40), 고른 칸은 surface + border-default | 날짜 하나 고르기 "전체 · 오늘 · 이번 주 · 이번 주말" |
+| segmented/date-filter/selected | surface-muted 틀(모서리 md, 안쪽 4), 칸 높이 44(누르는 영역), 고른 칸은 surface + border-default + primary-strong 글자, 나머지 text-secondary | 날짜 하나 고르기 "전체 · 오늘 · 이번 주 · 이번 주말", 필터 시트 장소 갈래 "스터디지점 · 지역 (시·도 → 구)" (시안 O01) |
 | segmented/binary/unanswered | 흰 버튼 두 칸 "예" · "아니오"(surface, border-default 1px, 모서리 lg, 높이 48, body-lg, 사이 8), 고른 칸 없음. 회색 질문 상자 안에 놓여 틀은 따로 없다 (시안 P09) | 비공개 질문 예/아니오, 아직 답 안 함 |
 | segmented/binary/selected | 고른 칸 text-primary 테두리 1.5px + 굵은 글자 | 예 또는 아니오를 고름 |
 | question-block/unanswered | 질문 글(body-md, text-primary) + 아래 8 segmented/binary/unanswered, 묶음 사이 20 | 후기 쓰기(P09)의 비공개 질문 3개 |
@@ -430,8 +431,10 @@ components:
 | segmented/with-counts/selected | 고른 칸 글자 primary-strong, 나머지 text-secondary | 소셜링 관리(P11) 신청자 탭 "승인 대기 2 · 참여 확정 4 · 거절·취소 1" |
 | toggle/off | toggle-off 바탕, 흰 손잡이, 48×28 | "파티·사교 숨기기" 꺼짐 (기본) |
 | toggle/on | primary-strong 바탕, 흰 손잡이 | 켜짐 |
-| radio-row/off | surface 바탕, border-default 1px, 높이 52, 모서리 lg | 장소 하나 고르기 "강남점 (서울 강남구)" |
-| radio-row/on | primary-soft 바탕, primary-strong 글자와 테두리 1.5px | 고른 행 |
+| radio-row/off | 왼쪽 동그라미(20, border-default 2px) + 이름(body-lg) + 지역(body-sm, text-secondary), 높이 52, 줄 아래 border-divider (시안 O01) | 장소 하나 고르기 "강남점 서울 강남구", "전체 지점", 지역 "전국"·"서울특별시 전체"·구 |
+| radio-row/on | 동그라미가 primary-strong으로 채워지고 가운데 흰 점, 이름 medium | 고른 행 |
+| radio-row/next | radio-row와 같은 줄에 동그라미 대신 오른쪽 ›. 그 시·도에서 고른 구가 있으면 이름 옆에 primary-strong 글자 | 지역 시·도 목록 (누르면 구 목록) |
+| radio-row/back | ‹ + 시·도 이름(body-md, primary-strong), 높이 44, 줄 아래 border-divider | 구 목록 맨 위 (시·도 목록으로) |
 
 ### C2 상태 표시와 카드
 
@@ -541,7 +544,7 @@ components:
 | bottom-sheet/confirm-apply | surface, 위 모서리 2xl, 손잡이 36×4, 뒤 dim. 제목 title-lg "신청할까요?" + 소셜링 요약 두 줄(body-md, text-secondary: "제목 · 일시" / "장소 · 총 참가비") + notice-box 승인 기준(있을 때) + 결과 안내("• …", body-md) + 결제 안내 문구(body-sm, text-muted), 아래 secondary "돌아가기" + primary "신청하기"(폭 1:2). 네트워크 오류면 버튼 위에 오류 문구(body-sm, danger)와 "다시 시도" (문구는 docs/spec.md M7·8.4) | 신청 확인(O02) |
 | bottom-sheet/trust-criteria | bottom-sheet와 같은 틀. 제목 "믿고 가는 호스트", 조건 3행(조건 · 이 호스트의 실제 값 · 채움 ✓), 닫기 | 등급 조건(O03) |
 | bottom-sheet/confirm-cancel-application | bottom-sheet와 같은 틀. 제목 "신청을 취소할까요?", 선착순일 때만 본문 "취소하면 다른 사람이 자리를 채울 수 있어요.", 버튼 secondary "돌아가기" + danger "신청 취소"(폭 1:1). 네트워크 오류면 버튼 위에 오류 문구와 "다시 시도" | 신청 취소 확인(O05), 상세에서 "신청 취소"를 누를 때 |
-| bottom-sheet/filter-sheet | surface, 위 모서리 2xl, 손잡이 36×4, 제목 + 닫기 X, 스크롤 내용, 아래 고정 secondary "초기화" + primary "소셜링 4개 보기" | 탐색 필터(O01) |
+| bottom-sheet/filter-sheet | surface, 위 모서리 2xl, 손잡이 36×4, 제목 "필터" + 닫기 X(아래 옅은 구분선), 스크롤 내용(카테고리 "여러 개 선택" · 날짜 · 장소, 묶음 사이 24), 아래 고정 secondary "초기화" + primary "소셜링 4개 보기"(폭 1:2, 위 옅은 구분선) | 탐색 필터(O01) |
 | empty-state/filter-no-results | 48px 원(surface-muted) 아이콘, 제목 title-md, 설명 body-sm, secondary "필터 초기화", 여백 48·20 | "조건에 맞는 소셜링이 없어요" |
 | empty-state/no-applications | 아이콘 원 primary-soft, primary "탐색하기" | "아직 신청한 소셜링이 없어요" (다른 빈 화면도 이 모양에 글과 버튼만 바꿈) |
 | error-state/full | 아이콘 원 danger-soft, "불러오지 못했어요", "연결을 확인하고 다시 시도해 주세요", primary "다시 시도" + text-link "홈으로" | 화면 전체 실패 |

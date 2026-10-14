@@ -1,12 +1,8 @@
 import Link from "next/link";
+import { shortSido } from "@/lib/format";
 
 // DESIGN.md shortcut-branch: 작은 카드(surface, border-default, 모서리 lg, 여백 12) 안 지점 이름(title-md) + 지역(body-sm).
-// 홈 스터디지점 바로가기 3개. 누르면 탐색(P01)의 그 지점 (거르기는 MS6).
-
-/** "서울특별시" → "서울", "경기도" → "경기" */
-function shortSido(sido: string) {
-  return sido.replace(/(특별자치시|특별자치도|특별시|광역시|도)$/, "");
-}
+// 홈 스터디지점 바로가기 3개. 누르면 탐색(P01)의 그 지점 소셜링만.
 
 export function ShortcutBranch({ id, name, sido, sigungu }: { id: number; name: string; sido: string; sigungu: string }) {
   return (

@@ -10,6 +10,8 @@
 //   hide_party 1 = 파티·사교 숨기기. 카테고리에 파티·사교를 고르면 꺼진다
 // 알 수 없는 값은 무시한다. branch와 region이 함께 오면 branch를 쓴다.
 
+import { shortSido } from "@/lib/format";
+
 export const DATE_FILTERS = ["today", "week", "weekend"] as const;
 export type DateFilter = (typeof DATE_FILTERS)[number];
 
@@ -59,10 +61,13 @@ export function parseExploreFilter(params: Params, catalog: FilterCatalog): Expl
     place = { kind: "region", code: region };
   }
 
-  const hasParty = categories.some((slug) => catalog.categories.find((c) => c.slug === slug)?.isParty);
-  const hideParty = first(params.hide_party) === "1" && !hasParty;
+  return normalizeFilter({ categories, date, place, hideParty: first(params.hide_party) === "1" }, catalog);
+}
 
-  return { categories, date, place, hideParty };
+/** 카테고리에 파티·사교가 있으면 "파티·사교 숨기기"를 끈다 (spec 8.9 P01). 필터 시트를 적용할 때도 쓴다 */
+export function normalizeFilter(filter: ExploreFilter, catalog: FilterCatalog): ExploreFilter {
+  const hasParty = filter.categories.some((slug) => catalog.categories.find((c) => c.slug === slug)?.isParty);
+  return hasParty && filter.hideParty ? { ...filter, hideParty: false } : filter;
 }
 
 /** 필터를 주소의 `?…`로 (값이 없으면 빈 문자열) */
@@ -175,4 +180,42 @@ export function resolveRegion(code: string, catalog: FilterCatalog): { sido: str
   }
   const row = catalog.regions.find((r) => r.code.startsWith(code));
   return row ? { sido: row.sido, sigungu: null } : null;
+}
+
+// --------------------------------------------------------------------------- 칩·시트 표시
+
+/** 시·도 목록(법정동코드 앞 2자리, 코드 순) */
+export function sidoOptions(catalog: FilterCatalog): { code: string; sido: string }[] {
+  const seen = new Map<string, string>();
+  for (const r of catalog.regions) if (!seen.has(r.code.slice(0, 2))) seen.set(r.code.slice(0, 2), r.sido);
+  return [...seen].map(([code, sido]) => ({ code, sido }));
+}
+
+/** 시·도 하나의 시·군·구 목록(코드 순) */
+export function sigunguOptions(catalog: FilterCatalog, sidoCode: string): { code: string; sigungu: string }[] {
+  return catalog.regions.filter((r) => r.code.startsWith(sidoCode)).map((r) => ({ code: r.code, sigungu: r.sigungu }));
+}
+
+/** 장소 값의 짧은 이름: "강남점" · "전체 지점" · "마포구" · "서울 전체" */
+export function placeLabel(place: PlaceFilter, catalog: FilterCatalog): string | null {
+  if (place.kind === "branch") {
+    if (place.branchId === "all") return "전체 지점";
+    return catalog.branches.find((b) => b.id === place.branchId)?.name ?? null;
+  }
+  const region = resolveRegion(place.code, catalog);
+  if (!region) return null;
+  return region.sigungu ?? `${shortSido(region.sido)} 전체`;
+}
+
+/** 필터 칩에 보이는 값 (spec 8.2 P01: 적용하면 값 표시). 값이 없으면 null → 항목 이름 */
+export function filterChipValues(
+  filter: ExploreFilter,
+  catalog: FilterCatalog,
+): { date: string | null; place: string | null; category: string | null } {
+  const names = filter.categories.map((slug) => catalog.categories.find((c) => c.slug === slug)?.name ?? slug);
+  return {
+    date: filter.date ? DATE_FILTER_LABELS[filter.date] : null,
+    place: filter.place ? placeLabel(filter.place, catalog) : null,
+    category: names.length === 0 ? null : names.length === 1 ? names[0] : `${names[0]} 외 ${names.length - 1}`,
+  };
 }

@@ -157,7 +157,7 @@ erDiagram
 /app                      화면 (라우트는 spec 8.2 주소 그대로)
   (tabs)/                 메인 탭 화면 묶음. layout.tsx가 header-main + tab-bar를 둔다 (주소에는 안 나타남)
     page.tsx              P00 홈
-    explore/              P01 탐색 (page + party-toggle-row: 파티·사교 숨기기)
+    explore/              P01 탐색 (page + explore-filters: 필터 칩 · 파티·사교 숨기기 · 필터 시트 O01)
     reviews/              P10 인증 후기
     me/                   P06 내 소셜링 (page: 닉네임·로그아웃·top-tabs, applied-socialings·hosted-socialings: 탭 내용)
   login/  signup/         P04 · P05 (page.tsx + 폼 클라이언트 컴포넌트). 하위 화면은 각자 header-sub
@@ -180,7 +180,8 @@ erDiagram
                           segmented(건수 탭), applicant-row, applicant-actions(승인·거절과 O04),
                           textarea, question-block(비공개 질문 예/아니오), review-summary,
                           host-stats(상세 호스트 기록, 기록만 실패하면 그 칸만 다시 시도),
-                          toggle(줄 전체가 스위치)
+                          toggle(줄 전체가 스위치), filter-chip, choice-chip, radio-row, filter-sheet(O01 틀),
+                          segmented에 SegmentedChoice(하나 고르는 칸: 날짜, 장소 갈래)
 /lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)
 /lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). auth.ts, applications.ts(신청·신청 취소),
                           manage.ts(승인·거절, 확정·종료·호스트 취소), reviews.ts(후기 올리기)
@@ -194,7 +195,7 @@ erDiagram
                           catalog.ts(카테고리·스터디지점, 탐색 필터 목록), reviews.ts(인증 후기),
                           manage.ts(P11: my_hosted_socialings 관리 칸, hosted_socialing_applicants),
                           host-record.ts(get_host_record. 상세가 본문과 따로 읽는다)
-/lib/format               날짜(Asia/Seoul)·금액 표시
+/lib/format               날짜(Asia/Seoul)·금액·시·도 짧은 이름 표시
 /lib/explore-filter.ts    탐색 필터: 주소 값 읽기·만들기, 날짜 범위(Asia/Seoul), 거르기 (목록과 필터 시트가 같이 씀)
 /lib/simulated-state.ts   화면 상태 흉내 `?_state=empty|error|loading|partial` (운영 주소에서는 무시, decisions.md).
                           partial = 묶음 하나만 실패: 홈은 최근 인증 후기, 상세는 호스트 기록
