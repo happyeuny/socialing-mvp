@@ -1,0 +1,59 @@
+# 발표 DB 준비 (docs/demo-checklist.md)
+# 발표용 Supabase(socialing-demo)에 아직 적용하지 않은 마이그레이션을 적용하고(npm run db:push),
+# 데모 데이터를 지우고 다시 넣는다(npm run seed). 스크립트는 dev와 같은 것을 쓰고, 값만 GitHub 저장소 Secrets의 demo 값으로 바꿔 넘긴다.
+#
+# - 저장소 Actions 탭의 "Run workflow" 버튼으로만 돈다(푸시·PR로는 돌지 않음). 쓰기 권한이 있는 사람만 누를 수 있다.
+# - demo 값은 Secrets에만 있고 로그에는 가려진다. 클라우드 Claude Code 환경에는 demo 값을 넣지 않는다(architecture 7장).
+# - 시드는 리허설 데이터를 모두 지운다. 리허설 뒤, 발표 전날, 당일 아침에 다시 돌린다.
+
+name: 발표 DB 준비
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 두 번 눌러도 차례로 돈다 (시드 두 개가 겹치지 않게)
+concurrency:
+  group: demo-db
+  cancel-in-progress: false
+
+jobs:
+  demo-db:
+    name: socialing-demo 마이그레이션과 시드
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.DEMO_SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.DEMO_SUPABASE_SECRET_KEY }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.DEMO_SUPABASE_ACCESS_TOKEN }}
+      DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
+    steps:
+      - name: Secrets 4개가 있는지 확인 (값은 보이지 않음)
+        run: |
+          missing=""
+          [ -n "$NEXT_PUBLIC_SUPABASE_URL" ] || missing="$missing DEMO_SUPABASE_URL"
+          [ -n "$SUPABASE_SECRET_KEY" ] || missing="$missing DEMO_SUPABASE_SECRET_KEY"
+          [ -n "$SUPABASE_ACCESS_TOKEN" ] || missing="$missing DEMO_SUPABASE_ACCESS_TOKEN"
+          # 비밀번호가 없으면 시드가 새로 만들어 러너의 .env.local에만 남기고 사라지므로 멈춘다
+          [ -n "$DEMO_PASSWORD" ] || missing="$missing DEMO_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::저장소 Settings → Secrets and variables → Actions에 없는 값:$missing"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: 마이그레이션 적용 (npm run db:push)
+        run: npm run db:push
+
+      - name: 데모 데이터 다시 넣기 (npm run seed)
+        run: npm run seed

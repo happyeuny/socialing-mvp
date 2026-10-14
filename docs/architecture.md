@@ -216,7 +216,7 @@ erDiagram
 | 환경 | Supabase | Vercel | 용도 |
 |---|---|---|---|
 | 개발 | `socialing-mvp` | 로컬 또는 PR 미리보기 배포 | 개발, E2E |
-| 발표 | `socialing-demo` (MS9 직전에 생성) | 운영 배포 (main) | 리허설, 발표 |
+| 발표 | `socialing-demo` (MS9에서 생성) | 운영 배포 (main) | 리허설, 발표. 마이그레이션·시드는 GitHub Actions **발표 DB 준비** |
 
 **환경 변수** (값은 저장소·채팅·로그 어디에도 쓰지 않는다. 이름만 확인한다)
 
@@ -228,9 +228,10 @@ erDiagram
 | `SUPABASE_ACCESS_TOKEN` | 마이그레이션(Management API), 타입 생성. dev 프로젝트로 범위를 줄인 토큰(scoped personal access token) |
 
 - 클라우드 Claude Code 환경에는 dev 값만 있다. demo 키는 넣지 않는다.
+- demo 값은 GitHub 저장소 Secrets(`DEMO_SUPABASE_URL`, `DEMO_SUPABASE_SECRET_KEY`, `DEMO_SUPABASE_ACCESS_TOKEN`, `DEMO_PASSWORD`)와 Vercel Production(`NEXT_PUBLIC_` 2개)에만 둔다. `.github/workflows/demo-db.yml`(**발표 DB 준비**, 버튼으로만 실행)이 Secrets 값을 위 표의 이름으로 바꿔 넘겨 `npm run db:push` → `npm run seed`를 돌린다. 스크립트는 dev와 같다. 순서와 점검은 [demo-checklist.md](demo-checklist.md)
 - `SUPABASE_DB_PASSWORD`는 클라우드 환경에 없다. 로컬 터미널에서 `supabase db push`를 쓸 때만 `.env.local`에 넣는다.
 - 로컬 터미널에서는 같은 이름을 `.env.local`에 넣는다(`.gitignore`).
-- Vercel에는 `NEXT_PUBLIC_` 2개만 넣는다. Preview·Production 모두 dev 값, MS9에서 Production만 demo 값으로 바꾼다.
+- Vercel에는 `NEXT_PUBLIC_` 2개만 넣는다. Preview·Production 모두 dev 값, MS9에서 Production만 demo 값으로 바꾼다. `NEXT_PUBLIC_` 값은 빌드할 때 들어가므로 바꾼 뒤 Production을 Redeploy해야 운영 주소에 반영된다. 발표 DB에 시드를 먼저 넣고 바꾼다.
 - 네트워크: 클라우드 환경은 `*.supabase.co`, `*.supabase.com`과 패키지 관리자만 허용한다. 다른 주소가 막히면 우회하지 말고 PM에게 허용할 도메인 이름을 알려 준다.
 
 **마이그레이션**: Docker(로컬 Supabase)는 쓰지 않는다. SQL은 `supabase/migrations/`에 파일로 남긴다. 클라우드 세션은 HTTP/HTTPS로만 나가므로(Claude Code 공식 문서, 2026-10-13 시험에서 80·443 외 포트 막힘) Postgres 직접 접속인 `supabase db push`는 기대하지 않는다. 기본 방법은 Supabase Management API(HTTPS `api.supabase.com`, `SUPABASE_ACCESS_TOKEN`)로 원격 dev에 적용하는 것이다. SP5에서 정한 방법: `npm run db:push`(`scripts/db-push.mts`)가 `POST /database/query`로 파일 하나를 트랜잭션 하나로 적용하고, 같은 트랜잭션에서 `supabase_migrations.schema_migrations`에 파일 이름의 버전·이름을 남긴다. 적용 기록용 엔드포인트(`POST /database/migrations`)는 버전을 적용 시각으로 새로 붙여 파일 버전과 달라지고(Supabase CLI가 같은 파일을 다시 적용하려 함), API로 되돌리기도 막혀 있어(production 브랜치) 쓰지 않는다. 막히면 ② 대시보드 SQL 편집기 ③ PM의 로컬 터미널(`supabase link` + `db push`, `SUPABASE_DB_PASSWORD`) 순서이고, 기록 방식이 CLI와 같아서 ③으로 바꿔도 이미 적용한 파일을 다시 적용하지 않는다. 타입 생성은 `npm run db:types`(`GET /types/typescript`). 자세한 규칙은 AGENTS.md "보안과 환경".
@@ -241,7 +242,9 @@ erDiagram
 
 **지역 데이터**: 공공데이터포털 "국토교통부_전국 법정동" CSV(https://www.data.go.kr/data/15063424/fileData.do)에서 시·군·구만 뽑은 `scripts/regions.mts`(시·도 16개, 시·군·구 256곳, 2026-07-29 기준, MS6). 다시 만들 때는 파일을 내려받아 `node scripts/build-regions.mts <CSV 경로>`를 돌린다(CSV는 저장소에 넣지 않음). 시·군·구 행 = 법정동코드 끝 5자리가 00000이고 읍면동명이 빈 행, 코드는 앞 5자리. 일반구가 있는 시(수원시 등 13곳)는 시 행을 빼고 "수원시 영통구"처럼 구로 둔다. MS1~MS5에는 서울 25개 구 + 다른 시·도 대표 1곳씩(42곳)이었다.
 
-**테스트**: E2E는 시드를 넣은 dev 프로젝트를 대상으로 돌린다. main에 합치기 전에 전체 E2E를 실행한다(GitHub Actions 자동 실행은 Should).
+**테스트**: E2E는 시드를 넣은 dev 프로젝트를 대상으로 돌린다. main에 합치기 전에 전체 E2E를 실행한다(GitHub Actions 자동 실행은 Should). 발표 DB에는 E2E를 돌리지 않는다(테스트가 데이터를 만들고 지움).
+
+**운영 점검**: `npm run test:smoke`(`playwright.smoke.config.ts`, `tests/smoke/`)는 운영 주소(또는 `PLAYWRIGHT_BASE_URL`)를 열고 로그인만 해서 데이터를 바꾸지 않는다. 로그인 쿠키 이름(`sb-<ref>-auth-token`)의 프로젝트 ref를 dev 주소와 비교해 운영 주소가 발표 DB를 보는지 확인하고(`SMOKE_DB=dev`면 dev인지), 시드 그대로의 시연 시작 상태인지 본다. Vercel 미리보기는 Vercel 로그인이 필요해 클라우드에서 열 수 없다.
 
 ## 8. 기술 위험
 

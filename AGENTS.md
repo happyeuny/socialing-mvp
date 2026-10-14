@@ -33,6 +33,7 @@
 | `npm run dev` | 로컬 실행 |
 | `npm run build` / `npm run lint` | 빌드, 린트 (PR마다 통과) |
 | `npm run test:e2e` | Playwright E2E (시드한 dev 프로젝트 대상) |
+| `npm run test:smoke` | 운영 주소 읽기 점검 (데이터를 바꾸지 않음, 어느 DB를 보는지와 시연 시작 상태, [docs/demo-checklist.md](docs/demo-checklist.md)) |
 | `npm run seed` | 데모 데이터 삭제 후 다시 넣기 (secret 키 사용) |
 | `npm run db:push` | `supabase/migrations`에서 아직 적용하지 않은 파일을 원격 dev에 적용 (Management API). `-- --dry-run`은 목록만 |
 | `npm run db:types` | DB 타입 생성 → `lib/supabase/database.types.ts` (Management API) |
@@ -73,7 +74,7 @@ Next.js 16.3.x (App Router) · React 19 · TypeScript 6.0 · Supabase (Postgres,
 - Supabase 키는 새 방식만 쓴다: 앱은 publishable 키(`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`), 시드는 secret 키(`SUPABASE_SECRET_KEY`). 옛 `anon`·`service_role` 키와 그 이름은 쓰지 않는다(2026년 말 폐지 예정).
 - `SUPABASE_SECRET_KEY`는 `scripts/seed.mts`에서만 쓴다. `app/`, `components/`, `lib/`에서 import하지 않는다. secret 키는 브라우저에서 거부된다(401).
 - `.env*.local`은 커밋하지 않는다. **이 저장소는 공개 상태다.**
-- 클라우드 환경에는 dev(`socialing-mvp`) 키만 있다. 발표용 `socialing-demo`는 PM이 MS9에서 직접 다룬다.
+- 클라우드 환경에는 dev(`socialing-mvp`) 키만 있다. 발표용 `socialing-demo`의 값은 GitHub 저장소 Secrets와 Vercel Production에만 있고, 마이그레이션·시드는 GitHub Actions **발표 DB 준비**(버튼으로만 실행)가 한다. 운영 주소가 발표 DB를 보는 동안 main에 새 마이그레이션을 합치면 병합 직후 이 작업을 돌린다([docs/demo-checklist.md](docs/demo-checklist.md)).
 - Docker는 없다. 클라우드 세션은 HTTPS로만 나가므로 Postgres 직접 접속(`supabase db push`)은 쓰지 않는다. 마이그레이션은 Management API(`api.supabase.com`, `SUPABASE_ACCESS_TOKEN`)로 원격 dev에 적용한다. 토큰은 dev 프로젝트로 범위를 줄인 것이라 권한이 모자라면 우회하지 말고 PM에게 필요한 권한 이름을 알려 준다.
 - **정한 방법 (SP5)**: `npm run db:push`가 `POST /v1/projects/{ref}/database/query`로 파일 하나를 트랜잭션 하나로 적용하고, 같은 트랜잭션에서 `supabase_migrations.schema_migrations`에 **파일 이름의 버전**을 기록한다. 실패하면 SQL과 기록이 함께 취소된다. 파일 이름은 `<14자리 버전>_<이름>.sql`(Supabase CLI 규칙), 파일 안에 `begin`/`commit`을 쓰지 않는다. 타입은 `npm run db:types`(`GET /types/typescript`). Supabase CLI와 Docker는 필요 없다. 클라우드 밖에서는 같은 이름의 변수를 `.env.local`에 넣고 같은 명령을 쓴다(Node 22.18 이상).
 
