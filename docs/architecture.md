@@ -97,6 +97,8 @@ erDiagram
 | `status_tag` | 꼬리표 `closed`(신청 마감) / `full`(정원 마감) / null |
 | `closed_reason` | 신청할 수 없는 이유. spec 8.4의 2·13줄 순서로 `host_canceled` / `started`(소셜링 일시 지남) / `not_open`(종료) / `deadline` / `full`, 신청 가능하면 null |
 
+탐색 필터(MS6, spec M3)는 DB가 아니라 `lib/explore-filter.ts`가 거른다. P01 서버 컴포넌트가 현재 소셜링(`listExploreSocialings`: 카드 칸 + `venue_id`·`category_is_party`·`region_sido`)과 필터 목록(`getFilterCatalog`: 카테고리·스터디지점·지역)을 읽고, 주소 값(`parseExploreFilter`)으로 거른다(`filterSocialings`). 필터 시트의 "소셜링 N개 보기"도 같은 함수로 센다. 날짜는 Asia/Seoul 기준(`dateFilterRange`). 지역 코드(2자리 시·도, 5자리 시·군·구)는 `regions` 이름으로 바꿔 스터디지점·외부 장소 모두와 맞춘다.
+
 뷰는 `security_invoker`라 보는 사람 권한으로 읽는다. 비로그인은 applications를 못 읽으므로 참여 확정 인원만 SECURITY DEFINER 함수 `socialing_accepted_count(socialing_id)`가 숫자로 돌려준다. 누가 신청했는지는 이 경로로 나가지 않는다.
 
 "나" 기준 읽기는 뷰 두 개다(MS3). 관리 화면(MS4)은 그중 `my_hosted_socialings`에 칸을 더하고 신청자 목록 뷰를 하나 더 쓴다. 둘 다 `socialing_summaries`의 칸을 그대로 두고 칸을 더하며, `security_invoker`이고 로그인한 사람만 읽는다. 상세 아래 영역(spec 8.4)과 내 소셜링(P06)이 같이 쓴다.
@@ -155,7 +157,7 @@ erDiagram
 /app                      화면 (라우트는 spec 8.2 주소 그대로)
   (tabs)/                 메인 탭 화면 묶음. layout.tsx가 header-main + tab-bar를 둔다 (주소에는 안 나타남)
     page.tsx              P00 홈
-    explore/              P01 탐색
+    explore/              P01 탐색 (page + party-toggle-row: 파티·사교 숨기기)
     reviews/              P10 인증 후기
     me/                   P06 내 소셜링 (page: 닉네임·로그아웃·top-tabs, applied-socialings·hosted-socialings: 탭 내용)
   login/  signup/         P04 · P05 (page.tsx + 폼 클라이언트 컴포넌트). 하위 화면은 각자 header-sub
@@ -177,7 +179,8 @@ erDiagram
                           manage-summary, progress-steps, manage-status-actions(상태 버튼과 O04),
                           segmented(건수 탭), applicant-row, applicant-actions(승인·거절과 O04),
                           textarea, question-block(비공개 질문 예/아니오), review-summary,
-                          host-stats(상세 호스트 기록, 기록만 실패하면 그 칸만 다시 시도)
+                          host-stats(상세 호스트 기록, 기록만 실패하면 그 칸만 다시 시도),
+                          toggle(줄 전체가 스위치)
 /lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)
 /lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). auth.ts, applications.ts(신청·신청 취소),
                           manage.ts(승인·거절, 확정·종료·호스트 취소), reviews.ts(후기 올리기)
@@ -188,10 +191,11 @@ erDiagram
 /lib/in-app-history.ts    머리글 뒤로 버튼: 앱 안 이전 화면이 없으면 홈 (spec 8.7)
 /lib/queries              읽기 함수. viewer.ts(지금 보는 사람, 닉네임은 로그인 토큰에서), socialings.ts(socialing_summaries 뷰),
                           my-socialings.ts("나" 기준 뷰: 상세 아래 영역의 보는 사람, 내 소셜링 두 탭 목록),
-                          catalog.ts(카테고리·스터디지점), reviews.ts(인증 후기),
+                          catalog.ts(카테고리·스터디지점, 탐색 필터 목록), reviews.ts(인증 후기),
                           manage.ts(P11: my_hosted_socialings 관리 칸, hosted_socialing_applicants),
                           host-record.ts(get_host_record. 상세가 본문과 따로 읽는다)
 /lib/format               날짜(Asia/Seoul)·금액 표시
+/lib/explore-filter.ts    탐색 필터: 주소 값 읽기·만들기, 날짜 범위(Asia/Seoul), 거르기 (목록과 필터 시트가 같이 씀)
 /lib/simulated-state.ts   화면 상태 흉내 `?_state=empty|error|loading|partial` (운영 주소에서는 무시, decisions.md).
                           partial = 묶음 하나만 실패: 홈은 최근 인증 후기, 상세는 호스트 기록
 /supabase/migrations      테이블·enum·RLS·함수 SQL (파일 하나 = 변경 하나)
