@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type APIRequestContext } from "@playwright/test";
-import { runQuery } from "../../scripts/lib/management-api.mts";
 import {
   addApplication,
   addReview,
   apiHeaders,
   createFixtureSocialing,
   deleteFixtureSocialings,
+  reviewsOf,
   rpc,
   signIn,
   supabaseUrl,
@@ -52,15 +52,6 @@ async function uploadPhoto(request: APIRequestContext, accessToken: string, fold
   });
   expect(response.status(), "사진 올리기").toBe(200);
   return path;
-}
-
-async function reviewsOf(socialingId: number) {
-  return runQuery<{ body: string; photo_path: string | null; members_match: boolean; extra_money: boolean; content_match: boolean }>(`
-    select r.body, r.photo_path, c.members_match, c.extra_money, c.content_match
-    from public.reviews r left join public.review_checks c on c.review_id = r.id
-    where r.socialing_id = ${socialingId}
-    order by r.id;
-  `);
 }
 
 test.describe("MS5 create_review", () => {

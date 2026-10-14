@@ -398,21 +398,21 @@ components:
 
 **signup-intro** — 가입(P05) 맨 위. 왼쪽에 라벨 알약 "새로운 여정"(높이 24, 모서리 full, primary-soft 바탕, primary-strong 글자 label)과 그 아래 title-lg "함께할 문화 메이트를 찾아요", 오른쪽에 48px 장식 아이콘 상자(surface, border-default 1px, 모서리 lg, 선 아이콘 primary-strong). 로그인(P04)은 맨 위에 안내 한 줄(body-md, text-secondary) "로그인하면 보던 화면으로 돌아가요"만 둔다.
 
-**textarea** — 최소 높이 120, 안쪽 여백 14·16, 오른쪽 아래 글자 수.
+**textarea** — 위에 라벨(title-md, text-primary, 시안 P09 "후기"), 최소 높이 120, 안쪽 여백 14·16, 글 body-long. 칸 아래 오른쪽에 글자 수(body-sm). 글자 수는 앞뒤 공백·줄바꿈을 뺀다.
 
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
-| textarea/normal | text-field/default와 같은 테두리, 글자 수 text-muted "120 / 500 · 10자 이상" | 후기 글, 소셜링 소개 |
-| textarea/error | danger 테두리 1.5px, 글자 수 danger "520 / 500" | 10자 미만이거나 500자 초과 |
+| textarea/normal | text-field/default와 같은 테두리, 글자 수 text-muted "120 / 500 · 10자 이상". 아직 안 썼을 때("0 / 500 · 10자 이상")도 normal | 후기 글, 소셜링 소개 |
+| textarea/error | danger 테두리 1.5px, 글자 수 danger "5 / 500 · 10자 이상" 또는 "520 / 500" | 1~9자이거나 500자 초과 |
 
-**photo-picker** — 높이 96, 모서리 lg. 사진은 1장.
+**photo-picker** — 96px 정사각, 모서리 lg. 사진은 1장. 위에 라벨 "사진"(title-md) + "선택 · 1장"(body-sm, text-secondary), 아래 도움말(body-sm, text-secondary) "사진을 올리지 못해도 쓴 글은 그대로 남아요" (시안 P09·P07).
 
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
-| photo-picker/empty | surface 바탕, border-default 점선 1.5px, + 아이콘 "사진 선택 · 1장" | 사진 고르기 전 |
-| photo-picker/selected | 썸네일 + 지우기 X | 사진 고른 뒤 |
-| photo-picker/uploading | primary-soft 바탕, primary-strong 글자, 진행 막대 | 올리는 중 |
-| photo-picker/failed | danger-soft 바탕, danger-border-soft 테두리, "사진을 올리지 못했어요" + sm 버튼 "다시 고르기" · "사진 없이 올리기" | 올리기 실패 (글은 그대로 올릴 수 있음) |
+| photo-picker/empty | surface 바탕, border-default 점선 1.5px, + 아이콘 위·"사진" 아래(body-sm, text-secondary). 버튼 이름 "사진 선택 · 1장" | 사진 고르기 전 |
+| photo-picker/selected | 96px 썸네일 + 오른쪽 위 지우기 X | 사진 고른 뒤 |
+| photo-picker/uploading | primary-soft 바탕, primary-strong 글자 "올리는 중…", 진행 막대 | 올리는 중 |
+| photo-picker/failed | 전체 폭(최소 높이 96), danger-soft 바탕, danger-border-soft 테두리, "사진을 올리지 못했어요" + sm 버튼 "다시 고르기" · "사진 없이 올리기" | 올리기 실패 (글은 그대로 올릴 수 있음) |
 
 **칩과 선택 부품**
 
@@ -423,9 +423,9 @@ components:
 | choice-chip/off | surface 바탕, text-secondary, border-default 1px | 여러 개 고르는 칩 (카테고리) |
 | choice-chip/on | primary-soft 바탕, primary-strong 글자와 테두리 1.5px | 고른 칩 |
 | segmented/date-filter/selected | surface-muted 틀(모서리 md, 높이 40), 고른 칸은 surface + border-default | 날짜 하나 고르기 "전체 · 오늘 · 이번 주 · 이번 주말" |
-| segmented/binary/unanswered | surface-muted 틀(높이 44), 고른 칸 없음 | 비공개 질문 예/아니오, 아직 답 안 함 |
-| segmented/binary/selected | 고른 칸 surface + text-primary 테두리 1.5px | 예 또는 아니오를 고름 |
-| question-block/unanswered | 질문 글(body-md, text-primary) + 아래 segmented/binary/unanswered, 묶음 사이 16 | 후기 쓰기(P09)의 비공개 질문 3개 |
+| segmented/binary/unanswered | 흰 버튼 두 칸 "예" · "아니오"(surface, border-default 1px, 모서리 lg, 높이 48, body-lg, 사이 8), 고른 칸 없음. 회색 질문 상자 안에 놓여 틀은 따로 없다 (시안 P09) | 비공개 질문 예/아니오, 아직 답 안 함 |
+| segmented/binary/selected | 고른 칸 text-primary 테두리 1.5px + 굵은 글자 | 예 또는 아니오를 고름 |
+| question-block/unanswered | 질문 글(body-md, text-primary) + 아래 8 segmented/binary/unanswered, 묶음 사이 20 | 후기 쓰기(P09)의 비공개 질문 3개 |
 | question-block/answered | 질문 글 + segmented/binary/selected | 답한 질문 |
 | segmented/with-counts/selected | 고른 칸 글자 primary-strong, 나머지 text-secondary | 소셜링 관리(P11) 신청자 탭 "승인 대기 2 · 참여 확정 4 · 거절·취소 1" |
 | toggle/off | toggle-off 바탕, 흰 손잡이, 48×28 | "파티·사교 숨기기" 꺼짐 (기본) |
@@ -504,6 +504,7 @@ components:
 | host-stats/ratio-hidden | normal과 같고 소개 일치 칸만 "응답 5건 이상부터 보여요" | 응답 5건 미만 |
 | host-stats/load-failed | "기록을 불러오지 못했어요" + text-link "다시 시도" | 기록만 실패 (상세와 신청은 그대로 동작) |
 | manage-summary/default | surface, border-default 1px, 모서리 xl, 여백 20. status-badge(+status-tag), 제목(title-lg), "10/14(화) 오후 7:30 · 스터디지점 강남점 · 호스트 승인"(body-md, text-secondary), "참가자 **4/8명** · 스태프 1명 · 승인 대기" + count-pill(body-md, text-primary. 스태프는 있을 때, 승인 대기는 1건 이상일 때) | 소셜링 관리(P11) 맨 위 요약 (시안) |
+| review-summary/default | manage-summary/default와 같은 카드. status-badge "종료" + application-chip "참여 확정", 제목(title-lg), "10/11(토) 오전 10:00 · 스터디지점 홍대점 · 호스트 도현"(body-md, text-secondary) | 후기 쓰기(P09) 맨 위 요약 (시안) |
 | manage-status-actions/recruiting | button/primary/lg "확정하기"(전체 폭) + 설명 body-sm text-secondary, 그 아래 button/secondary/md "수정" · button/danger/md "호스트 취소"(반씩), 그 아래 막힌 button/primary/lg "종료하기" + 이유. 막히면 버튼 disabled + 이유 한 줄 | 소셜링 관리(P11) 진행 단계 아래, 모집중 (시안) |
 | manage-status-actions/confirmed | "종료하기"(일시 전이면 disabled + "소셜링 일시가 지나야 종료할 수 있어요") + "수정" · "호스트 취소" | 확정한 뒤 |
 | manage-status-actions/closed | 버튼 대신 notice-box "종료한 소셜링이에요 · 참여자가 후기를 쓸 수 있어요" 또는 "호스트 취소한 소셜링이에요" | 종료·호스트 취소 뒤 |
@@ -518,7 +519,7 @@ components:
 | info-list/default | 라벨·값 행, 행 사이 border-divider 1px. 소셜링 일시 · 신청 마감 · 장소 · 총 참가비 · 모집 방식 · 인원("참가자 4/8명 · 스태프 1명" + "스태프는 정원에 세지 않아요") | 상세 정보 |
 | section-header/default | 제목 title-md, 오른쪽 text-link "전체 보기 ›", 아래 기준 문구 body-sm text-secondary | 홈·목록 묶음 머리 ("기준: 가까운 일시 순") |
 | notice-box/feed-criteria | surface-muted 바탕, text-secondary, 모서리 lg, 여백 14·16 | 호스트 승인 기준 등 안내 |
-| notice-box/lock-privacy | feed-criteria + 자물쇠 아이콘 | "개별 응답은 호스트를 포함해 누구에게도 보이지 않아요" |
+| notice-box/lock-privacy | surface-muted 바탕, 모서리 xl, 여백 20. 자물쇠 아이콘 + "비공개 확인 질문"(title-md), 안내(body-sm, text-secondary) "개별 응답은 호스트를 포함해 누구에게도 보이지 않아요. 합계만 호스트 기록에 쓰여요.", 그 아래 question-block 3개 (시안 P09) | 후기 쓰기(P09)의 비공개 질문 |
 
 ### C3 탐색과 피드백
 
@@ -572,6 +573,8 @@ components:
 | apply-bar/closed-after-application | 10 | application-chip/rejected 또는 withdrawn + 신청할 수 없는 이유(예: "신청 마감 일시가 지나 다시 신청할 수 없어요") + text-link "다른 소셜링 보기 ›" |
 | apply-bar/apply | 11, 12 | 모집 방식 안내 + primary "신청하기". 호스트 승인: "신청하면 호스트가 승인한 뒤 참여가 확정돼요". 선착순: "신청하면 바로 참여가 확정돼요" |
 | apply-bar/closed | 13 | button/primary/disabled + 이유 + text-link "다른 소셜링 보기 ›". 버튼·이유: "정원 마감" / "참여 확정 인원이 정원에 찼어요", "신청 마감" / "신청 마감 일시가 지났어요", "지난 소셜링" / "소셜링 일시가 지났어요" |
+
+후기 쓰기(P09)의 아래 고정 영역도 같은 모양(위 공통)을 쓴다: 안내 한 줄 + primary "후기 올리기". 안내는 막힌 이유 하나("후기를 10자 이상 써 주세요" → "후기는 500자까지 쓸 수 있어요" → "세 질문에 모두 답하면 올릴 수 있어요" → "사진을 올리는 중이에요"), 모두 되면 "올리면 바로 공개돼요". 올리기 실패면 그 자리에 오류 문구(danger)와 버튼 "다시 시도".
 
 ### 시안과 다르게 정한 것
 

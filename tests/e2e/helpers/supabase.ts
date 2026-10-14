@@ -172,6 +172,22 @@ export async function addReview(
   `);
 }
 
+/** 소셜링의 인증 후기와 비공개 응답 (DB에서 바로 읽는다. 앱에서는 비공개 응답을 누구도 읽을 수 없다) */
+export async function reviewsOf(socialingId: number) {
+  return runQuery<{
+    body: string;
+    photo_path: string | null;
+    members_match: boolean;
+    extra_money: boolean;
+    content_match: boolean;
+  }>(`
+    select r.body, r.photo_path, c.members_match, c.extra_money, c.content_match
+    from public.reviews r left join public.review_checks c on c.review_id = r.id
+    where r.socialing_id = ${socialingId}
+    order by r.id;
+  `);
+}
+
 /** 테스트 소셜링의 제목 ("[E2E] 테스트 소셜링 …") */
 export async function titleOf(socialingId: number): Promise<string> {
   const rows = await runQuery<{ title: string }>(`select title from public.socialings where id = ${socialingId};`);

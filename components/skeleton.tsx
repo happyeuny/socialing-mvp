@@ -105,3 +105,26 @@ export function SkeletonReviewList() {
     </div>
   );
 }
+
+/** 후기 쓰기(P09) 로딩: 소셜링 요약 카드 + 글 칸 + 사진 칸 + 질문 상자 */
+export function SkeletonReviewWrite() {
+  return (
+    <div role="status" aria-busy className="flex flex-col gap-xl px-page-x pt-lg motion-safe:animate-pulse">
+      <span className="sr-only">불러오는 중</span>
+      <div className="flex flex-col gap-xs rounded-xl border border-border-default bg-surface p-lg">
+        <Bar className="h-6 w-32" />
+        <Bar className="h-6 w-4/5" />
+        <Bar className="h-5 w-3/5" />
+      </div>
+      <div className="flex flex-col gap-xs">
+        <Bar className="h-5 w-12" />
+        <Bar className="h-30 w-full" />
+      </div>
+      <div className="flex flex-col gap-xs">
+        <Bar className="h-5 w-24" />
+        <Bar className="size-24" />
+      </div>
+      <Bar className="h-40 w-full" />
+    </div>
+  );
+}

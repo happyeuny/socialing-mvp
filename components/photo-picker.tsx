@@ -1,12 +1,13 @@
 "use client";
 
-import { ImagePlus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/button";
 import { compressPhoto, PhotoDecodeError } from "@/lib/photos/compress";
 import { createClient } from "@/lib/supabase/client";
 
-// DESIGN.md photo-picker. 사진 1장을 고르면 브라우저에서 1MB 이하로 줄여 Storage의 `<사용자 id>/` 폴더에 바로 올린다.
+// DESIGN.md photo-picker. 96px 정사각 "+ 사진"(시안 P07·P09). 사진 1장을 고르면 브라우저에서 1MB 이하로 줄여
+// Storage의 `<사용자 id>/` 폴더에 바로 올린다.
 // 올리기에 실패해도 폼의 다른 입력은 그대로이고, 사진 없이 제출할 수 있다 (spec Q4, 8.6 P09).
 // 폼에는 올린 경로가 숨은 칸(name)으로 들어간다. 실패하거나 지우면 빈 값이다.
 
@@ -34,11 +35,13 @@ type PhotoPickerProps = {
   onChange?: (photo: UploadedPhoto | null) => void;
   /** "사진 없이 올리기"를 눌렀을 때 (사진 칸은 비워진다) */
   onSkip?: () => void;
+  /** 올리는 중인지 (올리는 동안 폼 제출을 막을 때) */
+  onUploadingChange?: (uploading: boolean) => void;
 };
 
 const EXTENSIONS: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
-export function PhotoPicker({ bucket, userId, name, onChange, onSkip }: PhotoPickerProps) {
+export function PhotoPicker({ bucket, userId, name, onChange, onSkip, onUploadingChange }: PhotoPickerProps) {
   const [state, setState] = useState<PickerState>({ kind: "empty" });
   const inputRef = useRef<HTMLInputElement>(null);
   const previewUrl = state.kind === "selected" ? state.previewUrl : null;
@@ -52,6 +55,7 @@ export function PhotoPicker({ bucket, userId, name, onChange, onSkip }: PhotoPic
   function update(next: PickerState) {
     setState(next);
     onChange?.(next.kind === "selected" ? next.photo : null);
+    onUploadingChange?.(next.kind === "uploading");
   }
 
   async function onPick(event: React.ChangeEvent<HTMLInputElement>) {
@@ -102,21 +106,22 @@ export function PhotoPicker({ bucket, userId, name, onChange, onSkip }: PhotoPic
       {state.kind === "empty" ? (
         <button
           type="button"
+          aria-label="사진 선택 · 1장"
           onClick={() => inputRef.current?.click()}
-          className="flex h-24 w-full items-center justify-center gap-xs rounded-lg border-[1.5px] border-dashed border-border-default bg-surface text-body-md text-text-secondary"
+          className="flex size-24 flex-col items-center justify-center gap-xxs rounded-lg border-[1.5px] border-dashed border-border-default bg-surface text-body-sm text-text-secondary"
         >
-          <ImagePlus className="size-5" aria-hidden />
-          사진 선택 · 1장
+          <Plus className="size-6" aria-hidden />
+          사진
         </button>
       ) : null}
 
       {state.kind === "uploading" ? (
         <div
           role="status"
-          className="flex h-24 w-full flex-col items-center justify-center gap-xs rounded-lg bg-primary-soft px-md text-body-md text-primary-strong"
+          className="flex size-24 flex-col items-center justify-center gap-xs rounded-lg bg-primary-soft px-xs text-body-sm text-primary-strong"
         >
-          사진 올리는 중…
-          <span className="h-1 w-full max-w-48 animate-pulse rounded-full bg-primary-strong" aria-hidden />
+          올리는 중…
+          <span className="h-1 w-full animate-pulse rounded-full bg-primary-strong" aria-hidden />
         </div>
       ) : null}
 
