@@ -406,6 +406,7 @@ components:
 | select-field/filled | 고른 값(text-primary) "강남점 ⌄", 아래 도움말 "서울 강남구 스터디지점" | 고른 뒤 (시안 P07) |
 | select-field/disabled | surface-muted 바탕, text-secondary 글자 | 앞 칸을 아직 안 고름 (시·도를 골라야 시·군·구) |
 | select-field/error | text-field/error와 같음 | "스터디지점을 골라 주세요" |
+| select-field/locked | text-field/locked와 같음 (surface-muted 바탕, 칸 아래 자물쇠 + 이유) | 수정 화면의 장소 |
 
 **signup-intro** — 가입(P05) 맨 위. 왼쪽에 라벨 알약 "새로운 여정"(높이 24, 모서리 full, primary-soft 바탕, primary-strong 글자 label)과 그 아래 title-lg "함께할 문화 메이트를 찾아요", 오른쪽에 48px 장식 아이콘 상자(surface, border-default 1px, 모서리 lg, 선 아이콘 primary-strong). 로그인(P04)은 맨 위에 안내 한 줄(body-md, text-secondary) "로그인하면 보던 화면으로 돌아가요"만 둔다.
 
@@ -423,9 +424,9 @@ components:
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
 | photo-picker/empty | surface 바탕, border-default 점선 1.5px, + 아이콘 위·"사진" 아래(body-sm, text-secondary). 버튼 이름 "사진 선택 · 1장" | 사진 고르기 전 |
-| photo-picker/selected | 96px 썸네일 + 오른쪽 위 지우기 X | 사진 고른 뒤 |
+| photo-picker/selected | 96px 썸네일 + 오른쪽 위 지우기 X | 사진 고른 뒤, 수정(P08)에서 저장된 사진("지금 대표 사진"). X로 지우고 다시 고르면 바뀐다 |
 | photo-picker/uploading | primary-soft 바탕, primary-strong 글자 "올리는 중…", 진행 막대 | 올리는 중 |
-| photo-picker/failed | 전체 폭(최소 높이 96), danger-soft 바탕, danger-border-soft 테두리, "사진을 올리지 못했어요" + sm 버튼 "다시 고르기" · "사진 없이 올리기"(등록은 "사진 없이 열기") | 올리기 실패 (글은 그대로 올릴 수 있음) |
+| photo-picker/failed | 전체 폭(최소 높이 96), danger-soft 바탕, danger-border-soft 테두리, "사진을 올리지 못했어요" + sm 버튼 "다시 고르기" · "사진 없이 올리기"(등록은 "사진 없이 열기", 수정은 "사진 없이 저장") | 올리기 실패 (글은 그대로 올릴 수 있음) |
 
 등록(P07)은 라벨이 "대표 사진 (선택) · 1장"(title-md) 한 줄이고, 도움말 "사진을 올리지 않아도 글은 그대로 남아요"가 사진 칸 오른쪽에 있다(시안 P07).
 
@@ -439,6 +440,7 @@ components:
 | choice-chip/off | surface 바탕, text-secondary, border-default 1px | 여러 개 고르는 칩 (필터 시트 카테고리). 하나만 고르는 칩(등록·수정의 카테고리, 시안 P07)도 같은 모양이고 라디오로 읽힌다 |
 | choice-chip/on | primary-soft 바탕, primary-strong 글자와 테두리 1.5px | 고른 칩 |
 | segmented/date-filter/selected | surface-muted 틀(모서리 md, 안쪽 4), 칸 높이 44(누르는 영역), 고른 칸은 surface + border-default + primary-strong 글자, 나머지 text-secondary | 날짜 하나 고르기 "전체 · 오늘 · 이번 주 · 이번 주말", 필터 시트 장소 갈래 "스터디지점 · 지역 (시·도 → 구)" (시안 O01), 등록·수정의 술 여부 "없음 · 있음"·장소 갈래·모집 방식 "선착순 · 호스트 승인" (시안 P07) |
+| segmented/date-filter/locked | 같은 틀, 고른 칸 글자 text-secondary, 나머지 text-disabled, 누를 수 없음. 아래 자물쇠 + 이유(text-field/locked와 같은 줄) | 수정 화면의 장소 갈래(참여 확정자가 있음), 모집 방식("승인 대기 신청이 있어 바꿀 수 없어요") |
 | segmented/binary/unanswered | 흰 버튼 두 칸 "예" · "아니오"(surface, border-default 1px, 모서리 lg, 높이 48, body-lg, 사이 8), 고른 칸 없음. 회색 질문 상자 안에 놓여 틀은 따로 없다 (시안 P09) | 비공개 질문 예/아니오, 아직 답 안 함 |
 | segmented/binary/selected | 고른 칸 text-primary 테두리 1.5px + 굵은 글자 | 예 또는 아니오를 고름 |
 | question-block/unanswered | 질문 글(body-md, text-primary) + 아래 8 segmented/binary/unanswered, 묶음 사이 20 | 후기 쓰기(P09)의 비공개 질문 3개 |

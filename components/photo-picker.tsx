@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 // Storage의 `<사용자 id>/` 폴더에 바로 올린다.
 // 올리기에 실패해도 폼의 다른 입력은 그대로이고, 사진 없이 제출할 수 있다 (spec Q4, 8.6 P09).
 // 폼에는 올린 경로가 숨은 칸(name)으로 들어간다. 실패하거나 지우면 빈 값이다.
+// 수정(P08)은 지금 사진(initialPhoto)을 보이고 시작한다. X로 지우고 새로 고르면 바꾼다.
 
 export type PhotoBucket = "socialing-photos" | "review-photos";
 
@@ -25,6 +26,8 @@ type PickerState =
   | { kind: "empty" }
   | { kind: "uploading" }
   | { kind: "selected"; photo: UploadedPhoto; previewUrl: string }
+  /** 이미 저장된 사진 (수정 P08) */
+  | { kind: "saved"; path: string; url: string }
   | { kind: "failed"; unreadable: boolean };
 
 type PhotoPickerProps = {
@@ -41,6 +44,8 @@ type PhotoPickerProps = {
   onFailedChange?: (failed: boolean) => void;
   /** 실패 칸의 두 번째 버튼 글자. 기본 "사진 없이 올리기"(P09) */
   skipLabel?: string;
+  /** 처음에 보일 저장된 사진 (경로와 공개 주소) */
+  initialPhoto?: { path: string; url: string } | null;
 };
 
 const EXTENSIONS: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
@@ -54,8 +59,11 @@ export function PhotoPicker({
   onUploadingChange,
   onFailedChange,
   skipLabel = "사진 없이 올리기",
+  initialPhoto,
 }: PhotoPickerProps) {
-  const [state, setState] = useState<PickerState>({ kind: "empty" });
+  const [state, setState] = useState<PickerState>(
+    initialPhoto ? { kind: "saved", path: initialPhoto.path, url: initialPhoto.url } : { kind: "empty" },
+  );
   const inputRef = useRef<HTMLInputElement>(null);
   const previewUrl = state.kind === "selected" ? state.previewUrl : null;
 
@@ -105,7 +113,13 @@ export function PhotoPicker({
 
   return (
     <div>
-      {name ? <input type="hidden" name={name} value={state.kind === "selected" ? state.photo.path : ""} /> : null}
+      {name ? (
+        <input
+          type="hidden"
+          name={name}
+          value={state.kind === "selected" ? state.photo.path : state.kind === "saved" ? state.path : ""}
+        />
+      ) : null}
       {/* accept="image/*": iPhone은 HEIC 사진을 JPEG로 바꿔서 넘겨 준다 */}
       <input
         ref={inputRef}
@@ -139,10 +153,14 @@ export function PhotoPicker({
         </div>
       ) : null}
 
-      {state.kind === "selected" ? (
+      {state.kind === "selected" || state.kind === "saved" ? (
         <div className="relative size-24">
-          {/* eslint-disable-next-line @next/next/no-img-element -- 방금 고른 사진의 브라우저 미리보기(blob 주소) */}
-          <img src={state.previewUrl} alt="고른 사진" className="size-24 rounded-lg object-cover" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- 방금 고른 사진의 브라우저 미리보기(blob 주소) 또는 저장된 사진 */}
+          <img
+            src={state.kind === "selected" ? state.previewUrl : state.url}
+            alt={state.kind === "selected" ? "고른 사진" : "지금 대표 사진"}
+            className="size-24 rounded-lg object-cover"
+          />
           <button
             type="button"
             aria-label="사진 지우기"

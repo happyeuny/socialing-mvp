@@ -13,7 +13,8 @@ import { NoticeBox } from "@/components/notice-box";
 import { ProgressSteps } from "@/components/progress-steps";
 import { SegmentedWithCounts } from "@/components/segmented";
 import { SkeletonManage } from "@/components/skeleton";
-import { withNotice } from "@/lib/notices";
+import { UrlNotice } from "@/components/url-notice";
+import { noticeMessage, withNotice } from "@/lib/notices";
 import { type Applicant, type ManagedSocialing, getManagePageData } from "@/lib/queries/manage";
 import { getViewer } from "@/lib/queries/viewer";
 import { withNext } from "@/lib/routes";
@@ -94,6 +95,8 @@ export default async function ManagePage({ params, searchParams }: Props) {
         }
       />
       <main className="flex flex-col gap-2xl px-page-x pt-lg pb-2xl">
+        {/* 수정(P08)에서 보낸 안내: "종료한 소셜링은 수정할 수 없어요" 등 (spec 8.7, screen-cases E06) */}
+        <UrlNotice message={noticeMessage(query.notice)} />
         <ManageSummary socialing={socialing} />
 
         <section aria-labelledby="manage-status" className="flex flex-col gap-md">

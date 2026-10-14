@@ -81,3 +81,67 @@ export async function getManagePageData(id: number): Promise<ManagePageData> {
     applicants: applicants.data as unknown as Applicant[],
   };
 }
+
+/** 소셜링 수정(P08) 양식에 채울 지금 값 (socialing_summaries) */
+export type EditableSocialing = Pick<
+  SocialingDetail,
+  | "id"
+  | "title"
+  | "description"
+  | "has_alcohol"
+  | "venue_type"
+  | "venue_name"
+  | "region_sido"
+  | "region_sigungu"
+  | "starts_at"
+  | "apply_deadline_at"
+  | "fee"
+  | "capacity"
+  | "staff_count"
+  | "join_type"
+  | "approval_criteria"
+  | "cover_photo_path"
+> & { category_id: number; venue_id: number };
+
+const EDITABLE_COLUMNS =
+  "id, title, description, category_id, has_alcohol, venue_id, venue_type, venue_name, region_sido, region_sigungu, " +
+  "starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, cover_photo_path";
+
+export type EditPageData =
+  | {
+      kind: "host";
+      socialing: EditableSocialing;
+      /** 수정할 수 없으면 이유: 종료 / 호스트 취소 */
+      closed: "completed" | "canceled" | null;
+      /** 잠금 기준 (spec M8 수정): 참여 확정이 있으면 일시·장소·참가비, 승인 대기가 있으면 모집 방식 */
+      acceptedCount: number;
+      pendingCount: number;
+    }
+  | { kind: "not-host" }
+  | { kind: "not-found" };
+
+export async function getEditPageData(id: number): Promise<EditPageData> {
+  const supabase = await createClient();
+  const [hosted, socialing] = await Promise.all([
+    supabase
+      .from("my_hosted_socialings")
+      .select("status, can_edit, accepted_count, pending_count")
+      .eq("id", id)
+      .maybeSingle(),
+    supabase.from("socialing_summaries").select(EDITABLE_COLUMNS).eq("id", id).maybeSingle(),
+  ]);
+  if (hosted.error) throw new Error(`수정할 소셜링을 불러오지 못했습니다: ${hosted.error.message}`);
+  if (socialing.error) throw new Error(`소셜링을 불러오지 못했습니다: ${socialing.error.message}`);
+
+  if (!socialing.data) return { kind: "not-found" };
+  if (!hosted.data) return { kind: "not-host" };
+  const { status, can_edit, accepted_count, pending_count } = hosted.data;
+  return {
+    kind: "host",
+    // 뷰의 칸은 생성된 타입에서 null 가능으로 나오지만, 위 칸은 테이블의 not null 칸이다
+    socialing: socialing.data as unknown as EditableSocialing,
+    closed: can_edit ? null : status === "completed" ? "completed" : "canceled",
+    acceptedCount: accepted_count ?? 0,
+    pendingCount: pending_count ?? 0,
+  };
+}

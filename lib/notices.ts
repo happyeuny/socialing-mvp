@@ -7,6 +7,9 @@ export const NOTICES = {
   "review-not-participant": "참여 확정자만 쓸 수 있어요",
   "review-not-completed": "호스트가 종료한 뒤 쓸 수 있어요",
   "review-done": "이미 후기를 썼어요",
+  // 종료·호스트 취소된 소셜링의 수정(P08) 주소 → 관리 (spec 8.7, screen-cases E06)
+  "edit-completed": "종료한 소셜링은 수정할 수 없어요",
+  "edit-canceled": "호스트 취소한 소셜링은 수정할 수 없어요",
 } as const;
 
 export type NoticeKey = keyof typeof NOTICES;

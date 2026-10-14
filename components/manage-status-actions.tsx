@@ -165,7 +165,7 @@ export function ManageStatusActions(props: Props) {
       {(props.canEdit || props.canCancel) && (
         <div className="flex gap-xs">
           {props.canEdit && (
-            // 소셜링 수정(P08)은 MS7에서 만든다
+            // 소셜링 수정(P08). 저장하면 이 화면으로 돌아와 "저장했어요"
             <Link
               href={`/socialings/${socialingId}/edit`}
               className={cn(buttonVariants({ variant: "secondary", size: "md" }), "flex-1")}
