@@ -133,6 +133,39 @@ export async function deleteFixtureSocialings(ids: number[]) {
   await runQuery(`delete from public.socialings where id in (${ids.join(", ")}) and title like '[E2E]%';`);
 }
 
+/**
+ * 등록 함수·화면 테스트가 만든 외부 장소를 지운다. 이름이 "[E2E]"로 시작하고 어느 소셜링도 쓰지 않는 장소만.
+ * 소셜링을 먼저 지운 뒤 부른다.
+ */
+export async function deleteTestVenues() {
+  await runQuery(`
+    delete from public.venues v
+    where v.type = 'external' and v.name like '[E2E]%'
+      and not exists (select 1 from public.socialings s where s.venue_id = v.id);
+  `);
+}
+
+/** 소셜링의 장소 (유형, 이름, 시·군·구 코드) */
+export async function venueOf(socialingId: number) {
+  const rows = await runQuery<{ venue_id: number; type: string; name: string; region_code: string }>(`
+    select v.id as venue_id, v.type, v.name, r.code as region_code
+    from public.socialings s
+    join public.venues v on v.id = s.venue_id
+    join public.regions r on r.id = v.region_id
+    where s.id = ${socialingId};
+  `);
+  return rows[0];
+}
+
+/** 스터디지점 이름 → venue id (시드: 강남점·홍대점·성수점) */
+export async function branchIdOf(name: string): Promise<number> {
+  const rows = await runQuery<{ id: number }>(
+    `select id from public.venues where type = 'branch' and name = ${sqlText(name)};`,
+  );
+  if (!rows[0]) throw new Error(`스터디지점 ${name}이 없습니다(npm run seed).`);
+  return rows[0].id;
+}
+
 /** 테스트 소셜링에 신청 행을 바로 넣고 id를 돌려준다. 함수로는 만들 수 없는 상태(거절, 일시 지난 신청 등)를 준비할 때 쓴다 */
 export async function addApplication(
   socialingId: number,

@@ -758,6 +758,54 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_socialing: {
+        Args: {
+          p_apply_deadline_at: string
+          p_approval_criteria: string
+          p_branch_id: number
+          p_capacity: number
+          p_category_id: number
+          p_cover_photo_path: string
+          p_description: string
+          p_fee: number
+          p_has_alcohol: boolean
+          p_join_type: Database["public"]["Enums"]["join_type"]
+          p_place_name: string
+          p_region_code: string
+          p_staff_count: number
+          p_starts_at: string
+          p_title: string
+        }
+        Returns: {
+          apply_deadline_at: string
+          approval_criteria: string | null
+          canceled_at: string | null
+          capacity: number
+          category_id: number
+          completed_at: string | null
+          confirmed_at: string | null
+          cover_photo_path: string | null
+          created_at: string
+          description: string
+          fee: number
+          has_alcohol: boolean
+          host_id: string
+          id: number
+          join_type: Database["public"]["Enums"]["join_type"]
+          staff_count: number
+          starts_at: string
+          status: Database["public"]["Enums"]["socialing_status"]
+          title: string
+          updated_at: string
+          venue_id: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "socialings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       decide_application: {
         Args: { p_application_id: number; p_approve: boolean }
         Returns: {
@@ -790,6 +838,55 @@ export type Database = {
       socialing_accepted_count: {
         Args: { p_socialing_id: number }
         Returns: number
+      }
+      update_socialing: {
+        Args: {
+          p_apply_deadline_at: string
+          p_approval_criteria: string
+          p_branch_id: number
+          p_capacity: number
+          p_category_id: number
+          p_cover_photo_path: string
+          p_description: string
+          p_fee: number
+          p_has_alcohol: boolean
+          p_join_type: Database["public"]["Enums"]["join_type"]
+          p_place_name: string
+          p_region_code: string
+          p_socialing_id: number
+          p_staff_count: number
+          p_starts_at: string
+          p_title: string
+        }
+        Returns: {
+          apply_deadline_at: string
+          approval_criteria: string | null
+          canceled_at: string | null
+          capacity: number
+          category_id: number
+          completed_at: string | null
+          confirmed_at: string | null
+          cover_photo_path: string | null
+          created_at: string
+          description: string
+          fee: number
+          has_alcohol: boolean
+          host_id: string
+          id: number
+          join_type: Database["public"]["Enums"]["join_type"]
+          staff_count: number
+          starts_at: string
+          status: Database["public"]["Enums"]["socialing_status"]
+          title: string
+          updated_at: string
+          venue_id: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "socialings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {
