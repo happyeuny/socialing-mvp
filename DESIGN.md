@@ -504,6 +504,9 @@ components:
 | host-stats/ratio-hidden | normal과 같고 소개 일치 칸만 "응답 5건 이상부터 보여요" | 응답 5건 미만 |
 | host-stats/load-failed | "기록을 불러오지 못했어요" + text-link "다시 시도" | 기록만 실패 (상세와 신청은 그대로 동작) |
 | manage-summary/default | surface, border-default 1px, 모서리 xl, 여백 20. status-badge(+status-tag), 제목(title-lg), "10/14(화) 오후 7:30 · 스터디지점 강남점 · 호스트 승인"(body-md, text-secondary), "참가자 **4/8명** · 스태프 1명 · 승인 대기" + count-pill(body-md, text-primary. 스태프는 있을 때, 승인 대기는 1건 이상일 때) | 소셜링 관리(P11) 맨 위 요약 (시안) |
+| manage-status-actions/recruiting | button/primary/lg "확정하기"(전체 폭) + 설명 body-sm text-secondary, 그 아래 button/secondary/md "수정" · button/danger/md "호스트 취소"(반씩), 그 아래 막힌 button/primary/lg "종료하기" + 이유. 막히면 버튼 disabled + 이유 한 줄 | 소셜링 관리(P11) 진행 단계 아래, 모집중 (시안) |
+| manage-status-actions/confirmed | "종료하기"(일시 전이면 disabled + "소셜링 일시가 지나야 종료할 수 있어요") + "수정" · "호스트 취소" | 확정한 뒤 |
+| manage-status-actions/closed | 버튼 대신 notice-box "종료한 소셜링이에요 · 참여자가 후기를 쓸 수 있어요" 또는 "호스트 취소한 소셜링이에요" | 종료·호스트 취소 뒤 |
 | progress-steps/current-recruiting | 모집중 → 확정 → 종료 세 점, 지금 단계만 text-primary 굵게 | 소셜링 관리(P11), 모집중. 상세에는 쓰지 않고 status-badge만 (시안) |
 | progress-steps/current-confirmed | 확정이 지금 단계 | 호스트가 확정한 뒤 |
 | progress-steps/done-ended | 종료까지 모두 지남 | 호스트가 종료한 뒤 |
@@ -586,6 +589,7 @@ components:
 | 신청 확인(O02) 요약이 "제목 · 일시" 한 줄 | 그 아래 "장소 · 총 참가비" 한 줄 더 | 결제 안내 바로 위에서 금액과 장소를 한 번 더 확인하게 (bottom-sheet/confirm-apply) |
 | 로그인(P04)·가입(P05) 머리글 오른쪽에 사람 아이콘 원 | header-sub/default(뒤로 + 제목)만 | 로그인 전 화면에 프로필 원이 있으면 이미 로그인된 것처럼 보임 |
 | 지난 소셜링(P02) 시안의 배지가 네모에 가깝고 모집중이 연한 하늘 바탕, 카드 안 호스트 줄 위에 구분선 | 모든 목록이 같은 status-badge(알약, 모집중은 흰 바탕 + 테두리)와 같은 socialing-card | 배지 모양은 10-13 결정, 카드는 화면마다 같게 |
+| 소셜링 관리(P11)에서 막힌 "종료하기"가 점선 테두리 회색 버튼 | 다른 막힌 버튼과 같은 button disabled(surface-muted 바탕, text-disabled 글자) + 아래 이유 한 줄 | 막힌 버튼 모양을 하나로. 이유는 글자로 보인다 |
 
 ## Do's and Don'ts
 

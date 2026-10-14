@@ -76,3 +76,59 @@ export async function decideApplication(
   revalidatePath("/me");
   return { ok: true };
 }
+
+// 상태 버튼 확정 · 종료 · 호스트 취소 (spec 8.8, screen-cases P11-01~06·18~20). 셋 다 O04를 거친 뒤 부른다.
+
+const socialingIdSchema = z.number().int().positive();
+
+// 함수 오류 코드 → 처리하지 못한 이유. 버튼은 뷰가 누를 수 있다고 한 때만 열리므로,
+// 여기 오는 것은 화면을 연 사이 일시가 지났거나 다른 화면에서 이미 처리한 경우다.
+const STATUS_REASONS: Record<string, string> = {
+  STARTED: "소셜링 일시가 지나 확정할 수 없어요",
+  NOT_STARTED: "소셜링 일시가 지나야 종료할 수 있어요",
+  INVALID_STATE: "이미 처리된 소셜링이에요",
+  INVALID_INPUT: "이미 처리된 소셜링이에요",
+};
+
+async function changeSocialingStatus(
+  fn: "confirm_socialing" | "complete_socialing" | "cancel_socialing",
+  socialingId: number,
+): Promise<ManageActionResult> {
+  const parsed = socialingIdSchema.safeParse(socialingId);
+  if (!parsed.success) return { ok: false, reason: STATUS_REASONS.INVALID_INPUT };
+  const managePath = `/socialings/${parsed.data}/manage`;
+  const detailPath = `/socialings/${parsed.data}`;
+
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getClaims();
+  if (!auth?.claims?.sub) redirect(withNext("/login", managePath));
+
+  const { error } = await supabase.rpc(fn, { p_socialing_id: parsed.data });
+  if (error) {
+    if (error.message === "NOT_AUTHENTICATED") redirect(withNext("/login", managePath));
+    if (error.message === "NOT_HOST") redirect(withNotice(detailPath, "host-only"));
+    const reason = STATUS_REASONS[error.message];
+    if (reason) return { ok: false, reason };
+    console.error(fn, error);
+    return { ok: false, retry: true };
+  }
+
+  // 상태 배지는 관리·상세뿐 아니라 홈·탐색·지난 소셜링·내 소셜링 목록에도 보인다
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+/** 확정: 모집중, 소셜링 일시 전 */
+export async function confirmSocialing(socialingId: number): Promise<ManageActionResult> {
+  return changeSocialingStatus("confirm_socialing", socialingId);
+}
+
+/** 종료: 확정, 소셜링 일시 뒤. 종료하면 참여 확정자가 인증 후기를 쓸 수 있다 */
+export async function completeSocialing(socialingId: number): Promise<ManageActionResult> {
+  return changeSocialingStatus("complete_socialing", socialingId);
+}
+
+/** 호스트 취소: 종료·호스트 취소 전. 신청 상태는 그대로 둔다(spec 3.3) */
+export async function cancelSocialing(socialingId: number): Promise<ManageActionResult> {
+  return changeSocialingStatus("cancel_socialing", socialingId);
+}
