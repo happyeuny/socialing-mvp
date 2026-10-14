@@ -384,7 +384,7 @@ components:
 | button/text-link/pressed | on-primary 글자 | 눌렀을 때 |
 | button/text-link/disabled | text-disabled 글자 | 누를 수 없을 때 |
 
-**text-field** — 위에 라벨(body-sm, text-secondary), 높이 48, 모서리 lg, 좌우 16.
+**text-field** — 위에 라벨(body-sm, text-secondary), 높이 48, 모서리 lg, 좌우 16. 등록·수정(P07·P08) 양식의 칸 라벨은 body-lg, text-primary(시안 P07)이고, 장소 묶음 안의 작은 칸("스터디지점", "시·도", "시·군·구", "장소 이름")만 기본 라벨이다.
 
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
@@ -395,6 +395,17 @@ components:
 | text-field/locked | surface-muted 바탕, text-secondary 글자, 자물쇠 아이콘 + 이유 | 수정 화면에서 "참여 확정자가 있어 바꿀 수 없어요" |
 | text-field/helper | 칸 아래 도움말(body-sm, text-muted). 오류가 나면 그 자리에 오류 이유가 대신 보인다 | 가입: "6자 이상", "2~12자 · 후기와 호스트 이름으로 보여요" |
 | text-field/password | 칸 오른쪽 안에 눈 아이콘 버튼(text-muted, 누르는 영역 44). 숨김이면 빗금 눈, 누르면 글자가 보이고 열린 눈. 버튼 이름은 "비밀번호 보기" / "비밀번호 숨기기" | 로그인·가입의 비밀번호 |
+| text-field/suffix | 칸 오른쪽 안에 단위 글자(body-lg, text-primary). 숫자 칸은 숫자 글자만 받고 천 단위 쉼표로 보인다 | 등록·수정의 총 참가비 "15,000 원" (시안 P07) |
+| text-field/datetime | 휴대폰 기본 날짜·시간 고르기(`datetime-local`). 글자는 왼쪽 정렬. 자리 글은 둘 수 없다 | 등록·수정의 소셜링 일시, 신청 마감 일시 |
+
+**select-field** — text-field와 같은 칸(높이 48, 모서리 lg, 좌우 16) 오른쪽 안에 ⌄ 아이콘(text-secondary). 누르면 휴대폰 기본 고르기 목록이 열린다. 오류·도움말은 text-field와 같다.
+
+| 이름 | 모양 | 쓰는 곳 |
+|---|---|---|
+| select-field/empty | 자리 글(text-muted) "시·도" | 아직 안 고름 |
+| select-field/filled | 고른 값(text-primary) "강남점 ⌄", 아래 도움말 "서울 강남구 스터디지점" | 고른 뒤 (시안 P07) |
+| select-field/disabled | surface-muted 바탕, text-secondary 글자 | 앞 칸을 아직 안 고름 (시·도를 골라야 시·군·구) |
+| select-field/error | text-field/error와 같음 | "스터디지점을 골라 주세요" |
 
 **signup-intro** — 가입(P05) 맨 위. 왼쪽에 라벨 알약 "새로운 여정"(높이 24, 모서리 full, primary-soft 바탕, primary-strong 글자 label)과 그 아래 title-lg "함께할 문화 메이트를 찾아요", 오른쪽에 48px 장식 아이콘 상자(surface, border-default 1px, 모서리 lg, 선 아이콘 primary-strong). 로그인(P04)은 맨 위에 안내 한 줄(body-md, text-secondary) "로그인하면 보던 화면으로 돌아가요"만 둔다.
 
@@ -402,8 +413,10 @@ components:
 
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
-| textarea/normal | text-field/default와 같은 테두리, 글자 수 text-muted "120 / 500 · 10자 이상". 아직 안 썼을 때("0 / 500 · 10자 이상")도 normal | 후기 글, 소셜링 소개 |
-| textarea/error | danger 테두리 1.5px, 글자 수 danger "5 / 500 · 10자 이상" 또는 "520 / 500" | 1~9자이거나 500자 초과 |
+| textarea/normal | text-field/default와 같은 테두리, 글자 수 text-muted "120 / 500 · 10자 이상". 아직 안 썼을 때("0 / 500 · 10자 이상")도 normal | 후기 글, 소셜링 소개("0 / 1000 · 20자 이상"), 승인 기준("0 / 200") |
+| textarea/error | danger 테두리 1.5px, 글자 수 danger "5 / 500 · 10자 이상" 또는 "520 / 500" | 1~9자이거나 500자 초과. 등록·수정은 올리기를 눌렀을 때 칸 아래 이유도 보인다 |
+
+등록·수정(P07·P08)의 textarea 라벨은 text-field 양식 라벨과 같다(body-lg, text-primary).
 
 **photo-picker** — 96px 정사각, 모서리 lg. 사진은 1장. 위에 라벨 "사진"(title-md) + "선택 · 1장"(body-sm, text-secondary), 아래 도움말(body-sm, text-secondary) "사진을 올리지 못해도 쓴 글은 그대로 남아요" (시안 P09·P07).
 
@@ -412,7 +425,9 @@ components:
 | photo-picker/empty | surface 바탕, border-default 점선 1.5px, + 아이콘 위·"사진" 아래(body-sm, text-secondary). 버튼 이름 "사진 선택 · 1장" | 사진 고르기 전 |
 | photo-picker/selected | 96px 썸네일 + 오른쪽 위 지우기 X | 사진 고른 뒤 |
 | photo-picker/uploading | primary-soft 바탕, primary-strong 글자 "올리는 중…", 진행 막대 | 올리는 중 |
-| photo-picker/failed | 전체 폭(최소 높이 96), danger-soft 바탕, danger-border-soft 테두리, "사진을 올리지 못했어요" + sm 버튼 "다시 고르기" · "사진 없이 올리기" | 올리기 실패 (글은 그대로 올릴 수 있음) |
+| photo-picker/failed | 전체 폭(최소 높이 96), danger-soft 바탕, danger-border-soft 테두리, "사진을 올리지 못했어요" + sm 버튼 "다시 고르기" · "사진 없이 올리기"(등록은 "사진 없이 열기") | 올리기 실패 (글은 그대로 올릴 수 있음) |
+
+등록(P07)은 라벨이 "대표 사진 (선택) · 1장"(title-md) 한 줄이고, 도움말 "사진을 올리지 않아도 글은 그대로 남아요"가 사진 칸 오른쪽에 있다(시안 P07).
 
 **칩과 선택 부품**
 
@@ -421,9 +436,9 @@ components:
 | filter-chip/default | surface 바탕, text-primary, border-default 1px, 높이 36, 모서리 full, "카테고리 ⌄" | 탐색 필터 칩 (값 없음) |
 | filter-chip/selected | primary-soft 바탕, primary-strong 글자와 테두리 1.5px, 고른 값 표시 "강남점 ⌄" | 값이 적용된 필터 칩 |
 | filter-chip/all | 지름 36 동그라미, surface 바탕, border-default 1px, 필터 아이콘(줄 3개)만 | 칩 줄 맨 앞 "전체 필터" (시안 P01). 칩은 모두 보이는 높이 36, 누르는 영역은 위아래로 넓혀 44 |
-| choice-chip/off | surface 바탕, text-secondary, border-default 1px | 여러 개 고르는 칩 (카테고리) |
+| choice-chip/off | surface 바탕, text-secondary, border-default 1px | 여러 개 고르는 칩 (필터 시트 카테고리). 하나만 고르는 칩(등록·수정의 카테고리, 시안 P07)도 같은 모양이고 라디오로 읽힌다 |
 | choice-chip/on | primary-soft 바탕, primary-strong 글자와 테두리 1.5px | 고른 칩 |
-| segmented/date-filter/selected | surface-muted 틀(모서리 md, 안쪽 4), 칸 높이 44(누르는 영역), 고른 칸은 surface + border-default + primary-strong 글자, 나머지 text-secondary | 날짜 하나 고르기 "전체 · 오늘 · 이번 주 · 이번 주말", 필터 시트 장소 갈래 "스터디지점 · 지역 (시·도 → 구)" (시안 O01) |
+| segmented/date-filter/selected | surface-muted 틀(모서리 md, 안쪽 4), 칸 높이 44(누르는 영역), 고른 칸은 surface + border-default + primary-strong 글자, 나머지 text-secondary | 날짜 하나 고르기 "전체 · 오늘 · 이번 주 · 이번 주말", 필터 시트 장소 갈래 "스터디지점 · 지역 (시·도 → 구)" (시안 O01), 등록·수정의 술 여부 "없음 · 있음"·장소 갈래·모집 방식 "선착순 · 호스트 승인" (시안 P07) |
 | segmented/binary/unanswered | 흰 버튼 두 칸 "예" · "아니오"(surface, border-default 1px, 모서리 lg, 높이 48, body-lg, 사이 8), 고른 칸 없음. 회색 질문 상자 안에 놓여 틀은 따로 없다 (시안 P09) | 비공개 질문 예/아니오, 아직 답 안 함 |
 | segmented/binary/selected | 고른 칸 text-primary 테두리 1.5px + 굵은 글자 | 예 또는 아니오를 고름 |
 | question-block/unanswered | 질문 글(body-md, text-primary) + 아래 8 segmented/binary/unanswered, 묶음 사이 20 | 후기 쓰기(P09)의 비공개 질문 3개 |
@@ -579,6 +594,8 @@ components:
 
 후기 쓰기(P09)의 아래 고정 영역도 같은 모양(위 공통)을 쓴다: 안내 한 줄 + primary "후기 올리기". 안내는 막힌 이유 하나("후기를 10자 이상 써 주세요" → "후기는 500자까지 쓸 수 있어요" → "세 질문에 모두 답하면 올릴 수 있어요" → "사진을 올리는 중이에요"), 모두 되면 "올리면 바로 공개돼요". 올리기 실패면 그 자리에 오류 문구(danger)와 버튼 "다시 시도".
 
+등록(P07)의 아래 고정 영역도 같은 모양이다: primary "소셜링 열기" 하나. 빈 칸·틀린 칸은 버튼을 막지 않고, 누르면 칸마다 이유를 보이고 첫 오류 칸으로 간다(spec 8.6). 사진을 올리는 중이면 위에 "사진을 올리는 중이에요"와 버튼 막힘, 열기 실패면 오류 문구(danger) "소셜링을 열지 못했어요. 연결을 확인하고 다시 시도해 주세요"와 버튼 "다시 시도".
+
 ### 시안과 다르게 정한 것
 
 시안(Figma)과 Stitch가 마지막으로 보낸 요약(2026-10-13)에서 아래는 일부러 따르지 않았다. 시안이 이렇게 보여도 이 문서대로 만든다.
@@ -595,6 +612,10 @@ components:
 | 신청 확인(O02) 요약이 "제목 · 일시" 한 줄 | 그 아래 "장소 · 총 참가비" 한 줄 더 | 결제 안내 바로 위에서 금액과 장소를 한 번 더 확인하게 (bottom-sheet/confirm-apply) |
 | 로그인(P04)·가입(P05) 머리글 오른쪽에 사람 아이콘 원 | header-sub/default(뒤로 + 제목)만 | 로그인 전 화면에 프로필 원이 있으면 이미 로그인된 것처럼 보임 |
 | 지난 소셜링(P02) 시안의 배지가 네모에 가깝고 모집중이 연한 하늘 바탕, 카드 안 호스트 줄 위에 구분선 | 모든 목록이 같은 status-badge(알약, 모집중은 흰 바탕 + 테두리)와 같은 socialing-card | 배지 모양은 10-13 결정, 카드는 화면마다 같게 |
+| 등록(P07) 머리글 오른쪽에 사람 아이콘 원 | header-sub/default(뒤로 + 제목)만 | 하위 화면은 모두 header-sub |
+| 등록(P07) 신청 마감 도움말 "소셜링 일시보다 앞이어야 해요" | "소셜링 일시와 같거나 앞이어야 해요" | 같은 시각도 된다 (spec 2장, DB 함수) |
+| 등록(P07) 일시 칸 자리 글 "예: 10/24(금) 오후 7:30" | text-field/datetime (휴대폰 기본 고르기, 자리 글 없음) | 날짜·시간 고르기 칸은 자리 글을 둘 수 없고, 고르기 목록이 형식을 맞춰 준다 |
+| 등록(P07) 모집 방식이 "호스트 승인"으로 골라져 있음, 승인 기준 자리 글 "함께할 멤버를…" | 처음은 선착순, 자리 글은 "함께할 참여자를…" | screen-cases P07-01 "빈 양식, 선착순", 용어는 "참여자" |
 | 소셜링 관리(P11)에서 막힌 "종료하기"가 점선 테두리 회색 버튼 | 다른 막힌 버튼과 같은 button disabled(surface-muted 바탕, text-disabled 글자) + 아래 이유 한 줄 | 막힌 버튼 모양을 하나로. 이유는 글자로 보인다 |
 
 ## Do's and Don'ts

@@ -168,4 +168,19 @@
   body {
     @apply bg-background font-sans text-body-md text-foreground antialiased;
   }
+  /* 제출 뒤 첫 오류 칸으로 갈 때 위 머리글(56)과 아래 고정 버튼 영역에 가리지 않게 */
+  input,
+  select,
+  textarea {
+    scroll-margin-top: 72px;
+    scroll-margin-bottom: 120px;
+  }
+  /* 날짜·시간 고르기 칸(P07·P08): iPhone이 칸을 기본 너비로 늘리거나 값을 가운데 두지 않게 */
+  input[type="datetime-local"] {
+    appearance: none;
+    min-width: 0;
+  }
+  input[type="datetime-local"]::-webkit-date-and-time-value {
+    text-align: left;
+  }
 }

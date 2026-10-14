@@ -1,7 +1,7 @@
 import type { FilterCatalog } from "@/lib/explore-filter";
 import { createClient } from "@/lib/supabase/server";
 
-// 홈 바로가기(P00)와 탐색 필터(P01·O01)가 쓰는 카테고리·스터디지점·지역 목록.
+// 홈 바로가기(P00), 탐색 필터(P01·O01), 소셜링 등록·수정 양식(P07·P08)이 쓰는 카테고리·스터디지점·지역 목록.
 
 export type CategoryItem = { slug: string; name: string };
 export type BranchItem = { id: number; name: string; sido: string; sigungu: string };
@@ -46,4 +46,23 @@ export async function getFilterCatalog(): Promise<FilterCatalog> {
     branches,
     regions: regions.data,
   };
+}
+
+export type SocialingFormCatalog = {
+  categories: { id: number; name: string }[];
+  branches: BranchItem[];
+  regions: { code: string; sido: string; sigungu: string }[];
+};
+
+/** 소셜링 등록·수정(P07·P08) 양식: 카테고리(id), 스터디지점, 전국 시·군·구(법정동코드 순) */
+export async function getSocialingFormCatalog(): Promise<SocialingFormCatalog> {
+  const supabase = await createClient();
+  const [categories, branches, regions] = await Promise.all([
+    supabase.from("categories").select("id, name").order("sort_order"),
+    listBranches(),
+    supabase.from("regions").select("code, sido, sigungu").order("code"),
+  ]);
+  if (categories.error) throw new Error(`카테고리를 불러오지 못했습니다: ${categories.error.message}`);
+  if (regions.error) throw new Error(`지역을 불러오지 못했습니다: ${regions.error.message}`);
+  return { categories: categories.data, branches, regions: regions.data };
 }

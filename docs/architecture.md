@@ -165,8 +165,9 @@ erDiagram
   socialings/[id]/        P03 상세 (page + loading + not-found)
     manage/               P11 소셜링 관리 (page + loading + not-found). 호스트가 아니면 상세 + `?notice=host-only`
     review/               P09 후기 쓰기 (page + review-form + loading + not-found). 작성 조건이 안 맞으면 상세 + `?notice=review-…`
+  socialings/new/         P07 소셜링 등록 (page + loading). 양식은 socialings/socialing-form.tsx (P08과 함께 씀)
   error.tsx               화면 전체 오류: "불러오지 못했어요" + 다시 시도 · 홈으로
-  (MS7~) socialings/[id]/edit/, socialings/new/
+  (MS7~) socialings/[id]/edit/
 /components               DESIGN.md 이름의 컴포넌트: button, text-field, avatar-initial, photo-picker,
                           password-field, header-main, header-sub, header-login-link, tab-bar (+ 뒤로 판단용
                           navigation-tracker), top-tabs, status-badge, status-tag, application-chip, count-pill,
@@ -181,21 +182,22 @@ erDiagram
                           textarea, question-block(비공개 질문 예/아니오), review-summary,
                           host-stats(상세 호스트 기록, 기록만 실패하면 그 칸만 다시 시도),
                           toggle(줄 전체가 스위치), filter-chip, choice-chip, radio-row, filter-sheet(O01 틀),
-                          segmented에 SegmentedChoice(하나 고르는 칸: 날짜, 장소 갈래)
+                          segmented에 SegmentedChoice(하나 고르는 칸: 날짜, 장소 갈래), select-field(고르기 칸)
 /lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)
 /lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). auth.ts, applications.ts(신청·신청 취소),
-                          manage.ts(승인·거절, 확정·종료·호스트 취소), reviews.ts(후기 올리기)
-/lib/validation           zod 스키마 (폼과 서버 액션이 같이 씀)
+                          manage.ts(승인·거절, 확정·종료·호스트 취소), reviews.ts(후기 올리기), socialings.ts(소셜링 열기)
+/lib/validation           zod 스키마 (폼과 서버 액션이 같이 씀). socialing.ts는 등록·수정 칸 오류 문구와 DB 함수 인자
 /lib/photos               사진 줄이기 (compress.ts)
 /lib/routes.ts            로그인 필요 주소, `next` 검사
+/lib/focus-first-error.ts 제출 뒤 화면 순서상 첫 오류 칸으로 이동 (라디오 묶음은 첫 칸)
 /lib/notices.ts           다른 화면으로 보내며 남기는 짧은 안내 `?notice=` (예: "호스트만 볼 수 있어요")
 /lib/in-app-history.ts    머리글 뒤로 버튼: 앱 안 이전 화면이 없으면 홈 (spec 8.7)
 /lib/queries              읽기 함수. viewer.ts(지금 보는 사람, 닉네임은 로그인 토큰에서), socialings.ts(socialing_summaries 뷰),
                           my-socialings.ts("나" 기준 뷰: 상세 아래 영역의 보는 사람, 내 소셜링 두 탭 목록),
-                          catalog.ts(카테고리·스터디지점, 탐색 필터 목록), reviews.ts(인증 후기),
+                          catalog.ts(카테고리·스터디지점, 탐색 필터·등록 양식 목록), reviews.ts(인증 후기),
                           manage.ts(P11: my_hosted_socialings 관리 칸, hosted_socialing_applicants),
                           host-record.ts(get_host_record. 상세가 본문과 따로 읽는다)
-/lib/format               날짜(Asia/Seoul)·금액·시·도 짧은 이름 표시
+/lib/format               날짜(Asia/Seoul)·금액·시·도 짧은 이름 표시, 날짜·시간 고르기 칸 값 ↔ 일시(한국 시간)
 /lib/explore-filter.ts    탐색 필터: 주소 값 읽기·만들기, 날짜 범위(Asia/Seoul), 거르기 (목록과 필터 시트가 같이 씀)
 /lib/simulated-state.ts   화면 상태 흉내 `?_state=empty|error|loading|partial` (운영 주소에서는 무시, decisions.md).
                           partial = 묶음 하나만 실패: 홈은 최근 인증 후기, 상세는 호스트 기록

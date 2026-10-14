@@ -1,8 +1,10 @@
+import { fieldLabelClass } from "@/components/text-field";
 import { cn } from "@/lib/utils";
 
 // DESIGN.md textarea. 위에 라벨, 최소 높이 120, 안쪽 여백 14·16, 칸 오른쪽 아래 글자 수.
 // normal: text-field/default와 같은 테두리, 글자 수 text-muted "120 / 500 · 10자 이상".
 // error: 글자 수가 범위를 벗어나면 danger 테두리 1.5px와 danger 글자 수 (아무것도 안 썼을 때는 normal).
+// 라벨은 title-md(시안 P09 "후기"). 등록·수정 양식(P07·P08)은 다른 칸과 같은 labelTone="form".
 
 type TextareaProps = Omit<React.ComponentProps<"textarea">, "id"> & {
   name: string;
@@ -10,15 +12,16 @@ type TextareaProps = Omit<React.ComponentProps<"textarea">, "id"> & {
   /** 오른쪽 아래 글자 수 문구 */
   counter: string;
   invalid?: boolean;
+  labelTone?: "title" | "form";
 };
 
-export function Textarea({ name, label, counter, invalid = false, className, ...props }: TextareaProps) {
+export function Textarea({ name, label, counter, invalid = false, labelTone = "title", className, ...props }: TextareaProps) {
   const id = `field-${name}`;
   const counterId = `${id}-counter`;
 
   return (
     <div className={cn("flex flex-col gap-xs", className)}>
-      <label htmlFor={id} className="text-title-md text-text-primary">
+      <label htmlFor={id} className={labelTone === "form" ? fieldLabelClass("form") : "text-title-md text-text-primary"}>
         {label}
       </label>
       <textarea
