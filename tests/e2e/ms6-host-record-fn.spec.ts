@@ -161,7 +161,15 @@ test.describe("MS6 get_host_record", () => {
     );
     const record = await hostRecord(request, b.id);
     expect(Object.keys(record).sort()).toEqual(
-      ["canceled_count", "is_new_host", "match_rate", "opened_count", "response_count", "review_count"],
+      [
+        "canceled_count",
+        "is_new_host",
+        "is_trusted_host",
+        "match_rate",
+        "opened_count",
+        "response_count",
+        "review_count",
+      ],
     );
     // 시드 B: 새 호스트가 아니고 응답이 5건 이상이라 비율이 보인다 (다른 테스트가 B 소셜링을 잠깐 더해도 바뀌지 않는 조건)
     expect(record.is_new_host).toBe(false);
