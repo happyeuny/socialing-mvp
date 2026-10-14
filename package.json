@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
+    "test:smoke": "playwright test --config playwright.smoke.config.ts",
     "seed": "node --env-file-if-exists=.env.local scripts/seed.mts",
     "db:push": "node --env-file-if-exists=.env.local scripts/db-push.mts",
     "db:types": "node --env-file-if-exists=.env.local scripts/db-types.mts"
