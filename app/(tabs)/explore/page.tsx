@@ -7,12 +7,18 @@ import { EmptyState } from "@/components/empty-state";
 import { ErrorStateFull } from "@/components/error-state";
 import { SkeletonCardList } from "@/components/skeleton";
 import { SocialingCardList } from "@/components/socialing-card";
-import { filterSocialings, hasAnyFilter, parseExploreFilter, type FilterCatalog } from "@/lib/explore-filter";
+import {
+  filterSocialings,
+  hasAnyFilter,
+  parseExploreFilter,
+  type FilterableSocialing,
+  type FilterCatalog,
+} from "@/lib/explore-filter";
 import { getFilterCatalog } from "@/lib/queries/catalog";
 import { listExploreSocialings, type ExploreSocialing } from "@/lib/queries/socialings";
 import { readSimulatedState, type SimulatedState } from "@/lib/simulated-state";
 import { cn } from "@/lib/utils";
-import { PartyToggleRow } from "./party-toggle-row";
+import { ExploreFilters } from "./explore-filters";
 
 // P01 탐색 (spec M1, M2, M3, 8.2, 8.6, 8.7): 소셜링 일시가 지나지 않은 소셜링을 가까운 일시 순으로.
 // 필터·"파티·사교 숨기기" 값은 주소(`/explore?…`, lib/explore-filter.ts)에 있어 상세에 갔다 뒤로 와도 그대로이고,
@@ -62,12 +68,25 @@ async function ExploreBody({ params, simulated }: { params: SearchParams; simula
 
   return (
     <>
-      <PartyToggleRow filter={filter} catalog={catalog} />
+      <ExploreFilters filter={filter} catalog={catalog} socialings={socialings.map(filterableOf)} />
       <div className="mt-lg">
         <ExploreList socialings={shown} filtered={hasAnyFilter(filter)} />
       </div>
     </>
   );
+}
+
+/** 필터 시트 개수 계산에 쓰는 칸만 브라우저로 */
+function filterableOf(s: ExploreSocialing): FilterableSocialing {
+  return {
+    category_slug: s.category_slug,
+    category_is_party: s.category_is_party,
+    venue_type: s.venue_type,
+    venue_id: s.venue_id,
+    region_sido: s.region_sido,
+    region_sigungu: s.region_sigungu,
+    starts_at: s.starts_at,
+  };
 }
 
 function ExploreList({ socialings, filtered }: { socialings: ExploreSocialing[]; filtered: boolean }) {
