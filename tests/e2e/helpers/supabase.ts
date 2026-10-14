@@ -135,11 +135,18 @@ export async function addApplication(
  */
 export async function updateFixtureSocialing(
   socialingId: number,
-  change: { status?: "recruiting" | "confirmed" | "completed" | "canceled"; deadlineInHours?: number },
+  change: {
+    status?: "recruiting" | "confirmed" | "completed" | "canceled";
+    deadlineInHours?: number;
+    /** 소셜링 일시. 신청 마감 일시는 그보다 늦을 수 없어 함께 옮긴다 (deadlineInHours가 없으면 일시 1시간 전) */
+    startsInHours?: number;
+  },
 ) {
+  const deadline = change.deadlineInHours ?? (change.startsInHours !== undefined ? change.startsInHours - 1 : undefined);
   const sets = [
     change.status ? `status = '${change.status}'` : null,
-    change.deadlineInHours !== undefined ? `apply_deadline_at = now() + interval '${change.deadlineInHours} hours'` : null,
+    deadline !== undefined ? `apply_deadline_at = now() + interval '${deadline} hours'` : null,
+    change.startsInHours !== undefined ? `starts_at = now() + interval '${change.startsInHours} hours'` : null,
   ].filter(Boolean);
   if (sets.length === 0) return;
   await runQuery(

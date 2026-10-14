@@ -1,8 +1,9 @@
 import { Check, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { ApplicationChip } from "@/components/application-chip";
+import { ApplicationChip, chipVariantOf } from "@/components/application-chip";
 import { Button, buttonVariants } from "@/components/button";
 import { ConfirmApplySheet } from "@/components/confirm-apply-sheet";
+import { ConfirmCancelApplicationSheet } from "@/components/confirm-cancel-application-sheet";
 import { CountPill } from "@/components/count-pill";
 import { formatDateTime, formatFee } from "@/lib/format";
 import type { ApplyBarViewer } from "@/lib/queries/my-socialings";
@@ -12,14 +13,22 @@ import { cn } from "@/lib/utils";
 
 // DESIGN.md C4 apply-bar: 상세 맨 아래에 붙는 영역. spec 8.4 표의 위에서부터 먼저 맞는 줄 하나만 보인다.
 // 신청 가능 여부와 이유, 보는 사람의 신청·후기·승인 대기 건수는 DB(뷰)가 계산한 값을 그대로 쓴다.
-// 지금 있는 줄: 1(호스트), 2(호스트 취소), 3·4(종료 뒤 후기), 5·6(참여 확정 · 일시 지남), 7(신청함, 일시 전),
-// 8(승인 대기 · 일시 지남), 11(비로그인 신청하기 → 로그인 → 상세 복귀), 12(신청하기 → O02), 13(신청 마감·정원 마감·지난 소셜링).
-// 7줄의 "신청 취소"와 9·10줄(거절·신청 취소 뒤)은 MS3 다음 PR에서 끼운다. 그때까지 거절·신청 취소한 사람은 12·13줄을 본다.
+// 1(호스트), 2(호스트 취소), 3·4(종료 뒤 후기), 5·6(참여 확정 · 일시 지남), 7(신청함 → 신청 취소 O05),
+// 8(승인 대기 · 일시 지남), 9·10(거절·신청 취소 뒤 다시 신청 / 불가), 11(비로그인 신청하기 → 로그인 → 상세 복귀),
+// 12(신청하기 → O02), 13(신청 마감·정원 마감·지난 소셜링).
 
 const JOIN_GUIDE = {
   approval: "신청하면 호스트가 승인한 뒤 참여가 확정돼요",
   first_come: "신청하면 바로 참여가 확정돼요",
 } as const;
+
+// 10줄: 거절·신청 취소 뒤 다시 신청할 수 없는 이유 (13줄 이유를 "다시 신청할 수 없어요" 꼴로)
+const REAPPLY_CLOSED: Record<Exclude<ClosedReason, "host_canceled">, string> = {
+  full: "정원이 차서 다시 신청할 수 없어요",
+  deadline: "신청 마감 일시가 지나 다시 신청할 수 없어요",
+  started: "소셜링 일시가 지나 다시 신청할 수 없어요",
+  not_open: "소셜링 일시가 지나 다시 신청할 수 없어요",
+};
 
 // 13줄 버튼 글자와 이유. 종료는 소셜링 일시 뒤에만 되므로 not_open은 실제로 started와 같다.
 const CLOSED: Record<Exclude<ClosedReason, "host_canceled">, { button: string; reason: string }> = {
@@ -125,7 +134,7 @@ export function ApplyBar({ socialing, viewer }: { socialing: SocialingDetail; vi
     );
   }
 
-  // 7줄: 승인 대기·참여 확정, 소셜링 일시 전 (신청 취소 버튼은 다음 PR)
+  // 7줄: 승인 대기·참여 확정, 소셜링 일시 전 → 신청 취소 O05
   if (application && (application.status === "pending" || application.status === "accepted")) {
     return (
       <Shell>
@@ -135,24 +144,46 @@ export function ApplyBar({ socialing, viewer }: { socialing: SocialingDetail; vi
             ? `${formatDateTime(socialing.starts_at)}에 만나요`
             : "호스트가 승인하면 참여 확정돼요"}
         </ChipLine>
+        <ConfirmCancelApplicationSheet
+          socialingId={socialing.id}
+          applicationId={application.id}
+          firstCome={socialing.join_type === "first_come"}
+        />
       </Shell>
     );
   }
 
-  // 12줄: 로그인한 사람의 신청하기 → 신청 확인 O02
+  // 9·10줄: 거절 또는 신청 취소 뒤. 지금 신청할 수 있으면 다시 신청(O02), 아니면 이유 + 다른 소셜링 보기
+  if (application && (application.status === "rejected" || application.status === "canceled")) {
+    const chip = <ApplicationChip variant={chipVariantOf(application.status)} />;
+    if (socialing.can_apply) {
+      return (
+        <Shell>
+          <ChipLine>
+            {chip}
+            자리가 남아 있어 다시 신청할 수 있어요
+          </ChipLine>
+          <ConfirmApplySheet triggerLabel="다시 신청" {...applySheetProps(socialing)} />
+        </Shell>
+      );
+    }
+    return (
+      <Shell>
+        <ChipLine>
+          {chip}
+          {REAPPLY_CLOSED[(socialing.closed_reason ?? "started") as keyof typeof REAPPLY_CLOSED]}
+        </ChipLine>
+        <OtherSocialingsLink />
+      </Shell>
+    );
+  }
+
+  // 12줄: 로그인했고 신청 없음 → 신청하기 → 신청 확인 O02
   if (viewer.kind === "member" && socialing.can_apply) {
     return (
       <Shell>
         <Guide>{JOIN_GUIDE[socialing.join_type]}</Guide>
-        <ConfirmApplySheet
-          socialingId={socialing.id}
-          title={socialing.title}
-          startsAt={formatDateTime(socialing.starts_at)}
-          place={socialing.venue_type === "branch" ? `스터디지점 ${socialing.venue_name}` : socialing.venue_name}
-          fee={formatFee(socialing.fee)}
-          joinType={socialing.join_type}
-          approvalCriteria={socialing.approval_criteria}
-        />
+        <ConfirmApplySheet {...applySheetProps(socialing)} />
       </Shell>
     );
   }
@@ -183,6 +214,19 @@ export function ApplyBar({ socialing, viewer }: { socialing: SocialingDetail; vi
       <OtherSocialingsLink />
     </Shell>
   );
+}
+
+/** 신청 확인 O02에 넘길 요약 (일시는 Asia/Seoul로 바꾼 글자) */
+function applySheetProps(socialing: SocialingDetail) {
+  return {
+    socialingId: socialing.id,
+    title: socialing.title,
+    startsAt: formatDateTime(socialing.starts_at),
+    place: socialing.venue_type === "branch" ? `스터디지점 ${socialing.venue_name}` : socialing.venue_name,
+    fee: formatFee(socialing.fee),
+    joinType: socialing.join_type,
+    approvalCriteria: socialing.approval_criteria,
+  };
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
