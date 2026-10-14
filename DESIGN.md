@@ -503,6 +503,7 @@ components:
 | host-stats/new-host | surface-muted 상자, "새 호스트 · 기록이 쌓이면 숫자로 보여 줘요" | 열린 소셜링 3회 미만 |
 | host-stats/ratio-hidden | normal과 같고 소개 일치 칸만 "응답 5건 이상부터 보여요" | 응답 5건 미만 |
 | host-stats/load-failed | "기록을 불러오지 못했어요" + text-link "다시 시도" | 기록만 실패 (상세와 신청은 그대로 동작) |
+| manage-summary/default | surface, border-default 1px, 모서리 xl, 여백 20. status-badge(+status-tag), 제목(title-lg), "10/14(화) 오후 7:30 · 스터디지점 강남점 · 호스트 승인"(body-md, text-secondary), "참가자 **4/8명** · 스태프 1명 · 승인 대기" + count-pill(body-md, text-primary. 스태프는 있을 때, 승인 대기는 1건 이상일 때) | 소셜링 관리(P11) 맨 위 요약 (시안) |
 | progress-steps/current-recruiting | 모집중 → 확정 → 종료 세 점, 지금 단계만 text-primary 굵게 | 소셜링 관리(P11), 모집중. 상세에는 쓰지 않고 status-badge만 (시안) |
 | progress-steps/current-confirmed | 확정이 지금 단계 | 호스트가 확정한 뒤 |
 | progress-steps/done-ended | 종료까지 모두 지남 | 호스트가 종료한 뒤 |
