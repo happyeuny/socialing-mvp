@@ -42,8 +42,31 @@ export async function rpc(
 
 const sqlText = (value: string) => `'${value.replace(/'/g, "''")}'`;
 
+/** 테스트가 가입시킨 계정 (`e2e-…@socialing.test`). 끝에 deleteAuthUsers로 지운다 */
+export type TestUser = { id: string; email: string; nickname: string; accessToken: string };
+
+/**
+ * 테스트 전용 계정을 가입시킨다(이메일 인증이 꺼져 있어 바로 로그인된다).
+ * 다른 테스트가 시드 계정으로 만드는 소셜링과 섞이지 않아야 하는 경우(호스트 기록 숫자 등)에 쓴다.
+ */
+export async function createTestUser(request: APIRequestContext, label: string): Promise<TestUser> {
+  const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  const email = `e2e-${label}-${suffix}@${DEMO_EMAIL_DOMAIN}`;
+  const nickname = `t${suffix}`.slice(0, 12);
+  const response = await request.post(`${supabaseUrl}/auth/v1/signup`, {
+    headers: apiHeaders(),
+    data: { email, password: `e2e-${suffix}-pw`, data: { nickname } },
+  });
+  expect(response.status(), "테스트 계정 가입").toBe(200);
+  const body = await response.json();
+  return { id: body.user.id, email, nickname, accessToken: body.access_token };
+}
+
+const emailOf = (user: DemoUserKey | TestUser) => (typeof user === "string" ? DEMO_USERS[user].email : user.email);
+
 export type FixtureOptions = {
-  host: DemoUserKey;
+  /** 호스트. 시드 데모 계정 또는 테스트가 가입시킨 계정 */
+  host: DemoUserKey | TestUser;
   capacity?: number;
   joinType?: "first_come" | "approval";
   status?: "recruiting" | "confirmed" | "completed" | "canceled";
@@ -76,7 +99,7 @@ export async function createFixtureSocialing(options: FixtureOptions): Promise<n
 
   const rows = await runQuery<{ id: number }>(`
     with host as (
-      select id from auth.users where email = ${sqlText(DEMO_USERS[host].email)}
+      select id from auth.users where email = ${sqlText(emailOf(host))}
     ), inserted as (
       insert into public.socialings
         (host_id, title, description, category_id, has_alcohol, venue_id,
@@ -159,16 +182,32 @@ export async function updateFixtureSocialing(
   );
 }
 
-/** 테스트 소셜링에 user의 인증 후기를 바로 넣는다 (소셜링을 지우면 함께 지워진다) */
+/**
+ * 테스트 소셜링에 user의 인증 후기를 바로 넣는다 (소셜링을 지우면 함께 지워진다).
+ * checks를 주면 비공개 확인 응답(① 구성 같음 ② 돈 요구 ③ 내용 같음)도 함께 넣는다.
+ */
 export async function addReview(
   socialingId: number,
   user: DemoUserKey,
-  { body = "자동 테스트가 넣은 인증 후기입니다.", photoPath }: { body?: string; photoPath?: string } = {},
+  {
+    body = "자동 테스트가 넣은 인증 후기입니다.",
+    photoPath,
+    checks,
+  }: { body?: string; photoPath?: string; checks?: [boolean, boolean, boolean] } = {},
 ) {
   await runQuery(`
-    insert into public.reviews (socialing_id, user_id, body, photo_path)
-    select ${socialingId}, id, ${sqlText(body)}, ${photoPath ? sqlText(photoPath) : "null"}
-    from auth.users where email = ${sqlText(DEMO_USERS[user].email)};
+    with inserted as (
+      insert into public.reviews (socialing_id, user_id, body, photo_path)
+      select ${socialingId}, id, ${sqlText(body)}, ${photoPath ? sqlText(photoPath) : "null"}
+      from auth.users where email = ${sqlText(DEMO_USERS[user].email)}
+      returning id
+    )
+    ${
+      checks
+        ? `insert into public.review_checks (review_id, members_match, extra_money, content_match)
+           select id, ${checks[0]}, ${checks[1]}, ${checks[2]} from inserted;`
+        : "select id from inserted;"
+    }
   `);
 }
 

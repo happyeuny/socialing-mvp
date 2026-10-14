@@ -65,7 +65,7 @@ Next.js 16.3.x (App Router) · React 19 · TypeScript 6.0 · Supabase (Postgres,
 - Playwright E2E, 모바일 뷰포트 390px, Chromium. 시드한 dev 프로젝트를 대상으로 한다.
 - 기능을 만들면 spec 7장의 해당 시연 단계 E2E를 함께 추가한다. 테스트 이름에 단계 번호나 screen-cases ID를 넣는다.
 - main에 합치기 전에 전체 E2E가 통과해야 한다.
-- 테스트가 데이터를 바꿔야 하면 시드 데이터를 건드리지 말고, `tests/e2e/helpers/supabase.ts`로 제목이 `[E2E]`로 시작하는 테스트 전용 소셜링을 만들고 테스트 끝에 지운다(Management API, `SUPABASE_ACCESS_TOKEN`). 가입 테스트 계정은 `e2e-…@socialing.test` 이메일로 만들고 끝에 지운다(`deleteAuthUsers`). 남아도 `npm run seed`가 지운다. 사진 업로드 테스트가 올린 파일은 SQL로 지울 수 없어(Storage 보호) 버킷에 남고, `npm run seed`가 버킷을 비운다.
+- 테스트가 데이터를 바꿔야 하면 시드 데이터를 건드리지 말고, `tests/e2e/helpers/supabase.ts`로 제목이 `[E2E]`로 시작하는 테스트 전용 소셜링을 만들고 테스트 끝에 지운다(Management API, `SUPABASE_ACCESS_TOKEN`). 가입 테스트 계정은 `e2e-…@socialing.test` 이메일로 만들고 끝에 지운다(`deleteAuthUsers`). 다른 테스트가 시드 계정으로 만드는 소셜링과 섞이면 안 되는 숫자(호스트 기록 등)는 `createTestUser`로 전용 계정을 가입시켜 그 계정을 호스트로 쓴다. 남아도 `npm run seed`가 지운다. 사진 업로드 테스트가 올린 파일은 SQL로 지울 수 없어(Storage 보호) 버킷에 남고, `npm run seed`가 버킷을 비운다.
 - 테스트를 건너뛰거나 지우거나 약하게 바꿔서 통과시키지 않는다. 실패 원인을 고친다.
 
 ## 보안과 환경
