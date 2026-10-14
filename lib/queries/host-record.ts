@@ -11,6 +11,8 @@ export type HostRecord = {
   /** 소개 일치 비율 0~1 (반올림 안 함). 응답 5건 미만이면 null */
   matchRate: number | null;
   isNewHost: boolean;
+  /** 기준 공개 등급 "믿고 가는 호스트" (spec 6장). DB 함수가 판단한다 */
+  isTrustedHost: boolean;
 };
 
 export async function getHostRecord(hostId: string): Promise<HostRecord> {
@@ -25,5 +27,6 @@ export async function getHostRecord(hostId: string): Promise<HostRecord> {
     // 생성된 타입은 null을 빼고 나오지만 응답 5건 미만이면 null이다
     matchRate: data.match_rate ?? null,
     isNewHost: data.is_new_host,
+    isTrustedHost: data.is_trusted_host,
   };
 }

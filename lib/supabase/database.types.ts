@@ -829,6 +829,7 @@ export type Database = {
         Returns: {
           canceled_count: number
           is_new_host: boolean
+          is_trusted_host: boolean
           match_rate: number
           opened_count: number
           response_count: number
