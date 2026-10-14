@@ -12,7 +12,9 @@ import { SkeletonDetail } from "@/components/skeleton";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusTag } from "@/components/status-tag";
 import { AvatarInitial } from "@/components/avatar-initial";
-import { formatDateTime, formatFee } from "@/lib/format";
+import { UrlNotice } from "@/components/url-notice";
+import { formatDateTime, formatFee, formatVenue } from "@/lib/format";
+import { noticeMessage } from "@/lib/notices";
 import { getApplyBarViewer, type ApplyBarViewer } from "@/lib/queries/my-socialings";
 import { getSocialing, socialingPhotoUrl, type SocialingDetail } from "@/lib/queries/socialings";
 import { readSimulatedState } from "@/lib/simulated-state";
@@ -39,7 +41,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function SocialingPage({ params, searchParams }: Props) {
   const id = parseId((await params).id);
   if (!id) notFound();
-  const simulated = readSimulatedState(await searchParams);
+  const query = await searchParams;
+  const simulated = readSimulatedState(query);
 
   if (simulated === "loading") {
     return (
@@ -112,6 +115,8 @@ export default async function SocialingPage({ params, searchParams }: Props) {
         </div>
       </main>
       <ApplyBar socialing={socialing} viewer={viewer} />
+      {/* 다른 화면에서 보내며 남긴 안내 (예: 호스트가 아닌 사람이 관리 주소 → "호스트만 볼 수 있어요") */}
+      <UrlNotice message={noticeMessage(query.notice)} />
     </div>
   );
 }
@@ -129,14 +134,13 @@ function CoverPhoto({ socialing }: { socialing: SocialingDetail }) {
 }
 
 function infoRows(socialing: SocialingDetail) {
-  const isBranch = socialing.venue_type === "branch";
   const people = `참가자 ${socialing.accepted_count}/${socialing.capacity}명`;
   return [
     { label: "소셜링 일시", value: formatDateTime(socialing.starts_at), strong: true },
     { label: "신청 마감", value: formatDateTime(socialing.apply_deadline_at) },
     {
       label: "장소",
-      value: isBranch ? `스터디지점 ${socialing.venue_name}` : socialing.venue_name,
+      value: formatVenue(socialing.venue_type, socialing.venue_name),
       sub: `${socialing.region_sido} ${socialing.region_sigungu}`,
     },
     { label: "총 참가비", value: formatFee(socialing.fee), strong: true },

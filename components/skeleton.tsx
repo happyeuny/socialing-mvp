@@ -51,3 +51,35 @@ export function SkeletonDetail() {
     </div>
   );
 }
+
+/** 소셜링 관리(P11) 로딩: 요약 카드 + 진행 단계 + 신청자 줄 2개 */
+export function SkeletonManage() {
+  return (
+    <div role="status" aria-busy className="flex flex-col gap-xl px-page-x pt-lg motion-safe:animate-pulse">
+      <span className="sr-only">불러오는 중</span>
+      <div className="flex flex-col gap-xs rounded-xl border border-border-default bg-surface p-lg">
+        <Bar className="h-6 w-16" />
+        <Bar className="h-6 w-4/5" />
+        <Bar className="h-5 w-3/5" />
+      </div>
+      <div className="flex flex-col gap-sm">
+        <Bar className="h-6 w-24" />
+        <Bar className="h-10 w-full" />
+        <Bar className="h-13 w-full" />
+      </div>
+      <div className="flex flex-col gap-sm">
+        <Bar className="h-6 w-16" />
+        <Bar className="h-11 w-full" />
+        {[0, 1].map((key) => (
+          <div key={key} className="flex items-center gap-sm py-sm">
+            <div className="size-10 shrink-0 rounded-full bg-surface-muted" />
+            <div className="flex flex-1 flex-col gap-xxs">
+              <Bar className="h-5 w-16" />
+              <Bar className="h-4 w-32" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

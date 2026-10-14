@@ -34,3 +34,25 @@ const wonFormat = new Intl.NumberFormat("ko-KR");
 export function formatFee(fee: number): string {
   return fee === 0 ? "무료" : `${wonFormat.format(fee)}원`;
 }
+
+const monthDayTimeFormat = new Intl.DateTimeFormat("ko-KR", {
+  timeZone: "Asia/Seoul",
+  month: "numeric",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+
+/** 예: `10/12 오전 8:40` (소셜링 관리의 신청 일시) */
+export function formatMonthDayTime(value: string | Date): string {
+  const parts = Object.fromEntries(
+    monthDayTimeFormat.formatToParts(new Date(value)).map((part) => [part.type, part.value]),
+  );
+  return `${parts.month}/${parts.day} ${parts.dayPeriod} ${parts.hour}:${parts.minute}`;
+}
+
+/** 장소 이름. 스터디지점이면 `스터디지점 강남점`, 외부 장소는 이름 그대로 (상세·관리) */
+export function formatVenue(venueType: "branch" | "external", venueName: string): string {
+  return venueType === "branch" ? `스터디지점 ${venueName}` : venueName;
+}
