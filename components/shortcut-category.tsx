@@ -3,7 +3,7 @@ import { CategoryIcon } from "@/components/category-art";
 
 // DESIGN.md shortcut-category: 56px 원(surface, border-default) 안 카테고리 선 아이콘(primary-strong) + 아래 이름(label).
 // 칸이 56px보다 좁은 휴대폰에서는 원이 칸 폭에 맞춰 조금 작아진다.
-// 홈 카테고리 바로가기 5개. 누르면 탐색(P01)의 그 카테고리 (거르기는 MS6).
+// 홈 카테고리 바로가기 5개. 누르면 탐색(P01)의 그 카테고리 소셜링만.
 
 export function ShortcutCategory({ slug, name }: { slug: string; name: string }) {
   // "배움·자기계발"처럼 가운뎃점 뒤에서 줄을 바꿀 수 있게
