@@ -3,6 +3,7 @@
 import { Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, useTransition } from "react";
+import { ApplyBarShell } from "@/components/apply-bar-shell";
 import { Button } from "@/components/button";
 import { PhotoPicker } from "@/components/photo-picker";
 import { QuestionBlock } from "@/components/question-block";
@@ -204,10 +205,7 @@ function ReviewFormFields({
         </section>
       </div>
 
-      <div
-        data-toast-anchor
-        className="sticky bottom-0 z-10 flex flex-col items-center gap-xs border-t border-border-default bg-surface px-md pt-sm pb-[calc(12px+env(safe-area-inset-bottom))] shadow-up"
-      >
+      <ApplyBarShell>
         {showRetry ? (
           <p role="alert" className="text-center text-body-sm break-keep text-danger">
             후기를 올리지 못했어요. 연결을 확인하고 다시 시도해 주세요
@@ -227,7 +225,7 @@ function ReviewFormFields({
         >
           {showRetry ? "다시 시도" : "후기 올리기"}
         </Button>
-      </div>
+      </ApplyBarShell>
     </form>
   );
 }

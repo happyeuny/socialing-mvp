@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // 휴대폰 브라우저 위 막대 색 = surface 토큰(DESIGN.md). 메타 태그 값이라 CSS 변수를 쓸 수 없어 값을 그대로 적는다
   themeColor: "#FFFFFF",
   colorScheme: "light",
   // 아이폰 아래 안전 영역(env(safe-area-inset-bottom))을 아래 탭·고정 영역에서 쓰려고

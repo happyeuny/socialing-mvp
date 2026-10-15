@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
+import { ApplyBarShell } from "@/components/apply-bar-shell";
 import { Button } from "@/components/button";
 import { ChoiceChip } from "@/components/choice-chip";
 import { Dialog } from "@/components/dialog";
@@ -563,10 +564,7 @@ function SocialingFormFields({
         ) : null}
       </div>
 
-      <div
-        data-toast-anchor
-        className="sticky bottom-0 z-10 flex flex-col items-center gap-xs border-t border-border-default bg-surface px-md pt-sm pb-[calc(12px+env(safe-area-inset-bottom))] shadow-up"
-      >
+      <ApplyBarShell>
         {retry && !pending ? (
           <p role="alert" className="text-center text-body-sm break-keep text-danger">
             {edit ? "저장하지 못했어요" : "소셜링을 열지 못했어요"}. 연결을 확인하고 다시 시도해 주세요
@@ -577,7 +575,7 @@ function SocialingFormFields({
         <Button type="submit" size="lg" className="w-full" disabled={uploading} loading={pending || leaving}>
           {retry && !pending ? "다시 시도" : edit ? "저장하기" : "소셜링 열기"}
         </Button>
-      </div>
+      </ApplyBarShell>
 
       <Dialog
         open={conflict}
