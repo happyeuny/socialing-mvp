@@ -224,7 +224,8 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: false,
       venue: "seongsu",
       starts_at: seoulDateAt(1, 7, 0, now),
-      apply_deadline_at: seoulDateAt(0, 23, 0, now),
+      // 마감을 시드 당일 밤으로 두면 밤 11시 뒤에 시드를 넣거나 점검할 때 이미 마감이라 홈 히어로가 바뀐다 → 시작 1시간 전
+      apply_deadline_at: seoulDateAt(1, 6, 0, now),
       fee: 8000,
       capacity: 8,
       staff_count: 0,
