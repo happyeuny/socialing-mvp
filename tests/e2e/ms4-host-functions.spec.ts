@@ -84,27 +84,38 @@ test.describe("MS4 decide_application 승인·거절", () => {
 
     expect(await decide(-1)).toBe("INVALID_INPUT");
 
+    // 준비는 한꺼번에 한다. 관리 API 쿼리가 하나에 2초 가까이 걸리는 때가 있어 하나씩 만들면 30초를 넘는다
+    const [open, started, full, canceled] = await Promise.all([
+      fixture({ host: "C", joinType: "approval", capacity: 6 }),
+      fixture({ host: "C", joinType: "approval", status: "confirmed", ...STARTED }),
+      fixture({ host: "C", joinType: "approval", capacity: 2, accepted: ["P4", "P5"] }),
+      fixture({ host: "C", joinType: "approval", status: "canceled" }),
+    ]);
+    const [processed, late, waiting, onCanceled] = await Promise.all([
+      Promise.all([
+        addApplication(open, "P1", "accepted"),
+        addApplication(open, "P2", "rejected"),
+        addApplication(open, "P3", "canceled"),
+      ]),
+      addApplication(started, "P1", "pending"),
+      addApplication(full, "P1", "pending"),
+      addApplication(canceled, "P1", "pending"),
+    ]);
+
     // 이미 처리된 신청 (참여 확정, 거절, 신청 취소): 창을 연 사이 신청자가 취소한 경우 등
-    const open = await fixture({ host: "C", joinType: "approval", capacity: 6 });
-    for (const status of ["accepted", "rejected", "canceled"] as const) {
-      const user = status === "accepted" ? "P1" : status === "rejected" ? "P2" : "P3";
-      expect(await decide(await addApplication(open, user, status)), status).toBe("ALREADY_PROCESSED");
+    for (const [index, status] of (["accepted", "rejected", "canceled"] as const).entries()) {
+      expect(await decide(processed[index]), status).toBe("ALREADY_PROCESSED");
     }
 
     // 소셜링 일시가 지남: 승인도 거절도 안 된다
-    const started = await fixture({ host: "C", joinType: "approval", status: "confirmed", ...STARTED });
-    const late = await addApplication(started, "P1", "pending");
     expect(await decide(late, true)).toBe("STARTED");
     expect(await decide(late, false)).toBe("STARTED");
 
     // 정원이 참: 승인만 막히고 거절은 된다
-    const full = await fixture({ host: "C", joinType: "approval", capacity: 2, accepted: ["P4", "P5"] });
-    const waiting = await addApplication(full, "P1", "pending");
     expect(await decide(waiting, true)).toBe("FULL");
 
     // 호스트 취소·종료된 소셜링의 승인 대기
-    const canceled = await fixture({ host: "C", joinType: "approval", status: "canceled" });
-    expect(await decide(await addApplication(canceled, "P1", "pending"))).toBe("INVALID_STATE");
+    expect(await decide(onCanceled)).toBe("INVALID_STATE");
 
     expect((await applicationsOf(started)).map((a) => a.status)).toEqual(["pending"]);
     expect((await applicationsOf(full)).map((a) => a.status)).toEqual(["accepted", "accepted", "pending"]);
