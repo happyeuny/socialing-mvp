@@ -377,7 +377,8 @@ components:
 - 폭 390px, 좌우 여백 16px(page-x). 간격은 8의 배수, 미세 조정만 4px.
 - 누를 수 있는 것은 최소 44×44px(touch-min).
 - 메인 탭 화면(홈, 탐색, 인증 후기, 내 소셜링): 위 header-main(56px) + 아래 tab-bar(64px).
-- 하위 화면(상세, 관리, 후기 쓰기, 로그인, 가입, 등록, 수정, 지난 소셜링): 위 header-sub(56px), 아래 탭 없음.
+- 지난 소셜링: 위 header-sub(56px, 뒤로 + "지난 소셜링") + 아래 tab-bar(64px, 탐색이 켜짐). 탐색 탭을 누르면 필터 없는 탐색으로 간다.
+- 나머지 하위 화면(상세, 관리, 후기 쓰기, 로그인, 가입, 등록, 수정): 위 header-sub(56px), 아래 탭 없음.
 - 창(O01~O05)은 화면이 아니라 화면 위에 뜬다. 신청하는 사람 쪽 창(필터 O01, 신청 확인 O02, 등급 조건 O03, 신청 취소 확인 O05)은 bottom-sheet, 호스트 동작 확인(O04)은 가운데 dialog.
 - 소셜링 상세는 맨 아래에 apply-bar가 붙어 있고, 내용은 그 높이만큼 아래 여백을 둔다.
 - 목록 묶음 순서: section-header(제목 + "전체 보기 ›" + 기준 문구) → 카드 목록, 카드 사이 12px.
@@ -611,7 +612,7 @@ components:
 | header-main/logged-in | 오른쪽 avatar-initial/strong 28 (누르면 내 소셜링) | 메인 탭 화면, 로그인 |
 | header-sub/default | surface, 아래 border-divider, 높이 56. 뒤로 아이콘 + 제목(title-md, 700) ("소셜링 상세") | 하위 화면 |
 | header-sub/with-action | default + 오른쪽 text-link ("상세 보기 ›") | 소셜링 관리 |
-| tab-bar/active-home · active-explore · active-review · active-mysocialing | surface, 위 border-divider, 높이 64, 4칸 선 아이콘 + 글자 "홈 · 탐색 · 후기 · 내 소셜링". 활성 탭은 아이콘 뒤에 primary-soft 알약 52×28(모서리 full), 아이콘·글자 primary-strong 굵게. 비활성 text-muted | 메인 탭 화면 아래 |
+| tab-bar/active-home · active-explore · active-review · active-mysocialing | surface, 위 border-divider, 높이 64, 4칸 선 아이콘 + 글자 "홈 · 탐색 · 후기 · 내 소셜링". 활성 탭은 아이콘 뒤에 primary-soft 알약 52×28(모서리 full), 아이콘·글자 primary-strong 굵게. 비활성 text-muted | 메인 탭 화면 아래, 지난 소셜링 아래(active-explore) |
 | top-tabs/active-applied · active-hosted | 높이 48, 활성 탭 아래 2px text-primary 밑줄, 비활성 text-muted. "신청한 소셜링 / 호스트인 소셜링" | 내 소셜링 |
 | toast/success | toast-bg, toast-text(body-md), 링크 primary(누르는 영역 44), 모서리 lg, 여백 12·16. "신청했어요" + "내 소셜링에서 보기 ›" | 성공 뒤 짧은 안내 |
 | toast/info | toast-bg, toast-text | "환영해요, ○○님", "호스트만 볼 수 있어요" 같은 안내 |
@@ -707,7 +708,7 @@ components:
 - 소셜링마다 status-badge 정확히 하나, 그 오른쪽에 status-tag("신청 마감" 또는 "정원 마감") 최대 하나. 둘 다 해당하면 "신청 마감".
 - 개인의 신청 상태는 application-chip, 소셜링 상태는 status-badge로 나눈다. 둘 다 알약 모양이라 글자로 구분하고, 같이 놓이면 status-badge가 앞.
 - 소셜링 상세의 아래 고정 영역은 언제나 apply-bar 14가지 중 하나다.
-- 메인 탭 화면(홈, 탐색, 인증 후기, 내 소셜링)은 header-main + tab-bar, 하위 화면은 header-sub이고 아래 탭이 없다.
+- 메인 탭 화면(홈, 탐색, 인증 후기, 내 소셜링)과 지난 소셜링은 tab-bar가 있다. 지난 소셜링은 위가 header-sub다. 나머지 하위 화면(상세, 관리, 후기 쓰기, 로그인, 가입, 등록, 수정)은 header-sub만 있고 아래 탭이 없다.
 - 사람은 avatar-initial(원 안 닉네임 첫 글자) + 닉네임으로만 보인다.
 - 사진은 사물과 공간(책, 스터디룸, 노트북)만. 사람·읽을 수 있는 글자·로고가 없는 사진. 사진이 없으면 category-art(카테고리 soft 바탕 + 카테고리 색 선 아이콘).
 - 카테고리 색은 카테고리를 알아보는 곳(카테고리 그림, 카드의 카테고리 이름과 점, 홈 바로가기, 상세 대표 그림)에만 쓴다.

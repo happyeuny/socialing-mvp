@@ -52,6 +52,15 @@ test.describe("MS2 머리글과 아래 탭", () => {
     // 활성 탭은 primary-strong, 비활성은 text-muted
     await expect(tabs.getByRole("link", { name: "탐색" })).toHaveCSS("color", "rgb(19, 111, 134)");
     await expect(tabs.getByRole("link", { name: "홈" })).toHaveCSS("color", "rgb(107, 114, 128)");
+    // 활성 탭 아이콘 뒤에 primary-soft 알약 52×28 하나
+    const pill = tabs.getByTestId("tab-active-pill");
+    await expect(pill).toHaveCount(1);
+    await expect(tabs.getByRole("link", { name: "탐색" }).getByTestId("tab-active-pill")).toHaveCSS(
+      "background-color",
+      "rgb(225, 247, 252)",
+    );
+    await expect(pill).toHaveCSS("width", "52px");
+    await expect(pill).toHaveCSS("height", "28px");
 
     await expect(tabs.getByRole("link", { name: "후기" })).toHaveAttribute("href", "/reviews");
 
