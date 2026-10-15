@@ -213,10 +213,12 @@ erDiagram
 
 ## 7. 환경과 배포
 
-| 환경 | Supabase | Vercel | 용도 |
-|---|---|---|---|
-| 개발 | `socialing-mvp` | 로컬 또는 PR 미리보기 배포 | 개발, E2E |
-| 발표 | `socialing-demo` (MS9에서 생성) | 운영 배포 (main) | 리허설, 발표. 마이그레이션·시드는 GitHub Actions **발표 DB 준비** |
+| 환경 | Git 브랜치 | Supabase | Vercel | 용도 |
+|---|---|---|---|---|
+| 개발 | `dev`, `feat/…` (MS10부터) | `socialing-mvp` | 로컬 또는 미리보기 배포(PR마다, dev 브랜치 자체도 `socialing-mvp-git-dev-…`) | 개발, E2E |
+| 발표 | `main` (동결) | `socialing-demo` (MS9에서 생성) | 운영 배포 | 리허설, 발표. 마이그레이션·시드는 GitHub Actions **발표 DB 준비** |
+
+- 브랜치 규칙은 AGENTS.md "브랜치". Vercel의 Production 브랜치는 main 그대로이고, dev와 feat/… 는 Preview 환경 변수(dev DB)로 빌드된다.
 
 **환경 변수** (값은 저장소·채팅·로그 어디에도 쓰지 않는다. 이름만 확인한다)
 
@@ -229,6 +231,7 @@ erDiagram
 
 - 클라우드 Claude Code 환경에는 dev 값만 있다. demo 키는 넣지 않는다.
 - demo 값은 GitHub 저장소 Secrets(`DEMO_SUPABASE_URL`, `DEMO_SUPABASE_SECRET_KEY`, `DEMO_SUPABASE_ACCESS_TOKEN`, `DEMO_PASSWORD`)와 Vercel Production(`NEXT_PUBLIC_` 2개)에만 둔다. `.github/workflows/demo-db.yml`(**발표 DB 준비**, 버튼으로만 실행)이 Secrets 값을 위 표의 이름으로 바꿔 넘겨 `npm run db:push` → `npm run seed`를 돌린다. 스크립트는 dev와 같다. 순서와 점검은 [demo-checklist.md](demo-checklist.md)
+- 발표 DB 준비는 버튼 창의 "Use workflow from"으로 고른 브랜치(main 또는 dev만)의 마이그레이션·시드를 쓴다. 로그 맨 위에 기준 브랜치와 커밋이 나온다. "목록만 보기"(`dry_run`)는 `db:push --dry-run`만 돌려 적용할 파일을 보여 주고 발표 DB를 바꾸지 않는다. dev → main 병합 직전에는 dev 기준으로 목록을 보고, 새 마이그레이션이나 시드 변경이 있을 때만 dev 기준으로 실제 실행한다(demo-checklist 7장)
 - `SUPABASE_DB_PASSWORD`는 클라우드 환경에 없다. 로컬 터미널에서 `supabase db push`를 쓸 때만 `.env.local`에 넣는다.
 - 로컬 터미널에서는 같은 이름을 `.env.local`에 넣는다(`.gitignore`).
 - Vercel에는 `NEXT_PUBLIC_` 2개만 넣는다. Preview·Production 모두 dev 값, MS9에서 Production만 demo 값으로 바꾼다. `NEXT_PUBLIC_` 값은 빌드할 때 들어가므로 바꾼 뒤 Production을 Redeploy해야 운영 주소에 반영된다. 발표 DB에 시드를 먼저 넣고 바꾼다.
@@ -242,7 +245,7 @@ erDiagram
 
 **지역 데이터**: 공공데이터포털 "국토교통부_전국 법정동" CSV(https://www.data.go.kr/data/15063424/fileData.do)에서 시·군·구만 뽑은 `scripts/regions.mts`(시·도 16개, 시·군·구 256곳, 2026-07-29 기준, MS6). 다시 만들 때는 파일을 내려받아 `node scripts/build-regions.mts <CSV 경로>`를 돌린다(CSV는 저장소에 넣지 않음). 시·군·구 행 = 법정동코드 끝 5자리가 00000이고 읍면동명이 빈 행, 코드는 앞 5자리. 일반구가 있는 시(수원시 등 13곳)는 시 행을 빼고 "수원시 영통구"처럼 구로 둔다. MS1~MS5에는 서울 25개 구 + 다른 시·도 대표 1곳씩(42곳)이었다.
 
-**테스트**: E2E는 시드를 넣은 dev 프로젝트를 대상으로 돌린다. main에 합치기 전에 전체 E2E를 실행한다(GitHub Actions 자동 실행은 Should). 발표 DB에는 E2E를 돌리지 않는다(테스트가 데이터를 만들고 지움).
+**테스트**: E2E는 시드를 넣은 dev 프로젝트를 대상으로 돌린다. 기능·화면 PR(→ dev)은 고친 화면·함수의 E2E와 시연 흐름 `ms9-scenario`, 마이그레이션·시드가 바뀌는 PR과 dev → main은 dev 시드를 다시 넣고 전체 E2E를 돌린다(AGENTS.md "테스트", GitHub Actions 자동 실행은 Should). 발표 DB에는 E2E를 돌리지 않는다(테스트가 데이터를 만들고 지움).
 
 **운영 점검**: `npm run test:smoke`(`playwright.smoke.config.ts`, `tests/smoke/`)는 운영 주소(또는 `PLAYWRIGHT_BASE_URL`)를 열고 로그인만 해서 데이터를 바꾸지 않는다. 로그인 쿠키 이름(`sb-<ref>-auth-token`)의 프로젝트 ref를 dev 주소와 비교해 운영 주소가 발표 DB를 보는지 확인하고(`SMOKE_DB=dev`면 dev인지), 시드 그대로의 시연 시작 상태인지 본다. Vercel 미리보기는 Vercel 로그인이 필요해 클라우드에서 열 수 없다.
 
@@ -256,4 +259,6 @@ erDiagram
 | 범위 밖 기능 추가 | AGENTS.md "하지 않는 것", PR 설명에 "제안"으로만 |
 | 최신 버전 호환 문제 | 한 단계 이전 안정 버전 고정 |
 | Vercel Hobby 로그 1시간 보관 | 리허설 직후 바로 확인 |
+| 발표 DB에 dev 마이그레이션이 먼저 들어가 main 코드와 어긋남 (MS10부터) | 마이그레이션은 추가만(AGENTS.md 코드 규칙), dev → main 직전 "목록만 보기"로 확인, 발표 DB 준비는 main·dev에서만 |
+| dev와 main이 오래 갈라져 병합이 커짐 | 단계마다 dev → main(Create a merge commit), 급한 버그는 main에서 고친 뒤 바로 main → dev |
 | iPhone HEIC 사진 | 축소 라이브러리로 JPEG 변환, 실패 시 "JPEG로 골라 주세요" 안내 (SP3) |
