@@ -57,7 +57,7 @@ export function SkeletonManage() {
   return (
     <div role="status" aria-busy className="flex flex-col gap-xl px-page-x pt-lg motion-safe:animate-pulse">
       <span className="sr-only">불러오는 중</span>
-      <div className="flex flex-col gap-xs rounded-xl border border-border-default bg-surface p-lg">
+      <div className="flex flex-col gap-xs rounded-xl bg-surface p-lg shadow-card">
         <Bar className="h-6 w-16" />
         <Bar className="h-6 w-4/5" />
         <Bar className="h-5 w-3/5" />
@@ -111,7 +111,7 @@ export function SkeletonReviewWrite() {
   return (
     <div role="status" aria-busy className="flex flex-col gap-xl px-page-x pt-lg motion-safe:animate-pulse">
       <span className="sr-only">불러오는 중</span>
-      <div className="flex flex-col gap-xs rounded-xl border border-border-default bg-surface p-lg">
+      <div className="flex flex-col gap-xs rounded-xl bg-surface p-lg shadow-card">
         <Bar className="h-6 w-32" />
         <Bar className="h-6 w-4/5" />
         <Bar className="h-5 w-3/5" />

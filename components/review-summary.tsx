@@ -15,7 +15,7 @@ export function ReviewSummary({ socialing }: ReviewSummaryProps) {
   return (
     <section
       aria-label="소셜링 요약"
-      className="flex flex-col gap-xs rounded-xl border border-border-default bg-surface p-lg"
+      className="flex flex-col gap-xs rounded-xl bg-surface p-lg shadow-card"
     >
       <div className="flex flex-wrap items-center gap-[6px]">
         <StatusBadge status={socialing.status} />
