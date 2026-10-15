@@ -5,8 +5,9 @@ import { useTransition } from "react";
 import { Button } from "@/components/button";
 import type { HostRecord } from "@/lib/queries/host-record";
 
-// DESIGN.md host-stats (spec M5·6장). 상세(P03) 호스트 영역의 호스트 기록.
-// normal: 기준 문구 + 2×2 칸, new-host: 숫자 대신 안내 상자, ratio-hidden: 소개 일치 칸만 안내,
+// DESIGN.md host-stats (spec M5·6장). 상세(P03) 호스트 카드 안의 호스트 기록.
+// normal: 기준 문구 + 2×2 칸(칸 테두리 없이 칸 사이를 border-divider 줄로, 값 title-xl deep),
+// new-host: 숫자 대신 안내 상자, ratio-hidden: 소개 일치 칸만 안내,
 // load-failed: 기록만 실패 (상세와 신청은 그대로, Q3). 숫자를 점수 하나로 합치지 않는다.
 
 const CRITERIA = "최근 6개월 기록 · 별점이나 점수로 합치지 않아요";
@@ -26,7 +27,7 @@ export function HostStats({ record }: { record: HostRecord }) {
   return (
     <div className="flex flex-col gap-xs">
       <p className="text-body-sm text-text-secondary">{CRITERIA}</p>
-      <dl className="grid grid-cols-2 gap-xs">
+      <dl className="grid grid-cols-2 border-t border-border-divider">
         <Cell label="열린 소셜링" value={`${record.openedCount}회`} />
         <Cell label="호스트 취소" value={`${record.canceledCount}회`} />
         {record.matchRate === null ? (
@@ -46,11 +47,11 @@ export function HostStats({ record }: { record: HostRecord }) {
 
 function Cell({ label, value, sub, note }: { label: string; value?: string; sub?: string; note?: string }) {
   return (
-    <div className="flex min-w-0 flex-col gap-xxs rounded-lg border border-border-default bg-surface p-md">
+    <div className="flex min-w-0 flex-col gap-xxs border-b border-border-divider py-sm odd:border-r odd:pr-sm even:pl-md [&:nth-last-child(-n+2)]:border-b-0">
       <dt className="text-body-sm text-text-secondary">{label}</dt>
       {value ? (
         <dd className="flex flex-col">
-          <span className="text-title-xl text-text-primary">{value}</span>
+          <span className="text-title-xl text-deep">{value}</span>
           {sub && <span className="text-body-sm text-text-muted">{sub}</span>}
         </dd>
       ) : (

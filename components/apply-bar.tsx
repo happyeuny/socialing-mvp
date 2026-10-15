@@ -1,6 +1,7 @@
 import { Check, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { ApplicationChip, chipVariantOf } from "@/components/application-chip";
+import { ApplyBarShell } from "@/components/apply-bar-shell";
 import { Button, buttonVariants } from "@/components/button";
 import { ConfirmApplySheet } from "@/components/confirm-apply-sheet";
 import { ConfirmCancelApplicationSheet } from "@/components/confirm-cancel-application-sheet";
@@ -230,15 +231,7 @@ function applySheetProps(socialing: SocialingDetail) {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <section
-      aria-label="신청"
-      data-toast-anchor
-      className="sticky bottom-0 z-10 flex flex-col items-center gap-xs border-t border-border-default bg-surface px-md pt-sm pb-[calc(12px+env(safe-area-inset-bottom))] shadow-up"
-    >
-      {children}
-    </section>
-  );
+  return <ApplyBarShell label="신청">{children}</ApplyBarShell>;
 }
 
 /** 상태 상자: surface-muted 바탕, 모서리 lg, 버튼 자리를 채운다 */

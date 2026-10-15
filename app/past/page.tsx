@@ -6,11 +6,13 @@ import { ErrorStateFull } from "@/components/error-state";
 import { HeaderSub } from "@/components/header-sub";
 import { SkeletonCardList } from "@/components/skeleton";
 import { SocialingCardList } from "@/components/socialing-card";
+import { TabBar } from "@/components/tab-bar";
 import { listPastSocialings, type SocialingCardData } from "@/lib/queries/socialings";
 import { readSimulatedState, type SimulatedState } from "@/lib/simulated-state";
 
 // P02 지난 소셜링 (spec M1, 8.2, 8.6, 8.9): 소셜링 일시가 지난 소셜링을 최근 순으로, 상태는 그대로(종료·호스트 취소·모집중).
-// 탐색 안의 링크로 들어오는 하위 화면이라 아래 탭 없이 header-sub.
+// 탐색 안의 링크로 들어오는 화면이라 위는 header-sub(뒤로), 아래는 tab-bar(탐색이 켜짐).
+// 탭이 없으면 뒤로 말고 나갈 길이 없어서 둔다 (decisions 2026-10-15).
 
 export const metadata: Metadata = { title: "지난 소셜링 · 문화소셜링" };
 
@@ -24,7 +26,8 @@ export default async function PastPage({
   return (
     <>
       <HeaderSub title="지난 소셜링" />
-      <main className="flex flex-col px-page-x pt-xl pb-xl">
+      {/* 아래 탭(64px + 안전 영역)에 맨 아래 카드가 가리지 않게 */}
+      <main className="flex flex-col px-page-x pt-xl pb-[calc(var(--spacing-xl)+64px+env(safe-area-inset-bottom))]">
         {/* 시안처럼 큰 제목을 한 번 더 보인다. 화면 제목(h1)은 머리글에 있어 화면 읽기에서는 건너뛴다 */}
         <p aria-hidden className="text-title-xl text-text-primary">
           지난 소셜링
@@ -40,6 +43,7 @@ export default async function PastPage({
           )}
         </div>
       </main>
+      <TabBar />
     </>
   );
 }

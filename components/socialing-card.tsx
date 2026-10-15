@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { ApplicationChip, type ApplicationChipVariant } from "@/components/application-chip";
 import { AvatarInitial } from "@/components/avatar-initial";
-import { CategoryArt } from "@/components/category-art";
+import { CategoryArt, CategoryName } from "@/components/category-art";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusTag } from "@/components/status-tag";
 import { formatDateTime, formatFee } from "@/lib/format";
 import { socialingPhotoUrl, type SocialingCardData } from "@/lib/queries/socialings";
 
-// DESIGN.md socialing-card/photo · no-photo (spec 8.5). 홈·탐색·지난 소셜링 목록에 쓴다.
+// DESIGN.md socialing-card/photo · no-photo (spec 8.5). 홈·탐색·지난 소셜링 목록에 쓴다. 테두리 없이 shadow-card.
 // 내 소셜링(P06)은 같은 카드에 신청 칩(my-application)이나 아래 줄(후기 쓰기, 승인 대기 · 소셜링 관리)을 더한다.
 // 왼쪽 96px 정사각 사진(없으면 카테고리 그림), 오른쪽 위에서부터
-// ① 상태 배지 + 꼬리표 ② 제목 1줄 ③ 카테고리 · 술 여부 ④ 소셜링 일시 · 장소 ⑤ 호스트 · 참여 확정 인원/정원 · 총 참가비.
+// ① 상태 배지 + 꼬리표 ② 제목 1줄(700) ③ 카테고리(카테고리 색 600 + 6px 점) · 술 여부 ④ 소셜링 일시 · 장소
+// ⑤ 호스트 · 참여 확정 인원/정원 · 총 참가비(700).
 // 카드 전체가 상세로 가는 링크다(제목 링크를 카드 크기로 넓힘).
 
 /** 카드 목록. 카드 사이 12px (DESIGN.md Layout) */
@@ -40,7 +41,7 @@ export function SocialingCard({ socialing, href, chip, footer }: SocialingCardPr
   const place = socialing.venue_type === "branch" ? socialing.venue_name : socialing.region_sigungu;
 
   return (
-    <article className="relative flex flex-col rounded-xl border border-border-default bg-surface p-md has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-border-strong">
+    <article className="relative flex flex-col rounded-xl bg-surface p-md shadow-card has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-border-strong">
       <div className="flex gap-md">
         {socialing.cover_photo_path ? (
           // eslint-disable-next-line @next/next/no-img-element -- 올릴 때 이미 1MB 이하로 줄인 Storage 공개 사진
@@ -59,7 +60,7 @@ export function SocialingCard({ socialing, href, chip, footer }: SocialingCardPr
             {socialing.status_tag && <StatusTag tag={socialing.status_tag} />}
             {chip && <ApplicationChip variant={chip} />}
           </div>
-          <h2 className="mt-xxs truncate text-title-md text-text-primary">
+          <h2 className="mt-xxs truncate text-title-md font-bold text-text-primary">
             <Link
               href={href ?? `/socialings/${socialing.id}`}
               className="after:absolute after:inset-0 focus-visible:outline-none"
@@ -68,7 +69,8 @@ export function SocialingCard({ socialing, href, chip, footer }: SocialingCardPr
             </Link>
           </h2>
           <p className="truncate text-body-sm text-text-secondary">
-            {socialing.category_name} · {socialing.has_alcohol ? "술 있음" : "술 없음"}
+            <CategoryName slug={socialing.category_slug} name={socialing.category_name} />{" "}
+            · {socialing.has_alcohol ? "술 있음" : "술 없음"}
           </p>
           <p className="truncate text-body-sm text-text-secondary">
             {formatDateTime(socialing.starts_at)} · {place}
@@ -82,7 +84,7 @@ export function SocialingCard({ socialing, href, chip, footer }: SocialingCardPr
               {socialing.accepted_count}/{socialing.capacity}명
             </span>
             <span aria-hidden>·</span>
-            <span className="shrink-0 font-medium text-text-primary">{formatFee(socialing.fee)}</span>
+            <span className="shrink-0 font-bold text-text-primary">{formatFee(socialing.fee)}</span>
           </p>
         </div>
       </div>

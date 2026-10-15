@@ -23,7 +23,7 @@
   --text-muted: #6b7280;
   --text-disabled: #9ca3af;
   --border-default: #e5e7eb;
-  --border-divider: #f3f4f6;
+  --border-divider: #edf1f4;
   --border-strong: #136f86;
   --toggle-off: #8a94a3;
   --danger: #c62828;
@@ -33,6 +33,21 @@
   --toast-bg: #1f292e;
   --toast-text: #ffffff;
   --dim: rgba(0, 0, 0, 0.5);
+  --deep: #0e3a47;
+  /* 카테고리 색: 카테고리를 알아보는 곳에만 (카테고리 그림, 카드의 카테고리 이름과 점, 홈 바로가기, 상세 대표 그림) */
+  --category-learning: #3e54c7;
+  --category-learning-soft: #ebefff;
+  --category-hobby: #0b7360;
+  --category-hobby-soft: #e1f5ef;
+  --category-activity: #46720c;
+  --category-activity-soft: #eef6df;
+  --category-culture: #7a45d1;
+  --category-culture-soft: #f1ebfd;
+  --category-party: #b8336a;
+  --category-party-soft: #fceaf2;
+  /* hero-card/no-photo 바탕과 왼쪽 아래 primary 빛 (DESIGN.md hero-card/no-photo) */
+  --hero-no-photo: linear-gradient(155deg, #17586b 0%, var(--deep) 55%, var(--on-primary) 100%);
+  --hero-no-photo-glow: radial-gradient(120% 80% at 0% 100%, rgb(89 203 232 / 0.28), transparent 60%);
 
   /* shadcn/ui가 쓰는 이름을 DESIGN.md 값에 연결한다 */
   --background: var(--surface-bg);
@@ -82,6 +97,17 @@
   --color-toast-bg: var(--toast-bg);
   --color-toast-text: var(--toast-text);
   --color-dim: var(--dim);
+  --color-deep: var(--deep);
+  --color-category-learning: var(--category-learning);
+  --color-category-learning-soft: var(--category-learning-soft);
+  --color-category-hobby: var(--category-hobby);
+  --color-category-hobby-soft: var(--category-hobby-soft);
+  --color-category-activity: var(--category-activity);
+  --color-category-activity-soft: var(--category-activity-soft);
+  --color-category-culture: var(--category-culture);
+  --color-category-culture-soft: var(--category-culture-soft);
+  --color-category-party: var(--category-party);
+  --color-category-party-soft: var(--category-party-soft);
 
   /* shadcn/ui 색 이름 */
   --color-background: var(--background);
@@ -110,10 +136,12 @@
   /* 글자 (DESIGN.md typography). 12px 미만은 없다 */
   --text-title-xl: 22px;
   --text-title-xl--line-height: 28px;
-  --text-title-xl--font-weight: 700;
+  --text-title-xl--font-weight: 800;
+  --text-title-xl--letter-spacing: -0.02em;
   --text-title-lg: 18px;
   --text-title-lg--line-height: 24px;
-  --text-title-lg--font-weight: 700;
+  --text-title-lg--font-weight: 800;
+  --text-title-lg--letter-spacing: -0.02em;
   --text-title-md: 16px;
   --text-title-md--line-height: 22px;
   --text-title-md--font-weight: 600;
@@ -154,8 +182,9 @@
   --spacing-touch-min: 44px;
   --spacing-screen: 390px;
 
-  /* 그림자 (DESIGN.md Elevation): 화면 위에 뜨는 것에만. apply-bar는 아주 옅은 위쪽 그림자 */
-  --shadow-up: 0 -2px 8px rgb(0 0 0 / 0.04);
+  /* 그림자 (DESIGN.md Elevation). 연한 바탕 위 흰 카드는 테두리 대신 shadow-card, 아래 고정 영역은 shadow-bar */
+  --shadow-card: 0 1px 2px rgb(14 58 71 / 0.06), 0 6px 16px rgb(14 58 71 / 0.06);
+  --shadow-bar: 0 -6px 18px rgb(14 58 71 / 0.08);
 }
 
 @layer base {

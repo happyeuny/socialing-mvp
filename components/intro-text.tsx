@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/button";
 import { cn } from "@/lib/utils";
 
-// 상세 소개 (spec M4, 8.9): 5줄을 넘으면 접고 "더보기". 누르면 전부 펼친다.
+// 상세 소개 (spec M4, 8.9, DESIGN.md 상세(P03) 배치의 소개): 5줄을 넘으면 접고 "더보기"(text-link, primary-strong 600 + ⌄, 왼쪽 정렬). 누르면 전부 펼친다.
 // 넘치는지는 그려진 뒤에야 알 수 있어, 글 상자 크기를 지켜보다가(ResizeObserver) 넘칠 때만 버튼을 보인다.
 
 export function IntroText({ text }: { text: string }) {
@@ -24,7 +24,7 @@ export function IntroText({ text }: { text: string }) {
   }, [expanded]);
 
   return (
-    <div className="flex flex-col gap-md">
+    <div className="flex flex-col gap-xxs">
       <p
         ref={ref}
         className={cn(
@@ -35,7 +35,7 @@ export function IntroText({ text }: { text: string }) {
         {text}
       </p>
       {overflowing && !expanded && (
-        <Button variant="secondary" size="md" className="w-full" onClick={() => setExpanded(true)}>
+        <Button variant="text-link" size="inline" className="-my-xs gap-xxs self-start font-semibold" onClick={() => setExpanded(true)}>
           더보기
           <ChevronDown className="size-4" aria-hidden />
         </Button>

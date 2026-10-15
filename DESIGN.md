@@ -18,7 +18,7 @@ colors:
   text-muted: "#6B7280"
   text-disabled: "#9CA3AF"
   border-default: "#E5E7EB"
-  border-divider: "#F3F4F6"
+  border-divider: "#EDF1F4"
   border-strong: "#136F86"
   toggle-off: "#8A94A3"
   danger: "#C62828"
@@ -28,17 +28,30 @@ colors:
   toast-bg: "#1F292E"
   toast-text: "#FFFFFF"
   dim: "rgba(0, 0, 0, 0.5)"
+  deep: "#0E3A47"
+  category-learning: "#3E54C7"
+  category-learning-soft: "#EBEFFF"
+  category-hobby: "#0B7360"
+  category-hobby-soft: "#E1F5EF"
+  category-activity: "#46720C"
+  category-activity-soft: "#EEF6DF"
+  category-culture: "#7A45D1"
+  category-culture-soft: "#F1EBFD"
+  category-party: "#B8336A"
+  category-party-soft: "#FCEAF2"
 typography:
   title-xl:
     fontFamily: Noto Sans KR
     fontSize: 22px
-    fontWeight: 700
+    fontWeight: 800
     lineHeight: 28px
+    letterSpacing: -0.02em
   title-lg:
     fontFamily: Noto Sans KR
     fontSize: 18px
-    fontWeight: 700
+    fontWeight: 800
     lineHeight: 24px
+    letterSpacing: -0.02em
   title-md:
     fontFamily: Noto Sans KR
     fontSize: 16px
@@ -227,6 +240,13 @@ components:
     height: 64px
   tab-bar-active:
     textColor: "{colors.primary-strong}"
+  tab-bar-active-indicator:
+    backgroundColor: "{colors.primary-soft}"
+    rounded: "{rounded.full}"
+    width: 52px
+    height: 28px
+  logo-wordmark:
+    textColor: "{colors.primary-strong}"
   apply-bar:
     backgroundColor: "{colors.surface}"
     padding: 16px
@@ -250,11 +270,11 @@ components:
     backgroundColor: "{colors.border-divider}"
     height: 1px
   edge-line:
-    backgroundColor: "{colors.border-default}"
+    backgroundColor: "{colors.border-divider}"
     height: 1px
   avatar-initial:
-    backgroundColor: "{colors.surface-muted}"
-    textColor: "{colors.text-secondary}"
+    backgroundColor: "{colors.primary-soft}"
+    textColor: "{colors.primary-strong}"
     rounded: "{rounded.full}"
   avatar-initial-strong:
     backgroundColor: "{colors.primary-strong}"
@@ -269,6 +289,10 @@ components:
     backgroundColor: "{colors.primary-strong}"
   overlay:
     backgroundColor: "{colors.dim}"
+  notice-box-info:
+    backgroundColor: "{colors.primary-soft}"
+    textColor: "{colors.text-primary}"
+    rounded: "{rounded.lg}"
 ---
 
 # 문화소셜링 DESIGN.md
@@ -285,7 +309,9 @@ components:
 
 ## Colors
 
-하늘색 primary 하나를 중심으로, 살짝 푸른 뉴트럴과 단 한 가지 따뜻한 point 색을 쓴다. 대비는 WCAG 2.x 공식으로 잰 값이다(본문 글자 기준 4.5:1, 부품 경계 3:1).
+하늘색 primary 하나를 중심으로, 살짝 푸른 뉴트럴과 단 한 가지 따뜻한 point 색을 쓴다. 카테고리마다 보조색(진한 색과 연한 soft 색)이 하나씩 있고, 가장 진한 청록 deep이 로고와 큰 숫자를 맡는다. 대비는 WCAG 2.x 공식으로 잰 값이다(본문 글자 기준 4.5:1, 부품 경계 3:1).
+
+색 비율(홈 첫 화면 기준): 흰·연한 바탕 약 60, 연한 색(primary-soft·카테고리 soft) 약 30, 진한 색(primary·primary-strong·deep·카테고리 색) 약 10. point는 이 비율에 넣지 않는다(두 곳에만).
 
 | 역할 | Hex | 쓰는 곳 | 대비 |
 |---|---|---|---|
@@ -293,7 +319,7 @@ components:
 | primary-pressed | #47BBD8 | 주 버튼 눌림 | on-primary와 7.1:1 |
 | on-primary | #0B2530 | primary·primary-pressed 위 글자와 아이콘 (유일하게 허용) | primary와 8.4:1 |
 | primary-strong | #136F86 | 흰·연한 바탕 위 링크, 테두리 배지·버튼, 활성 탭, 선택된 칩 글자, 머리글 아바타 바탕 | 흰 5.8:1, primary-soft 5.2:1 |
-| primary-soft | #E1F7FC | 선택된 칩·행 바탕, "참여 확정" 칩 바탕, 사진 없는 카드의 카테고리 그림 바탕 (Stitch 이름 primary-container) | - |
+| primary-soft | #E1F7FC | 선택된 칩·탭 표시, 안내 상자(notice-box/info), 아이콘 칸, 이름 첫 글자 원 바탕, "참여 확정" 칩 바탕 (Stitch 이름 primary-container) | - |
 | point | #F5A623 | trust-label, count-pill 두 곳에만 | - |
 | on-point | #2A1C00 | point 위 글자 | point와 8.2:1 |
 | surface | #FFFFFF | 카드, 창, 바텀시트, 머리글, 아래 탭 | - |
@@ -303,8 +329,8 @@ components:
 | text-secondary | #4B5563 | 보조 설명, 라벨, 카드 메타 | 흰 7.6:1, surface-muted 7.0:1 |
 | text-muted | #6B7280 | 힌트, 플레이스홀더, 글자 수, 비활성 탭 글자, "신청 취소" 칩 | 흰 4.8:1, surface-muted 4.5:1 |
 | text-disabled | #9CA3AF | 누를 수 없는 버튼·링크 글자에만 (WCAG 예외) | 흰 2.5:1 |
-| border-default | #E5E7EB | 카드·버튼·입력칸 기본 테두리, 머리글·아래 탭·apply-bar 경계선(edge-line) | - |
-| border-divider | #F3F4F6 | 목록 행 사이, 카드 안 구분선 (장식용, 부품 경계에 쓰지 않음) | - |
+| border-default | #E5E7EB | 버튼·입력칸·칩 테두리, 흰 바탕 위 상자(창 안 상자 등) 테두리 | - |
+| border-divider | #EDF1F4 | 목록 행 사이, 카드 안 구분선, 머리글·아래 탭 경계선(edge-line) (장식용, 부품 경계에 쓰지 않음) | - |
 | border-strong | #136F86 | 포커스된 입력칸, 선택된 칩·행 테두리 | - |
 | toggle-off | #8A94A3 | 꺼진 토글 바탕 | 흰 3.1:1 |
 | danger | #C62828 | 호스트 취소, 거절, 오류 글자와 테두리 | 흰 5.6:1, danger-soft 4.6:1 |
@@ -314,6 +340,16 @@ components:
 | toast-bg | #1F292E | 짧은 안내(토스트) 바탕 | - |
 | toast-text | #FFFFFF | 토스트 글자. 토스트 안 링크는 primary | 14.8:1, 링크 7.9:1 |
 | dim | rgba(0,0,0,0.5) | 창·바텀시트 뒤 어둡게 | - |
+| deep | #0E3A47 | 로고 "문화", 사진 없는 히어로 바탕, 호스트 기록 숫자 | 흰 12.3:1 |
+| category-learning / -soft | #3E54C7 / #EBEFFF | 배움·자기계발 | 흰 6.4:1, soft 위 5.6:1 |
+| category-hobby / -soft | #0B7360 / #E1F5EF | 취미 | 흰 5.8:1, soft 위 5.1:1 |
+| category-activity / -soft | #46720C / #EEF6DF | 운동·활동 | 흰 5.7:1, soft 위 5.1:1 |
+| category-culture / -soft | #7A45D1 / #F1EBFD | 문화·예술 | 흰 5.8:1, soft 위 5.0:1 |
+| category-party / -soft | #B8336A / #FCEAF2 | 파티·사교 | 흰 5.7:1, soft 위 4.9:1 |
+| caution / caution-soft | #8A4B00 / #FFF4E0 | notice-box/caution. **정의만 한다.** 쓰는 기능이 생길 때 front matter와 `globals.css`에 넣는다 | caution-soft 위 6.2:1 |
+
+- 카테고리 이름(slug)은 코드와 같다: learning, hobby, activity, culture, party. 화면에 보이는 이름은 DB 그대로.
+- 카테고리 색은 **카테고리를 알아보는 곳에만** 쓴다: 카테고리 그림(category-art), 카드의 카테고리 이름과 점, 홈 카테고리 바로가기, 상세 대표 그림. 버튼, 링크, 상태 표시에는 쓰지 않고, 특정 소셜링을 눈에 띄게 하는 데도 쓰지 않는다(유료 노출 없음).
 
 ## Typography
 
@@ -321,8 +357,8 @@ components:
 
 | 토큰 | 크기 / 줄 높이 / 굵기 | 쓰는 곳 |
 |---|---|---|
-| title-xl | 22 / 28 / 700 | 화면 제목, 상세 제목 |
-| title-lg | 18 / 24 / 700 | 시트·창 제목, 히어로 제목 |
+| title-xl | 22 / 28 / 800, 자간 −0.02em | 화면 제목, 상세 제목, 호스트 기록 숫자 |
+| title-lg | 18 / 24 / 800, 자간 −0.02em | 시트·창 제목, 히어로 제목, 묶음 제목(section-header, 상세 "소개"·"호스트") |
 | title-md | 16 / 22 / 600 | 묶음 제목, 카드 제목 |
 | body-lg | 15 / 22 / 500 | 버튼 글자, 입력값 |
 | body-long | 15 / 24 / 400 | 소개, 후기 본문처럼 여러 줄인 글 |
@@ -332,19 +368,32 @@ components:
 
 12px보다 작은 글자는 쓰지 않는다.
 
+- 글꼴(Noto Sans KR Variable)은 800까지 들어 있어 따로 글꼴 파일을 더하지 않는다.
+- 카드 제목과 주요 값(총 참가비 등)은 그 토큰에 굵기만 700(font-bold)으로 올린다. 굵기 때문에 새 글자 토큰을 만들지 않는다.
+- 로고(logo-wordmark)는 글자 토큰의 예외다(C3).
+
 ## Layout
 
 - 폭 390px, 좌우 여백 16px(page-x). 간격은 8의 배수, 미세 조정만 4px.
 - 누를 수 있는 것은 최소 44×44px(touch-min).
 - 메인 탭 화면(홈, 탐색, 인증 후기, 내 소셜링): 위 header-main(56px) + 아래 tab-bar(64px).
-- 하위 화면(상세, 관리, 후기 쓰기, 로그인, 가입, 등록, 수정, 지난 소셜링): 위 header-sub(56px), 아래 탭 없음.
+- 지난 소셜링: 위 header-sub(56px, 뒤로 + "지난 소셜링") + 아래 tab-bar(64px, 탐색이 켜짐). 탐색 탭을 누르면 필터 없는 탐색으로 간다.
+- 나머지 하위 화면(상세, 관리, 후기 쓰기, 로그인, 가입, 등록, 수정): 위 header-sub(56px), 아래 탭 없음.
 - 창(O01~O05)은 화면이 아니라 화면 위에 뜬다. 신청하는 사람 쪽 창(필터 O01, 신청 확인 O02, 등급 조건 O03, 신청 취소 확인 O05)은 bottom-sheet, 호스트 동작 확인(O04)은 가운데 dialog.
 - 소셜링 상세는 맨 아래에 apply-bar가 붙어 있고, 내용은 그 높이만큼 아래 여백을 둔다.
 - 목록 묶음 순서: section-header(제목 + "전체 보기 ›" + 기준 문구) → 카드 목록, 카드 사이 12px.
 
 ## Elevation & Depth
 
-그림자보다 바탕 색 차이와 테두리로 층을 나눈다. 페이지(surface-bg) 위에 흰 카드(surface, border-default 1px)를 놓는다. 그림자는 화면 위에 뜨는 것에만 쓴다: 창·바텀시트(뒤를 dim으로 어둡게), 토스트, apply-bar(위쪽 테두리 1px + 아주 옅은 위쪽 그림자).
+연한 바탕(surface-bg) 위의 흰 카드는 테두리 대신 옅은 그림자로 띄운다. 흰 바탕 위에서 줄로 나눌 때는 border-divider를 쓴다. 입력칸, 버튼, 칩처럼 누르거나 쓰는 부품은 테두리(border-default)를 쓴다.
+
+| 이름 | 값 | 쓰는 곳 |
+|---|---|---|
+| shadow-card | `0 1px 2px rgba(14,58,71,.06), 0 6px 16px rgba(14,58,71,.06)` | 소셜링 카드, 짧은 후기 카드, 스터디지점 바로가기, 상세의 정보·소개·호스트 카드, 요약 카드(manage-summary·review-summary) |
+| shadow-bar | `0 -6px 18px rgba(14,58,71,.08)` | 아래 고정 영역(apply-bar와 같은 모양들) |
+
+- 창(바텀시트, 대화상자)은 뒤를 dim으로 어둡게 해서 띄운다. 토스트는 진한 바탕으로 구분한다.
+- 테두리를 빼는 것은 **연한 바탕 위의 카드**만이다. 흰 바탕 위 카드(바텀시트 안 상자 등)는 테두리를 남긴다.
 
 ## Shapes
 
@@ -352,11 +401,13 @@ components:
 |---|---|---|
 | xs | 4px | status-tag, verified-badge |
 | sm | 6px | 지금 쓰는 곳 없음 (남겨 둔 단계) |
-| md | 8px | segmented |
-| lg | 12px | 버튼, 입력칸, 사진 고르기 칸, 짧은 후기 카드, 안내 상자, 호스트 기록 칸, 토스트 |
-| xl | 16px | 소셜링 카드, 전체 후기 카드, 창 |
-| 2xl | 20px | 홈 히어로 카드, 바텀시트 위 모서리 |
-| full | 9999px | 칩, status-badge, application-chip, trust-label, count-pill, 토글, avatar-initial |
+| md | 8px | segmented, 상세 정보 아이콘 칸 |
+| lg | 12px | 버튼, 입력칸, 사진 고르기 칸, 카드 사진, 짧은 후기 카드, 안내 상자, 토스트 |
+| xl | 16px | 소셜링 카드, 상세의 정보·소개·호스트 카드, 요약 카드, 창 |
+| 2xl | 20px | 홈 히어로 카드, 바텀시트 위 모서리, 상세 제목 묶음 위 모서리, 아래 고정 영역 위 모서리 |
+| full | 9999px | 칩, status-badge, application-chip, trust-label, count-pill, 토글, avatar-initial, 아래 탭 활성 알약, 머리글 로그인 버튼 |
+
+새 모서리 값은 만들지 않는다. 2026-10 견본(홈·상세)의 대략 값은 위 토큰으로 맞췄다: 카드 14 → xl, 썸네일 10 → lg, 정보 아이콘 칸 9 → md, 아래 고정 영역 18 → 2xl, 신청 버튼 14 → lg.
 
 ## Components
 
@@ -364,7 +415,7 @@ components:
 
 ### C1 기본 컴포넌트
 
-**button** — 높이 lg 52 / md 48 / sm 36, 좌우 여백 lg 20 / md 16 / sm 12, 모서리 lg, 글자 lg·md는 body-lg, sm은 body-md. sm은 보이는 높이만 36이고 누르는 영역은 위아래로 넓혀 44px를 지킨다. 로딩 상태는 작은 스피너 + "처리 중…"이고 다시 누를 수 없다.
+**button** — 높이 lg 52 / md 48 / sm 36, 좌우 여백 lg 20 / md 16 / sm 12, 모서리 lg, 글자 lg·md는 body-lg에 굵기 700, sm은 body-md. sm은 보이는 높이만 36이고 누르는 영역은 위아래로 넓혀 44px를 지킨다. 로딩 상태는 작은 스피너 + "처리 중…"이고 다시 누를 수 없다.
 
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
@@ -487,7 +538,7 @@ components:
 
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
-| trust-label/default | point 바탕, on-point 글자, 높이 24(누르는 영역은 위아래로 넓혀 44), 모서리 full, "믿고 가는 호스트 ⓘ" | 기준이 공개된 등급 라벨. 조건: 최근 6개월 열린 소셜링 5회 이상 + 호스트 취소 0회 + 소개 일치 90% 이상. 상세의 host-profile-row와 호스트 묶음 닉네임 아래 두 곳, 누르면 bottom-sheet/trust-criteria(O03). O03 제목 옆에서는 누르지 않는 모양만 |
+| trust-label/default | point 바탕, on-point 글자, 높이 24(누르는 영역은 위아래로 넓혀 44), 모서리 full, 글자 앞에 방패 아이콘 14(on-point), "믿고 가는 호스트 ⓘ" | 기준이 공개된 등급 라벨. 조건: 최근 6개월 열린 소셜링 5회 이상 + 호스트 취소 0회 + 소개 일치 90% 이상. 상세의 host-profile-row와 호스트 묶음 닉네임 아래 두 곳, 누르면 bottom-sheet/trust-criteria(O03). O03 제목 옆에서는 누르지 않는 모양만 |
 | count-pill/pending | point 바탕, on-point 글자, 높이 20, 모서리 full, "2" | 승인 대기 건수 (상세 "관리하기", 내 소셜링 호스트 카드) |
 
 **사람과 인증 표시**
@@ -495,7 +546,7 @@ components:
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
 | verified-badge/default | surface-muted 바탕, border-default 1px, text-secondary, 높이 22, 모서리 xs, "참여 인증" (시안) | 참여를 마친 사람이 쓴 후기. 후기 줄 오른쪽 끝 |
-| avatar-initial/default | surface-muted 원 안에 닉네임 첫 글자(text-secondary). 크기 20 · 32 · 40 · 48 | 카드 메타 20, 후기 카드 32, 신청자 행·상세 호스트 40, 내 소셜링 프로필 48. 프로필 사진은 없다 |
+| avatar-initial/default | primary-soft 원 안에 닉네임 첫 글자(primary-strong, 5.2:1). 크기 20 · 32 · 40 · 48 | 카드 메타 20, 후기 카드 32, 신청자 행·상세 호스트 40, 내 소셜링 프로필 48. 프로필 사진은 없다 |
 | avatar-initial/strong | primary-strong 원 안에 흰 글자, 28 | 로그인한 머리글 오른쪽 |
 | host-profile-row/default | 높이 52. avatar-initial 40 + "호스트"(body-md, text-secondary) + 닉네임(title-md) + 조건을 채운 호스트만 trust-label | 상세 제목 아래 호스트 한 줄 |
 | profile-row/default | avatar-initial 48 + 닉네임(title-md), 오른쪽 "로그아웃"(body-md, text-secondary, 누르는 영역 44) | 내 소셜링(P06) 맨 위 |
@@ -504,26 +555,28 @@ components:
 
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
-| socialing-card/photo | surface, border-default 1px, 모서리 xl, 여백 16. 왼쪽 96px 정사각 사진(모서리 lg), 오른쪽 위에서부터: status-badge(+status-tag), 제목 1줄 말줄임(title-md), "카테고리 · 술 여부", "일시 · 장소", avatar-initial 20 + "호스트 · 4/8명 · 총 참가비"(닉네임과 총 참가비는 text-primary) | 홈·탐색·지난 소셜링 목록 |
-| socialing-card/no-photo | 왼쪽 칸이 primary-soft 바탕 + 카테고리 선 아이콘 | 대표 사진이 없을 때 |
-| socialing-card/my-application | photo 카드 + status-badge 뒤에 application-chip(승인 대기·참여 확정·거절. 호스트 취소면 배지 하나만, 내가 신청 취소한 소셜링은 목록에 없음). 후기를 쓸 수 있으면(참여 확정 + 종료 + 아직 안 씀) 카드 아래 옅은 구분선 + 오른쪽 sm primary "후기 쓰기" | 내 소셜링 "신청한 소셜링" 탭 |
-| socialing-card/host | photo 카드 + 카드 아래 옅은 구분선, 왼쪽 "승인 대기" + count-pill(0이면 없음), 오른쪽 "소셜링 관리 ›"(body-md, primary-strong). 카드 전체가 P11로 가는 링크 | 내 소셜링 "호스트인 소셜링" 탭 |
-| hero-card/default | 대표 사진 전체, 아래쪽 어두운 그라데이션 위 흰 글자, 모서리 2xl, 여백 20, 최소 높이 280. 왼쪽 위 작은 라벨 "지금 신청할 수 있는 가장 가까운 소셜링", 아래 status-badge, 제목, 일시 · 장소, 호스트 · 참가자 · 총 참가비 | 홈 맨 위 1개. 넘기는 배너가 아니다. 카드 아래 기준 문구(body-sm) |
-| review-card/compact | surface, border-default 1px, 모서리 lg, 여백 14·16. "닉네임 · 날짜 · 소셜링 제목" + 글 2줄 | 홈 "최근 인증 후기" |
+| socialing-card/photo | surface, 테두리 없음 + shadow-card, 모서리 xl, 여백 16. 왼쪽 96px 정사각 사진(모서리 lg), 오른쪽 위에서부터: status-badge(+status-tag), 제목 1줄 말줄임(title-md, 700), "카테고리 · 술 여부"(카테고리 이름은 카테고리 색 600 + 앞에 6px 점, 술 여부는 text-secondary), "일시 · 장소", avatar-initial 20 + "호스트 · 4/8명 · 총 참가비"(닉네임은 text-primary, 총 참가비는 text-primary 700) | 홈·탐색·지난 소셜링 목록 |
+| socialing-card/no-photo | 왼쪽 칸이 category-art(그 카테고리 soft 바탕 + 카테고리 색 선 아이콘) | 대표 사진이 없을 때 |
+| socialing-card/my-application | photo 카드 + status-badge 뒤에 application-chip(승인 대기·참여 확정·거절. 호스트 취소면 배지 하나만, 내가 신청 취소한 소셜링은 목록에 없음). 후기를 쓸 수 있으면(참여 확정 + 종료 + 아직 안 씀) 카드 아래 구분선(border-divider) + 오른쪽 sm primary "후기 쓰기" | 내 소셜링 "신청한 소셜링" 탭 |
+| socialing-card/host | photo 카드 + 카드 아래 구분선(border-divider), 왼쪽 "승인 대기" + count-pill(0이면 없음), 오른쪽 "소셜링 관리 ›"(body-md, primary-strong). 카드 전체가 P11로 가는 링크 | 내 소셜링 "호스트인 소셜링" 탭 |
+| category-art/default | 그 카테고리 soft 바탕 + 가운데 카테고리 선 아이콘(카테고리 색). 아이콘: 배움·자기계발 책, 취미 웃는 얼굴, 운동·활동 번개, 문화·예술 팔레트, 파티·사교 사람들 | 사진 없는 카드의 사진 칸 |
+| hero-card/default | 대표 사진 전체, 아래쪽 어두운 그라데이션 위 흰 글자, 모서리 2xl, 여백 20, 최소 높이 280. 왼쪽 위 작은 라벨 "지금 신청할 수 있는 가장 가까운 소셜링", 아래 status-badge, 제목(title-lg), 일시 · 장소, 호스트 · 참가자 · 총 참가비 | 홈 맨 위 1개. 넘기는 배너가 아니다. 카드 아래 기준 문구(body-sm) |
+| hero-card/no-photo | default와 같은 틀에 사진 대신 바탕 `linear-gradient(155deg, #17586B 0%, deep 55%, on-primary 100%)`, 오른쪽 위에 카테고리 선 아이콘 132px(흰색 13% 투명), 왼쪽 아래 primary 빛(radial, 28%). 라벨 바탕 흰색 14%·글자 600, status-badge/recruiting은 테두리 없이, 제목 title-lg(800), 일시·장소 글자 흰색 86% | 대표 사진이 없을 때 |
+| review-card/compact | surface, 테두리 없음 + shadow-card, 모서리 lg, 여백 14·16. avatar-initial 20 + "닉네임 · 날짜 · 소셜링 제목" + 글 2줄 | 홈 "최근 인증 후기" |
 | review-card/full-no-photo | 목록 한 줄(시안): surface 바탕 화면에서 위아래 여백 20, 줄 사이 border-divider. avatar-initial 32 + 닉네임(title-md) + 날짜(body-sm, text-muted), 오른쪽 끝 verified-badge, 소셜링 제목 링크 "주말 아침 독서 토론 ›"(body-lg), 글(body-long, 줄바꿈 그대로) | 인증 후기(P10) 목록 |
 | review-card/full-with-photo | full-no-photo + 4:3 사진(모서리 lg) | 사진이 있는 후기 |
-| shortcut-category/default | 56px 원(surface, border-default 1px) 안 카테고리 선 아이콘 24(primary-strong) + 아래 이름(label, text-primary, 가운뎃점 뒤에서 줄바꿈). 5개가 한 줄을 똑같이 나눠 쓰고, 칸이 56px보다 좁은 화면에서는 원이 칸 폭에 맞춰 줄어든다 | 홈 카테고리 바로가기 5개 (시안) |
-| shortcut-branch/default | surface, border-default 1px, 모서리 lg, 여백 12, 가운데 정렬. 지점 이름(title-md) + 지역 "서울 강남구"(body-sm, text-secondary). 3개가 한 줄을 나눠 씀 | 홈 스터디지점 바로가기 3개 (시안) |
+| shortcut-category/default | 56px 원(테두리 없음, 그 카테고리 soft 바탕) 안 카테고리 선 아이콘 24(카테고리 색, 선 굵기 2) + 아래 이름(label, text-primary, 가운뎃점 뒤에서 줄바꿈). 5개가 한 줄을 똑같이 나눠 쓰고, 칸이 56px보다 좁은 화면에서는 원이 칸 폭에 맞춰 줄어든다 | 홈 카테고리 바로가기 5개 (시안) |
+| shortcut-branch/default | surface, 테두리 없음 + shadow-card, 모서리 lg, 여백 12, 가운데 정렬. 위치 핀 아이콘 16(primary-strong) 아래 지점 이름(title-md, 700) + 지역 "서울 강남구"(label, text-secondary). 3개가 한 줄을 나눠 씀. 핀 원을 왼쪽에 두면 390px에서 지역 글이 "서울 강/남구"로 끊겨 가운데 정렬로 둔다 | 홈 스터디지점 바로가기 3개 (시안) |
 
 **호스트 기록과 상세 정보**
 
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
-| host-stats/normal | 위 문구 "최근 6개월 기록 · 별점이나 점수로 합치지 않아요"(body-sm, text-secondary), 2×2 칸(surface, border-default, 모서리 lg, 여백 16, 사이 8): 칸 이름(body-sm, text-secondary) + 값(title-xl) "6회" · "0회" · "92%"와 아래 "응답 12건"(body-sm, text-muted) · "12개" (시안) | 상세의 호스트 영역 |
-| host-stats/new-host | 위 문구는 normal과 같고, 칸 대신 surface-muted 상자(모서리 lg, 여백 16) "새 호스트 · 기록이 쌓이면 숫자로 보여 줘요" | 열린 소셜링 3회 미만 |
+| host-stats/normal | 상세 호스트 카드(흰 카드, 모서리 xl, shadow-card, 여백 16) 안: avatar-initial 48 + 닉네임(700) + trust-label, 위 문구 "최근 6개월 기록 · 별점이나 점수로 합치지 않아요"(body-sm, text-secondary), 2×2 칸(칸 테두리 없음, 칸 사이를 border-divider 줄로 나눔): 칸 이름(body-sm, text-secondary) + 값(title-xl 800, deep) "6회" · "0회" · "92%"와 아래 "응답 12건"(body-sm, text-muted) · "12개" | 상세의 호스트 영역 |
+| host-stats/new-host | 같은 호스트 카드 안. 위 문구는 normal과 같고, 칸 대신 surface-muted 상자(모서리 lg, 여백 16) "새 호스트 · 기록이 쌓이면 숫자로 보여 줘요" | 열린 소셜링 3회 미만 |
 | host-stats/ratio-hidden | normal과 같고 소개 일치 칸만 "응답 5건 이상부터 보여요" | 응답 5건 미만 |
-| host-stats/load-failed | error-state/inline 틀(surface-muted, 점선 테두리, 모서리 lg) 안에 "기록을 불러오지 못했어요" + text-link "다시 시도" | 기록만 실패 (상세와 신청은 그대로 동작) |
-| manage-summary/default | surface, border-default 1px, 모서리 xl, 여백 20. status-badge(+status-tag), 제목(title-lg), "10/14(화) 오후 7:30 · 스터디지점 강남점 · 호스트 승인"(body-md, text-secondary), "참가자 **4/8명** · 스태프 1명 · 승인 대기" + count-pill(body-md, text-primary. 스태프는 있을 때, 승인 대기는 1건 이상일 때) | 소셜링 관리(P11) 맨 위 요약 (시안) |
+| host-stats/load-failed | 같은 호스트 카드 안. error-state/inline 틀(surface-muted, 점선 테두리, 모서리 lg) 안에 "기록을 불러오지 못했어요" + text-link "다시 시도" | 기록만 실패 (상세와 신청은 그대로 동작) |
+| manage-summary/default | surface, 테두리 없음 + shadow-card, 모서리 xl, 여백 20. status-badge(+status-tag), 제목(title-lg), "10/14(화) 오후 7:30 · 스터디지점 강남점 · 호스트 승인"(body-md, text-secondary), "참가자 **4/8명** · 스태프 1명 · 승인 대기" + count-pill(body-md, text-primary. 스태프는 있을 때, 승인 대기는 1건 이상일 때) | 소셜링 관리(P11) 맨 위 요약 (시안) |
 | review-summary/default | manage-summary/default와 같은 카드. status-badge "종료" + application-chip "참여 확정", 제목(title-lg), "10/11(토) 오전 10:00 · 스터디지점 홍대점 · 호스트 도현"(body-md, text-secondary) | 후기 쓰기(P09) 맨 위 요약 (시안) |
 | manage-status-actions/recruiting | button/primary/lg "확정하기"(전체 폭) + 설명 body-sm text-secondary, 그 아래 button/secondary/md "수정" · button/danger/md "호스트 취소"(반씩), 그 아래 막힌 button/primary/lg "종료하기" + 이유. 막히면 버튼 disabled + 이유 한 줄 | 소셜링 관리(P11) 진행 단계 아래, 모집중 (시안) |
 | manage-status-actions/confirmed | "종료하기"(일시 전이면 disabled + "소셜링 일시가 지나야 종료할 수 있어요") + "수정" · "호스트 취소" | 확정한 뒤 |
@@ -536,20 +589,30 @@ components:
 | applicant-row/approve-disabled | 승인 버튼 disabled(일시가 지나면 거절도) + 이유: "정원이 차서 승인할 수 없어요" 또는 "소셜링 일시가 지나 승인할 수 없어요". 이유는 줄마다가 아니라 승인 대기 목록 아래 한 줄(body-sm, text-secondary), 승인할 수 있으면 그 자리에 "남은 자리 4 · 정원이 차면 승인할 수 없어요"(시안) | 승인할 수 없을 때 |
 | applicant-row/accepted | 높이 64, application-chip/accepted | 참여 확정 탭 |
 | applicant-row/rejected | 높이 64, application-chip/rejected 또는 withdrawn | 거절·취소 탭 |
-| info-list/default | 라벨·값 행, 행 사이 border-divider 1px. 소셜링 일시 · 신청 마감 · 장소 · 총 참가비 · 모집 방식 · 인원("참가자 4/8명 · 스태프 1명" + "스태프는 정원에 세지 않아요") | 상세 정보 |
-| section-header/default | 제목 title-md, 오른쪽 text-link "전체 보기 ›", 아래 기준 문구 body-sm text-secondary | 홈·목록 묶음 머리 ("기준: 가까운 일시 순") |
-| notice-box/feed-criteria | surface-muted 바탕, text-secondary, 모서리 lg, 여백 14·16 | 호스트 승인 기준 등 안내 |
+| info-list/default | 흰 카드(모서리 xl, shadow-card, 여백 6·14, 화면 좌우 16 띄움) 안 라벨·값 행, 행 사이 border-divider 1px. 라벨 앞에 아이콘 칸 30×30(모서리 md, primary-soft 바탕, primary-strong 아이콘 17): 소셜링 일시 calendar · 신청 마감 clock · 장소 map-pin · 총 참가비 wallet · 모집 방식 user-check · 인원 users. 값은 700, **소셜링 일시·총 참가비 값은 primary-strong**. 인원 값 아래 보조 글("스태프는 정원에 세지 않아요") 그대로 | 상세 정보 |
+| section-header/default | 제목 title-lg(800), 오른쪽 text-link "전체 보기 ›"(primary-strong, 600), 아래 기준 문구 body-sm text-secondary | 홈·목록 묶음 머리 ("기준: 가까운 일시 순") |
+| notice-box/feed-criteria | surface-muted 바탕, text-secondary, 모서리 lg, 여백 14·16 | 회색 안내: 신청 확인(O02)의 승인 기준, 관리 화면의 종료·취소 안내 등 |
+| notice-box/info | primary-soft 바탕, 제목 primary-strong 700 + 앞에 정보 아이콘 16, 본문 text-primary, 모서리 lg, 여백 14·16 | 상세(P03) 소개 카드 안 맨 아래 "호스트 승인 기준". 늘 펼쳐 보여야 하는 짧은 안내(C5 ②) |
 | notice-box/lock-privacy | surface-muted 바탕, 모서리 xl, 여백 20. 자물쇠 아이콘 + "비공개 확인 질문"(title-md), 안내(body-sm, text-secondary) "개별 응답은 호스트를 포함해 누구에게도 보이지 않아요. 합계만 호스트 기록에 쓰여요.", 그 아래 question-block 3개 (시안 P09) | 후기 쓰기(P09)의 비공개 질문 |
+
+**상세(P03) 배치** (견본 A안, 새 컴포넌트 이름 없이 위 부품을 놓는 방법)
+- 화면 바탕은 surface-bg이고, 흰 카드들이 그 위에 뜬다.
+- 대표 그림: 4:3. 사진이 있으면 사진, 없으면 그 카테고리 soft에서 surface-bg 쪽으로 옅어지는 그라데이션 + 가운데 카테고리 선 아이콘 84(카테고리 색, 선 굵기 1.5).
+- 제목 묶음: 흰 바탕 묶음이 대표 그림 위로 16 겹쳐 올라오고 위 모서리 2xl. 안에 status-badge(+status-tag) + 카테고리 줄(카테고리 이름은 카테고리 색 600 + 앞에 점, 술 여부 text-secondary), 제목 title-xl, host-profile-row.
+- info-list 카드 → "소개" 묶음 → "호스트" 묶음 순서. 묶음 제목 "소개" "호스트"는 title-lg.
+- 소개: 흰 카드(모서리 xl, shadow-card, 여백 16) 안에 글. 5줄을 넘으면 접고 "더보기"(text-link, primary-strong 600 + ⌄, 왼쪽 정렬, 누르는 영역 44). 호스트 승인 기준이 있으면 이 카드 안 맨 아래 notice-box/info.
+- 호스트: host-stats 카드 하나(위 host-stats).
 
 ### C3 탐색과 피드백
 
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
-| header-main/logged-out | surface, 아래 border-default, 높이 56. 왼쪽 "문화소셜링"(누르면 홈), 오른쪽 sm secondary "로그인" | 메인 탭 화면, 비로그인 |
+| logo-wordmark/default | 왼쪽 그림 26×22: 두 원이 겹친 모양 `<svg viewBox="0 0 26 22"><circle cx="9" cy="11" r="8" fill="primary"/><circle cx="17" cy="11" r="8" fill="primary-strong" fill-opacity=".88"/></svg>`(색은 토큰), 사이 7, 글자 "문화"(500, deep) + "소셜링"(800, primary-strong), 19px/24, 자간 −0.045em. 로고라서 글자 토큰의 예외. 그림은 읽기 프로그램에서 숨기고, 링크 이름은 "문화소셜링"(누르면 홈) | header-main 왼쪽 |
+| header-main/logged-out | surface, 아래 border-divider, 높이 56. 왼쪽 logo-wordmark, 오른쪽 "로그인": sm 버튼(보이는 높이 36, 누르는 영역 44)을 primary 바탕, on-primary 글자 700, 모서리 full로(머리글 로그인에만 쓰는 모양) | 메인 탭 화면, 비로그인 |
 | header-main/logged-in | 오른쪽 avatar-initial/strong 28 (누르면 내 소셜링) | 메인 탭 화면, 로그인 |
-| header-sub/default | 뒤로 아이콘 + 제목 ("소셜링 상세") | 하위 화면 |
+| header-sub/default | surface, 아래 border-divider, 높이 56. 뒤로 아이콘 + 제목(title-md, 700) ("소셜링 상세") | 하위 화면 |
 | header-sub/with-action | default + 오른쪽 text-link ("상세 보기 ›") | 소셜링 관리 |
-| tab-bar/active-home · active-explore · active-review · active-mysocialing | surface, 위 border-default, 높이 64, 4칸 선 아이콘 + 글자 "홈 · 탐색 · 후기 · 내 소셜링". 활성 primary-strong 굵게, 비활성 text-muted | 메인 탭 화면 아래 |
+| tab-bar/active-home · active-explore · active-review · active-mysocialing | surface, 위 border-divider, 높이 64, 4칸 선 아이콘 + 글자 "홈 · 탐색 · 후기 · 내 소셜링". 활성 탭은 아이콘 뒤에 primary-soft 알약 52×28(모서리 full), 아이콘·글자 primary-strong 굵게. 비활성 text-muted | 메인 탭 화면 아래, 지난 소셜링 아래(active-explore) |
 | top-tabs/active-applied · active-hosted | 높이 48, 활성 탭 아래 2px text-primary 밑줄, 비활성 text-muted. "신청한 소셜링 / 호스트인 소셜링" | 내 소셜링 |
 | toast/success | toast-bg, toast-text(body-md), 링크 primary(누르는 영역 44), 모서리 lg, 여백 12·16. "신청했어요" + "내 소셜링에서 보기 ›" | 성공 뒤 짧은 안내 |
 | toast/info | toast-bg, toast-text | "환영해요, ○○님", "호스트만 볼 수 있어요" 같은 안내 |
@@ -570,12 +633,13 @@ components:
 | skeleton/card-list | surface-muted 덩어리: 96px 정사각 + 글 막대 3개, 2개 | 목록 로딩 |
 | skeleton/hero | surface-muted 덩어리, 높이 280, 모서리 2xl | 홈 히어로 로딩 |
 | skeleton/detail | 4:3 사진 칸 + 제목 막대 + 정보 줄 | 상세 로딩 |
+| skeleton/manage · review-list · review-write · socialing-form | 같은 surface-muted 덩어리로 그 화면의 모양(요약 카드, 후기 줄, 입력 칸)을 그린다 | 관리(P11), 인증 후기(P10), 후기 쓰기(P09), 등록·수정(P07·P08) 로딩 |
 
 ### C4 상세 아래 고정 영역 (apply-bar)
 
 소셜링 상세 맨 아래에 붙는 영역. 아래 14가지 중 **정확히 하나**만 보인다. 어떤 것을 고를지는 [docs/spec.md](docs/spec.md) 8.4의 순서표가 정한다: 표의 위에서부터 먼저 맞는 줄 하나.
 
-공통: surface 바탕, 위 border-default 1px, 여백 12·16, 높이 약 100(아이폰 아래 안전 영역 포함). 안내 한 줄(body-sm) + 버튼은 lg 하나까지. 상태 상자는 surface-muted 바탕, 모서리 lg, 버튼 lg와 같은 높이. 상자 안의 application-chip/pending은 바탕이 상자와 같아 surface 바탕으로 띄운다.
+공통: surface 바탕, 위 테두리 없음 + shadow-bar, 위 모서리 2xl, 여백 12·16, 높이 약 100(아이폰 아래 안전 영역 포함). 안내 한 줄(body-sm) + 버튼은 lg 하나까지. 상태 상자는 surface-muted 바탕, 모서리 lg, 버튼 lg와 같은 높이. 상자 안의 application-chip/pending은 바탕이 상자와 같아 surface 바탕으로 띄운다.
 
 | 이름 | spec 8.4 줄 | 모양 |
 |---|---|---|
@@ -598,7 +662,21 @@ components:
 
 등록(P07)의 아래 고정 영역도 같은 모양이다: primary "소셜링 열기" 하나. 빈 칸·틀린 칸은 버튼을 막지 않고, 누르면 칸마다 이유를 보이고 첫 오류 칸으로 간다(spec 8.6). 사진을 올리는 중이면 위에 "사진을 올리는 중이에요"와 버튼 막힘, 열기 실패면 오류 문구(danger) "소셜링을 열지 못했어요. 연결을 확인하고 다시 시도해 주세요"와 버튼 "다시 시도".
 
+### C5 새 정보 블록 (기능 추가용)
+
+기능 추가 단계에서 상세 등에 새 정보가 붙을 때는 **아래 세 모양 중 하나로만** 만든다. 새 모양이 필요하면 이 문서를 먼저 PR로 고친다.
+
+| 모양 | 컴포넌트 | 언제 | 모양 |
+|---|---|---|---|
+| ① 정보 카드 줄 | info-list 행 | 값 하나로 말할 수 있는 정보 (예: 연령 조건) | 라벨 + 값 한 줄. 상세 info-list 카드 안에 행으로 붙는다(아이콘 칸 규칙도 같음) |
+| ② 안내 상자 | notice-box/info, notice-box/caution | 늘 펼쳐 보여야 하는 짧은 안내 (예: 승인 기준, 환불 규칙 요약) | info: 위 notice-box/info. caution: caution-soft 바탕, 제목 caution 700, 본문 text-primary. 모서리 lg, 여백 14·16 |
+| ③ 접는 줄 | collapsible-row | 길거나 가끔 보는 정보 (예: 규칙 전문, 비용 내역) | 흰 카드 안 제목 줄(title-md, 높이 52, 오른쪽 ⌄). 누르면 아래로 펼쳐지고 ⌃. 버튼에 aria-expanded. 여러 개면 줄 사이 border-divider |
+
+- notice-box/caution과 collapsible-row는 **정의만** 한다. 처음 쓰는 기능 PR에서 만든다(쓰지 않는 부품을 미리 만들지 않음).
+
 ### 시안과 다르게 정한 것
+
+2026-10 UI 업데이트(MS11)로 색·그림자·로고가 Figma 시안과 달라졌다. 모양은 이 문서가 기준이고, 시안은 배치와 글 참고용이다.
 
 시안(Figma)과 Stitch가 마지막으로 보낸 요약(2026-10-13)에서 아래는 일부러 따르지 않았다. 시안이 이렇게 보여도 이 문서대로 만든다.
 
@@ -630,9 +708,11 @@ components:
 - 소셜링마다 status-badge 정확히 하나, 그 오른쪽에 status-tag("신청 마감" 또는 "정원 마감") 최대 하나. 둘 다 해당하면 "신청 마감".
 - 개인의 신청 상태는 application-chip, 소셜링 상태는 status-badge로 나눈다. 둘 다 알약 모양이라 글자로 구분하고, 같이 놓이면 status-badge가 앞.
 - 소셜링 상세의 아래 고정 영역은 언제나 apply-bar 14가지 중 하나다.
-- 메인 탭 화면(홈, 탐색, 인증 후기, 내 소셜링)은 header-main + tab-bar, 하위 화면은 header-sub이고 아래 탭이 없다.
+- 메인 탭 화면(홈, 탐색, 인증 후기, 내 소셜링)과 지난 소셜링은 tab-bar가 있다. 지난 소셜링은 위가 header-sub다. 나머지 하위 화면(상세, 관리, 후기 쓰기, 로그인, 가입, 등록, 수정)은 header-sub만 있고 아래 탭이 없다.
 - 사람은 avatar-initial(원 안 닉네임 첫 글자) + 닉네임으로만 보인다.
-- 사진은 사물과 공간(책, 스터디룸, 노트북)만. 사람·읽을 수 있는 글자·로고가 없는 사진. 사진이 없으면 primary-soft 바탕 + 카테고리 선 아이콘.
+- 사진은 사물과 공간(책, 스터디룸, 노트북)만. 사람·읽을 수 있는 글자·로고가 없는 사진. 사진이 없으면 category-art(카테고리 soft 바탕 + 카테고리 색 선 아이콘).
+- 카테고리 색은 카테고리를 알아보는 곳(카테고리 그림, 카드의 카테고리 이름과 점, 홈 바로가기, 상세 대표 그림)에만 쓴다.
+- 연한 바탕 위 흰 카드는 테두리 대신 shadow-card, 누르거나 쓰는 부품(버튼·입력칸·칩)은 테두리.
 - 목록·히어로·후기 묶음에는 정렬·선정 기준 문구를 함께 적는다.
 - 글자 대비는 4.5:1 이상(누를 수 없는 버튼 글자는 예외), 누를 수 있는 것은 44×44px 이상.
 - Light mode만 쓴다.
@@ -646,4 +726,4 @@ components:
 - 지도, 1:1 채팅, 알림 종 아이콘.
 - 위쪽 검색창. 찾기는 탭과 필터 바텀시트로 한다.
 - 공유 버튼, 비용 상세 내역, 팔로워·팔로잉 수.
-- 다크 모드, 12px보다 작은 글자, 위에 정의되지 않은 새 컴포넌트 모양.
+- 다크 모드, 12px보다 작은 글자, 위에 정의되지 않은 새 컴포넌트 모양(새 정보 블록은 C5 세 모양 중 하나).

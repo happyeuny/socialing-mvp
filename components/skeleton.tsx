@@ -4,13 +4,13 @@ function Bar({ className }: { className: string }) {
   return <div className={`rounded-md bg-surface-muted ${className}`} />;
 }
 
-/** skeleton/card-list: 96px 정사각 + 글 막대 3개인 카드 2개 */
+/** skeleton/card-list: 96px 정사각 + 글 막대 3개인 카드 2개. 카드처럼 테두리 없이 shadow-card */
 export function SkeletonCardList() {
   return (
     <div role="status" aria-busy className="flex flex-col gap-sm motion-safe:animate-pulse">
       <span className="sr-only">불러오는 중</span>
       {[0, 1].map((key) => (
-        <div key={key} className="flex gap-md rounded-xl border border-border-default bg-surface p-md">
+        <div key={key} className="flex gap-md rounded-xl bg-surface p-md shadow-card">
           <div className="size-24 shrink-0 rounded-lg bg-surface-muted" />
           <div className="flex flex-1 flex-col gap-xs pt-xxs">
             <Bar className="h-6 w-16" />
@@ -57,7 +57,7 @@ export function SkeletonManage() {
   return (
     <div role="status" aria-busy className="flex flex-col gap-xl px-page-x pt-lg motion-safe:animate-pulse">
       <span className="sr-only">불러오는 중</span>
-      <div className="flex flex-col gap-xs rounded-xl border border-border-default bg-surface p-lg">
+      <div className="flex flex-col gap-xs rounded-xl bg-surface p-lg shadow-card">
         <Bar className="h-6 w-16" />
         <Bar className="h-6 w-4/5" />
         <Bar className="h-5 w-3/5" />
@@ -111,7 +111,7 @@ export function SkeletonReviewWrite() {
   return (
     <div role="status" aria-busy className="flex flex-col gap-xl px-page-x pt-lg motion-safe:animate-pulse">
       <span className="sr-only">불러오는 중</span>
-      <div className="flex flex-col gap-xs rounded-xl border border-border-default bg-surface p-lg">
+      <div className="flex flex-col gap-xs rounded-xl bg-surface p-lg shadow-card">
         <Bar className="h-6 w-32" />
         <Bar className="h-6 w-4/5" />
         <Bar className="h-5 w-3/5" />
