@@ -2,11 +2,12 @@
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import { useReturnFocus } from "@/lib/return-focus";
 import { cn } from "@/lib/utils";
 
 // DESIGN.md bottom-sheet/filter-sheet (O01). bottom-sheet와 같은 틀(surface, 위 모서리 2xl, 손잡이 36×4, 뒤 dim)에
 // 제목 + 닫기 X(아래 옅은 구분선), 스크롤되는 내용, 아래 고정 버튼 줄(위 옅은 구분선).
-// 칩에서 열면 그 항목 위치로 스크롤한다(onOpenAutoFocus에서 bodyRef를 쓴다).
+// 칩에서 열면 그 항목 위치로 스크롤한다(onOpenAutoFocus에서 bodyRef를 쓴다). 닫으면 포커스는 연 칩으로 돌아간다(lib/return-focus).
 
 type FilterSheetProps = {
   open: boolean;
@@ -20,13 +21,18 @@ type FilterSheetProps = {
 };
 
 export function FilterSheet({ open, onOpenChange, title, children, footer, bodyRef, onOpenAutoFocus }: FilterSheetProps) {
+  const returnFocus = useReturnFocus();
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-dim motion-safe:data-[state=open]:animate-in motion-safe:data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
           aria-describedby={undefined}
-          onOpenAutoFocus={onOpenAutoFocus}
+          onOpenAutoFocus={(event) => {
+            returnFocus.onOpenAutoFocus();
+            onOpenAutoFocus?.(event);
+          }}
+          onCloseAutoFocus={returnFocus.onCloseAutoFocus}
           className={cn(
             "fixed inset-x-0 bottom-0 z-40 mx-auto flex max-h-[90dvh] w-full max-w-(--spacing-screen) flex-col rounded-t-2xl bg-surface outline-none",
             "motion-safe:data-[state=open]:animate-in motion-safe:data-[state=open]:slide-in-from-bottom",
