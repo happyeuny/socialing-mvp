@@ -4,7 +4,7 @@ import { StatusTag } from "@/components/status-tag";
 import { formatDateTime, formatVenue } from "@/lib/format";
 import type { ManagedSocialing } from "@/lib/queries/manage";
 
-// DESIGN.md manage-summary/default. 소셜링 관리(P11) 맨 위 요약 카드 (spec 8.8):
+// DESIGN.md manage-summary/default. 소셜링 관리(P11) 맨 위 요약 카드 (spec 8.8). 테두리 없이 shadow-card:
 // status-badge(+ status-tag), 제목, "일시 · 장소 · 모집 방식", "참가자 4/8명 · 스태프 1명 · 승인 대기 2".
 // 스태프는 있을 때만, 승인 대기는 호스트 승인 방식이고 1건 이상일 때만 보인다.
 
@@ -13,7 +13,7 @@ export function ManageSummary({ socialing }: { socialing: ManagedSocialing }) {
   return (
     <section
       aria-label="소셜링 요약"
-      className="flex flex-col gap-xs rounded-xl border border-border-default bg-surface p-lg"
+      className="flex flex-col gap-xs rounded-xl bg-surface p-lg shadow-card"
     >
       <div className="flex flex-wrap items-center gap-[6px]">
         <StatusBadge status={socialing.status} />

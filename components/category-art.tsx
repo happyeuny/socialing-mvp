@@ -20,19 +20,51 @@ type CategoryTone = {
   text: string;
   /** 카테고리 색 바탕(점) */
   dot: string;
+  /** 그라데이션 시작 색 = soft (상세 대표 그림) */
+  from: string;
 };
 
 // Tailwind가 class를 찾을 수 있게 이름을 그대로 적는다
 const TONES: Record<string, CategoryTone> = {
-  learning: { art: "bg-category-learning-soft text-category-learning", text: "text-category-learning", dot: "bg-category-learning" },
-  hobby: { art: "bg-category-hobby-soft text-category-hobby", text: "text-category-hobby", dot: "bg-category-hobby" },
-  activity: { art: "bg-category-activity-soft text-category-activity", text: "text-category-activity", dot: "bg-category-activity" },
-  culture: { art: "bg-category-culture-soft text-category-culture", text: "text-category-culture", dot: "bg-category-culture" },
-  party: { art: "bg-category-party-soft text-category-party", text: "text-category-party", dot: "bg-category-party" },
+  learning: {
+    art: "bg-category-learning-soft text-category-learning",
+    text: "text-category-learning",
+    dot: "bg-category-learning",
+    from: "from-category-learning-soft",
+  },
+  hobby: {
+    art: "bg-category-hobby-soft text-category-hobby",
+    text: "text-category-hobby",
+    dot: "bg-category-hobby",
+    from: "from-category-hobby-soft",
+  },
+  activity: {
+    art: "bg-category-activity-soft text-category-activity",
+    text: "text-category-activity",
+    dot: "bg-category-activity",
+    from: "from-category-activity-soft",
+  },
+  culture: {
+    art: "bg-category-culture-soft text-category-culture",
+    text: "text-category-culture",
+    dot: "bg-category-culture",
+    from: "from-category-culture-soft",
+  },
+  party: {
+    art: "bg-category-party-soft text-category-party",
+    text: "text-category-party",
+    dot: "bg-category-party",
+    from: "from-category-party-soft",
+  },
 };
 
 /** 모르는 카테고리는 예전 그림처럼 primary-soft 바탕 + primary-strong */
-const FALLBACK_TONE: CategoryTone = { art: "bg-primary-soft text-primary-strong", text: "text-primary-strong", dot: "bg-primary-strong" };
+const FALLBACK_TONE: CategoryTone = {
+  art: "bg-primary-soft text-primary-strong",
+  text: "text-primary-strong",
+  dot: "bg-primary-strong",
+  from: "from-primary-soft",
+};
 
 export function categoryTone(slug: string): CategoryTone {
   return TONES[slug] ?? FALLBACK_TONE;
@@ -41,6 +73,17 @@ export function categoryTone(slug: string): CategoryTone {
 export function CategoryIcon({ slug, className, strokeWidth = 1.75 }: { slug: string; className?: string; strokeWidth?: number }) {
   const Icon = ICONS[slug] ?? Tag;
   return <Icon className={className} strokeWidth={strokeWidth} aria-hidden />;
+}
+
+/** 카드·상세의 카테고리 이름: 카테고리 색 600 + 앞에 6px 점 */
+export function CategoryName({ slug, name }: { slug: string; name: string }) {
+  const tone = categoryTone(slug);
+  return (
+    <span className={cn("font-semibold", tone.text)}>
+      <span aria-hidden className={cn("mr-xxs inline-block size-[6px] rounded-full align-middle", tone.dot)} />
+      {name}
+    </span>
+  );
 }
 
 export function CategoryArt({ slug, className, iconClassName }: { slug: string; className?: string; iconClassName?: string }) {

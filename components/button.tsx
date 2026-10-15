@@ -2,7 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// DESIGN.md C1 button. 변형: primary · secondary · danger · text-link, 크기: lg 52 · md 48 · sm 36.
+// DESIGN.md C1 button. 변형: primary · secondary · danger · text-link, 크기: lg 52 · md 48 · sm 36. lg·md 글자는 700.
 // 처리 중(loading)이면 스피너 + "처리 중…"으로 바뀌고 다시 누를 수 없다.
 
 export const buttonVariants = cva(
@@ -19,8 +19,8 @@ export const buttonVariants = cva(
         "text-link": "min-h-touch-min text-body-md text-primary-strong active:text-on-primary disabled:text-text-disabled",
       },
       size: {
-        lg: "h-13 rounded-lg px-lg text-body-lg",
-        md: "h-12 rounded-lg px-md text-body-lg",
+        lg: "h-13 rounded-lg px-lg text-body-lg font-bold",
+        md: "h-12 rounded-lg px-md text-body-lg font-bold",
         // 보이는 높이는 36, 누르는 영역은 위아래로 넓혀 44
         sm: "h-9 rounded-lg px-sm text-body-md before:absolute before:inset-x-0 before:-inset-y-1",
         inline: "",
