@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Button, buttonVariants } from "@/components/button";
 import { Dialog } from "@/components/dialog";
 import { showToast } from "@/components/toast";
@@ -90,8 +90,11 @@ export function ManageStatusActions(props: Props) {
   const [failure, setFailure] = useState<Failure | null>(null);
   const [pending, startTransition] = useTransition();
   const action = open ? ACTIONS[open] : null;
+  // 창과 결과 창을 닫으면 포커스를 돌려줄 버튼 (성공해서 버튼이 사라지면 "소셜링 상태"의 첫 버튼으로)
+  const openerRef = useRef<HTMLElement | null>(null);
 
-  function openDialog(next: HostAction) {
+  function openDialog(next: HostAction, opener: HTMLElement) {
+    openerRef.current = opener;
     setRetry(false);
     setOpen(next);
   }
@@ -135,7 +138,7 @@ export function ManageStatusActions(props: Props) {
         className="w-full"
         disabled={!canComplete}
         aria-describedby={completeNote ? "complete-note" : undefined}
-        onClick={() => openDialog("complete")}
+        onClick={(event) => openDialog("complete", event.currentTarget)}
       >
         종료하기
       </Button>
@@ -154,7 +157,7 @@ export function ManageStatusActions(props: Props) {
             className="w-full"
             disabled={!canConfirm}
             aria-describedby="confirm-note"
-            onClick={() => openDialog("confirm")}
+            onClick={(event) => openDialog("confirm", event.currentTarget)}
           >
             확정하기
           </Button>
@@ -174,7 +177,12 @@ export function ManageStatusActions(props: Props) {
             </Link>
           )}
           {props.canCancel && (
-            <Button variant="danger" size="md" className="flex-1" onClick={() => openDialog("cancel")}>
+            <Button
+              variant="danger"
+              size="md"
+              className="flex-1"
+              onClick={(event) => openDialog("cancel", event.currentTarget)}
+            >
               호스트 취소
             </Button>
           )}
@@ -187,6 +195,7 @@ export function ManageStatusActions(props: Props) {
       <Dialog
         open={open !== null}
         onOpenChange={(next) => (pending || next ? undefined : setOpen(null))}
+        returnFocusRef={openerRef}
         title={action?.title ?? ""}
         alert={retry ? RETRY_MESSAGE : null}
         footer={
@@ -212,6 +221,7 @@ export function ManageStatusActions(props: Props) {
       <Dialog
         open={failure !== null}
         onOpenChange={(next) => (next ? undefined : confirmFailure())}
+        returnFocusRef={openerRef}
         title={failure?.title ?? ""}
         footer={
           <Button size="lg" className="w-full" onClick={confirmFailure}>

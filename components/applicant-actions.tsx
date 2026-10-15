@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/button";
 import { Dialog } from "@/components/dialog";
 import { showToast } from "@/components/toast";
@@ -35,8 +35,13 @@ export function ApplicantActions({ socialingId, applicationId, nickname, canDeci
   const [retry, setRetry] = useState(false);
   const [failure, setFailure] = useState<Failure | null>(null);
   const [pending, startTransition] = useTransition();
+  // 창과 결과 창을 닫으면 포커스를 돌려줄 버튼 (처리되어 줄이 바뀌면 신청자 목록의 첫 버튼으로)
+  const rejectRef = useRef<HTMLButtonElement>(null);
+  const approveRef = useRef<HTMLButtonElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
 
   function decide(approve: boolean) {
+    if (approve) openerRef.current = approveRef.current;
     setRunning(approve ? "approve" : "reject");
     startTransition(async () => {
       let result: Awaited<ReturnType<typeof decideApplication>> | undefined;
@@ -64,6 +69,7 @@ export function ApplicantActions({ socialingId, applicationId, nickname, canDeci
   }
 
   function openReject() {
+    openerRef.current = rejectRef.current;
     setRetry(false);
     setRejectOpen(true);
   }
@@ -76,6 +82,7 @@ export function ApplicantActions({ socialingId, applicationId, nickname, canDeci
   return (
     <div className="flex shrink-0 gap-xs">
       <Button
+        ref={rejectRef}
         variant="secondary"
         size="sm"
         onClick={openReject}
@@ -85,6 +92,7 @@ export function ApplicantActions({ socialingId, applicationId, nickname, canDeci
         거절
       </Button>
       <Button
+        ref={approveRef}
         size="sm"
         onClick={() => decide(true)}
         disabled={!canApprove || pending}
@@ -97,6 +105,7 @@ export function ApplicantActions({ socialingId, applicationId, nickname, canDeci
       <Dialog
         open={rejectOpen}
         onOpenChange={(next) => (pending ? undefined : setRejectOpen(next))}
+        returnFocusRef={rejectRef}
         title={`${nickname} 님의 신청을 거절할까요?`}
         alert={retry ? RETRY_MESSAGE : null}
         footer={
@@ -128,6 +137,7 @@ export function ApplicantActions({ socialingId, applicationId, nickname, canDeci
       <Dialog
         open={failure !== null}
         onOpenChange={(next) => (next ? undefined : confirmFailure())}
+        returnFocusRef={openerRef}
         title={failure?.title ?? ""}
         footer={
           <Button size="lg" className="w-full" onClick={confirmFailure}>

@@ -1,10 +1,12 @@
 "use client";
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { useReturnFocus } from "@/lib/return-focus";
 import { cn } from "@/lib/utils";
 
 // DESIGN.md bottom-sheet. surface, 위 모서리 2xl, 손잡이 36×4, 뒤 dim. 신청하는 사람 쪽 창(O02·O03·O05)이 쓴다.
 // 손잡이는 모양만 있고 끌어서 닫지 않는다. 뒤 배경을 누르거나 "돌아가기"·Esc로 닫는다(Radix Dialog, 포커스는 창 안에 머문다).
+// 닫으면 포커스는 창을 연 버튼으로 돌아간다(lib/return-focus).
 
 type BottomSheetProps = {
   open: boolean;
@@ -19,7 +21,7 @@ type BottomSheetProps = {
   footer: React.ReactNode;
   /** 처리 중에는 뒤 배경·Esc로 닫히지 않게 */
   locked?: boolean;
-  /** 닫은 뒤 포커스를 돌려줄 곳 (창을 연 버튼). Radix Dialog.Trigger를 쓰지 않아 직접 알려 준다 */
+  /** 닫은 뒤 포커스를 돌려줄 곳 (창을 연 버튼). 없으면 열 때 포커스가 있던 곳 */
   returnFocusRef?: React.RefObject<HTMLElement | null>;
 };
 
@@ -34,6 +36,7 @@ export function BottomSheet({
   locked,
   returnFocusRef,
 }: BottomSheetProps) {
+  const returnFocus = useReturnFocus(returnFocusRef);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(next) => (locked && !next ? undefined : onOpenChange(next))}>
       <DialogPrimitive.Portal>
@@ -41,11 +44,8 @@ export function BottomSheet({
         <DialogPrimitive.Content
           // 설명 줄이 없으면 Radix가 설명을 찾지 않게 한다
           {...(description ? {} : { "aria-describedby": undefined })}
-          onCloseAutoFocus={(event) => {
-            if (!returnFocusRef?.current) return;
-            event.preventDefault();
-            returnFocusRef.current.focus();
-          }}
+          onOpenAutoFocus={returnFocus.onOpenAutoFocus}
+          onCloseAutoFocus={returnFocus.onCloseAutoFocus}
           className={cn(
             "fixed inset-x-0 bottom-0 z-40 mx-auto flex max-h-[90dvh] w-full max-w-(--spacing-screen) flex-col rounded-t-2xl bg-surface outline-none",
             "motion-safe:data-[state=open]:animate-in motion-safe:data-[state=open]:slide-in-from-bottom",

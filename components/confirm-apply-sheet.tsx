@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { BottomSheet } from "@/components/bottom-sheet";
 import { Button } from "@/components/button";
 import { Dialog } from "@/components/dialog";
@@ -40,6 +40,8 @@ export function ConfirmApplySheet(props: ConfirmApplySheetProps) {
   const [retry, setRetry] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // 창과 결과 창을 닫으면 포커스를 돌려줄 버튼 (성공해서 버튼이 바뀌면 아래 영역의 첫 버튼으로)
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   function openSheet() {
     setRetry(false);
@@ -79,7 +81,7 @@ export function ConfirmApplySheet(props: ConfirmApplySheetProps) {
 
   return (
     <>
-      <Button size="lg" className="w-full" onClick={openSheet}>
+      <Button ref={triggerRef} size="lg" className="w-full" onClick={openSheet}>
         {props.triggerLabel ?? "신청하기"}
       </Button>
 
@@ -87,6 +89,7 @@ export function ConfirmApplySheet(props: ConfirmApplySheetProps) {
         open={open}
         onOpenChange={setOpen}
         locked={pending}
+        returnFocusRef={triggerRef}
         title="신청할까요?"
         description={
           <>
@@ -127,6 +130,7 @@ export function ConfirmApplySheet(props: ConfirmApplySheetProps) {
       <Dialog
         open={failure !== null}
         onOpenChange={(next) => (next ? undefined : confirmFailure())}
+        returnFocusRef={triggerRef}
         title="신청하지 못했어요"
         footer={
           <Button size="lg" className="w-full" onClick={confirmFailure}>
