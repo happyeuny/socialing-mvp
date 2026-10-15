@@ -50,13 +50,32 @@ test.describe("MS2 지난 소셜링 P02", () => {
     }
   });
 
-  test("탐색 → 지난 소셜링 → 뒤로 = 탐색, 지난 소셜링에는 아래 탭이 없다", async ({ page }) => {
+  test("탐색 → 지난 소셜링 → 뒤로 = 탐색, 지난 소셜링에는 아래 탭이 있고 탐색이 켜져 있다", async ({ page }) => {
     await page.goto("/explore");
     await page.getByRole("link", { name: "지난 소셜링 보기" }).click();
     await expect(page).toHaveURL("/past");
-    await expect(page.getByRole("navigation", { name: "아래 탭" })).toHaveCount(0);
+
+    // 위는 뒤로 버튼이 있는 머리글, 아래 탭은 탐색이 켜짐 (탐색 화면 자체는 아니라 aria-current="true")
+    await expect(page.getByRole("button", { name: "뒤로" })).toBeVisible();
+    const tabs = page.getByRole("navigation", { name: "아래 탭" });
+    await expect(tabs).toBeVisible();
+    await expect(tabs.getByRole("link", { name: "탐색" })).toHaveAttribute("aria-current", "true");
+    await expect(tabs.getByRole("link", { name: "탐색" })).toHaveCSS("color", "rgb(19, 111, 134)");
+    await expect(tabs.getByRole("link", { name: "홈" })).not.toHaveAttribute("aria-current");
+
+    // 맨 아래까지 내려도 마지막 카드가 아래 탭에 가리지 않는다
+    await expect(cards(page).first()).toBeVisible();
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    const lastCard = await cards(page).last().boundingBox();
+    const tabBox = await tabs.boundingBox();
+    expect((lastCard?.y ?? 0) + (lastCard?.height ?? 0)).toBeLessThanOrEqual(tabBox?.y ?? 0);
 
     await page.getByRole("button", { name: "뒤로" }).click();
+    await expect(page).toHaveURL("/explore");
+
+    // 아래 탭 탐색은 필터 없는 탐색으로
+    await page.goto("/past");
+    await tabs.getByRole("link", { name: "탐색" }).click();
     await expect(page).toHaveURL("/explore");
   });
 
