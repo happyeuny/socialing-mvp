@@ -2,7 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 // DESIGN.md avatar-initial. 원 안에 닉네임 첫 글자. 프로필 사진은 없다.
-// default: surface-muted 원 + text-secondary 글자, 크기 20 · 32 · 40 · 48.
+// default: primary-soft 원 + primary-strong 글자(5.2:1), 크기 20 · 32 · 40 · 48.
 // strong: primary-strong 원 + 흰 글자, 28 (로그인한 머리글 오른쪽).
 
 const avatarInitialVariants = cva(
@@ -10,7 +10,7 @@ const avatarInitialVariants = cva(
   {
     variants: {
       tone: {
-        default: "bg-surface-muted text-text-secondary",
+        default: "bg-primary-soft text-primary-strong",
         strong: "bg-primary-strong text-surface",
       },
       size: {

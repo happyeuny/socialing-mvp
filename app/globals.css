@@ -45,6 +45,9 @@
   --category-culture-soft: #f1ebfd;
   --category-party: #b8336a;
   --category-party-soft: #fceaf2;
+  /* hero-card/no-photo 바탕과 왼쪽 아래 primary 빛 (DESIGN.md hero-card/no-photo) */
+  --hero-no-photo: linear-gradient(155deg, #17586b 0%, var(--deep) 55%, var(--on-primary) 100%);
+  --hero-no-photo-glow: radial-gradient(120% 80% at 0% 100%, rgb(89 203 232 / 0.28), transparent 60%);
 
   /* shadcn/ui가 쓰는 이름을 DESIGN.md 값에 연결한다 */
   --background: var(--surface-bg);

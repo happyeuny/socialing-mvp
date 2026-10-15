@@ -7,15 +7,19 @@ import { reviewPhotoUrl, type ReviewSummary } from "@/lib/queries/reviews";
 // 인증 후기 카드. 작성자는 닉네임으로만 보인다 (spec M10, P10).
 
 /**
- * DESIGN.md review-card/compact: surface, border-default, 모서리 lg, 여백 14·16. "닉네임 · 날짜 · 소셜링 제목" + 글 2줄.
+ * DESIGN.md review-card/compact: surface, 테두리 없음 + shadow-card, 모서리 lg, 여백 14·16.
+ * avatar-initial 20 + "닉네임 · 날짜 · 소셜링 제목" + 글 2줄.
  * 홈 "최근 인증 후기".
  */
 export function ReviewCardCompact({ review }: { review: ReviewSummary }) {
   return (
-    <article className="flex flex-col gap-xxs rounded-lg border border-border-default bg-surface px-md py-[14px]">
-      <p className="truncate text-body-sm text-text-secondary">
-        <span className="font-medium text-text-primary">{review.author_nickname}</span> · {formatMonthDay(review.created_at)} ·{" "}
-        {review.socialing_title}
+    <article className="flex flex-col gap-xxs rounded-lg bg-surface px-md py-[14px] shadow-card">
+      <p className="flex min-w-0 items-center gap-xxs text-body-sm text-text-secondary">
+        <AvatarInitial nickname={review.author_nickname} size={20} />
+        <span className="truncate">
+          <span className="font-medium text-text-primary">{review.author_nickname}</span> ·{" "}
+          {formatMonthDay(review.created_at)} · {review.socialing_title}
+        </span>
       </p>
       <p className="line-clamp-2 text-body-md text-text-primary">{review.body}</p>
     </article>

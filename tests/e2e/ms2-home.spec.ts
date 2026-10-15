@@ -88,6 +88,29 @@ test.describe("MS2 홈 P00", () => {
     await expect(page.getByRole("heading", { level: 2, name: title! })).toBeVisible();
   });
 
+  test("카테고리 색은 바로가기 원과 카드의 카테고리 이름에, 카드는 테두리 없이 그림자 (DESIGN.md MS11)", async ({ page }) => {
+    await page.goto("/");
+
+    // shortcut-category: 배움·자기계발 원 = category-learning-soft 바탕 + category-learning 아이콘
+    const learning = section(page, "카테고리").getByRole("link", { name: "배움·자기계발" }).locator("span").first();
+    await expect(learning).toHaveCSS("background-color", "rgb(235, 239, 255)");
+    await expect(learning).toHaveCSS("color", "rgb(62, 84, 199)");
+
+    // socialing-card: 테두리 없음 + shadow-card
+    const card = section(page, "곧 열리는 소셜링").getByRole("article").first();
+    await expect(card).toHaveCSS("border-top-width", "0px");
+    await expect(card).not.toHaveCSS("box-shadow", "none");
+
+    // 카드의 카테고리 이름은 카테고리 색, 호스트 원은 primary-soft 바탕 + primary-strong 글자
+    await page.goto("/explore?category=learning");
+    const learningCard = page.getByRole("article").first();
+    await expect(learningCard.getByText("배움·자기계발", { exact: true })).toHaveCSS("color", "rgb(62, 84, 199)");
+    // 가운뎃점(·)도 aria-hidden 글자라 빼고, 호스트 닉네임 첫 글자 원만
+    const avatar = learningCard.locator("span[aria-hidden]", { hasText: /^[^·\s]$/ });
+    await expect(avatar).toHaveCSS("background-color", "rgb(225, 247, 252)");
+    await expect(avatar).toHaveCSS("color", "rgb(19, 111, 134)");
+  });
+
   test("P00-01: 390px보다 좁은 휴대폰(320·360px)에서도 홈이 옆으로 넘치지 않고 카테고리 5개가 화면 안에 있다", async ({
     page,
   }) => {
