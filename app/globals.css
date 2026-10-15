@@ -185,8 +185,6 @@
   /* 그림자 (DESIGN.md Elevation). 연한 바탕 위 흰 카드는 테두리 대신 shadow-card, 아래 고정 영역은 shadow-bar */
   --shadow-card: 0 1px 2px rgb(14 58 71 / 0.06), 0 6px 16px rgb(14 58 71 / 0.06);
   --shadow-bar: 0 -6px 18px rgb(14 58 71 / 0.08);
-  /* 아래 고정 영역의 예전 옅은 위쪽 그림자 */
-  --shadow-up: 0 -2px 8px rgb(0 0 0 / 0.04);
 }
 
 @layer base {

@@ -69,6 +69,22 @@ test.describe("MS2 소셜링 상세 P03", () => {
       await expect(main).toContainText("영어로 3분 정도 자기소개를 할 수 있는 분");
       await expect(page.getByRole("heading", { level: 3, name: "호스트" })).toBeVisible();
 
+      // DESIGN.md 상세 배치(MS11): 정보 카드 아이콘 칸(primary-soft), 소셜링 일시·총 참가비 값만 primary-strong,
+      // 승인 기준은 notice-box/info(primary-soft), 아래 영역은 위 테두리 없이 그림자 + 위 모서리 2xl, 큰 버튼 글자 700
+      await expect(infoRow(page, "소셜링 일시").locator("dt > span")).toHaveCSS("background-color", "rgb(225, 247, 252)");
+      await expect(infoRow(page, "소셜링 일시").locator("dd > span").first()).toHaveCSS("color", "rgb(19, 111, 134)");
+      await expect(infoRow(page, "총 참가비").locator("dd > span").first()).toHaveCSS("color", "rgb(19, 111, 134)");
+      await expect(infoRow(page, "신청 마감").locator("dd > span").first()).toHaveCSS("color", "rgb(17, 24, 39)");
+      await expect(main.getByText("호스트 승인 기준", { exact: true }).locator("..")).toHaveCSS(
+        "background-color",
+        "rgb(225, 247, 252)",
+      );
+      const bar = page.getByRole("region", { name: "신청" });
+      await expect(bar).toHaveCSS("border-top-width", "0px");
+      await expect(bar).toHaveCSS("border-top-left-radius", "20px");
+      await expect(bar).not.toHaveCSS("box-shadow", "none");
+      await expect(bar.getByText("신청하기", { exact: true })).toHaveCSS("font-weight", "700");
+
       // P03-02 소개 5줄 넘으면 접고 더보기
       const intro = main.locator("p", { hasText: "1번째 줄" });
       expect(await intro.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);

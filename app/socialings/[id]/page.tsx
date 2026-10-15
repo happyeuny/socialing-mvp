@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Calendar, Clock, MapPin, UserCheck, Users, Wallet } from "lucide-react";
 import { Suspense } from "react";
 import { ApplyBar } from "@/components/apply-bar";
-import { CategoryArt } from "@/components/category-art";
+import { CategoryIcon, CategoryName, categoryTone } from "@/components/category-art";
 import { ErrorStateFull } from "@/components/error-state";
 import { HeaderSub } from "@/components/header-sub";
 import { HostProfileRow } from "@/components/host-profile-row";
@@ -17,6 +18,7 @@ import { AvatarInitial } from "@/components/avatar-initial";
 import { TrustLabelButton, type TrustCriteriaValues } from "@/components/trust-criteria-sheet";
 import { UrlNotice } from "@/components/url-notice";
 import { formatDateTime, formatFee, formatVenue } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { noticeMessage } from "@/lib/notices";
 import { getHostRecord, type HostRecord } from "@/lib/queries/host-record";
 import { getApplyBarViewer, type ApplyBarViewer } from "@/lib/queries/my-socialings";
@@ -28,6 +30,7 @@ import { readSimulatedState, type SimulatedState } from "@/lib/simulated-state";
 // 화면 상태 흉내 `?_state=partial`은 호스트 기록만 실패시킨다.
 // 등급 라벨 "믿고 가는 호스트"(spec M5)는 호스트 기록의 등급 칸으로 정해 제목 아래 호스트 줄과 호스트 묶음 닉네임 아래에 붙고,
 // 누르면 O03이 열린다. 기록을 못 읽으면 라벨도 보이지 않는다.
+// 배치는 DESIGN.md 상세(P03) 배치: surface-bg 위에 대표 그림 → 16 겹쳐 올라온 흰 제목 묶음 → 정보 카드 → 소개 카드 → 호스트 카드.
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -83,53 +86,57 @@ export default async function SocialingPage({ params, searchParams }: Props) {
   return (
     <div className="flex min-h-dvh flex-col">
       <HeaderSub title="소셜링 상세" />
-      <main className="flex flex-1 flex-col bg-surface pb-2xl">
+      <main className="flex flex-1 flex-col pb-2xl">
         <CoverPhoto socialing={socialing} />
-        <div className="flex flex-col gap-xl px-page-x pt-lg">
-          <section className="flex flex-col gap-xs">
-            <div className="flex flex-wrap items-center gap-[6px]">
-              <StatusBadge status={socialing.status} />
-              {socialing.status_tag && <StatusTag tag={socialing.status_tag} />}
-              <span className="ml-xxs text-body-md text-text-secondary">
-                {socialing.category_name} · {socialing.has_alcohol ? "술 있음" : "술 없음"}
-              </span>
-            </div>
-            <h2 className="text-title-xl break-words text-text-primary">{socialing.title}</h2>
-            <HostProfileRow
-              nickname={socialing.host_nickname}
-              trustLabel={
-                <Suspense fallback={null}>
-                  <HostTrustLabel hostId={socialing.host_id} simulated={simulated} />
-                </Suspense>
-              }
-            />
-          </section>
-
-          <div className="border-t border-border-divider pt-xxs">
-            <InfoList rows={infoRows(socialing)} />
+        <section className="relative -mt-md flex flex-col gap-xs rounded-t-2xl bg-surface px-page-x pt-lg pb-lg">
+          <div className="flex flex-wrap items-center gap-[6px]">
+            <StatusBadge status={socialing.status} />
+            {socialing.status_tag && <StatusTag tag={socialing.status_tag} />}
+            <span className="ml-xxs text-body-md text-text-secondary">
+              <CategoryName slug={socialing.category_slug} name={socialing.category_name} /> ·{" "}
+              {socialing.has_alcohol ? "술 있음" : "술 없음"}
+            </span>
           </div>
+          <h2 className="text-title-xl break-words text-text-primary">{socialing.title}</h2>
+          <HostProfileRow
+            nickname={socialing.host_nickname}
+            trustLabel={
+              <Suspense fallback={null}>
+                <HostTrustLabel hostId={socialing.host_id} simulated={simulated} />
+              </Suspense>
+            }
+          />
+        </section>
 
-          <section className="flex flex-col gap-sm border-t border-border-divider pt-xl">
-            <h3 className="text-title-md text-text-primary">소개</h3>
-            <IntroText text={socialing.description} />
+        <InfoList rows={infoRows(socialing)} className="mx-page-x mt-sm" />
+
+        <div className="flex flex-col gap-xl px-page-x pt-xl">
+          <section className="flex flex-col gap-sm">
+            <h3 className="text-title-lg text-text-primary">소개</h3>
+            <div className="flex flex-col gap-md rounded-xl bg-surface p-md shadow-card">
+              <IntroText text={socialing.description} />
+              {socialing.join_type === "approval" && socialing.approval_criteria?.trim() && (
+                <NoticeBox variant="info" title="호스트 승인 기준">
+                  {socialing.approval_criteria}
+                </NoticeBox>
+              )}
+            </div>
           </section>
-
-          {socialing.join_type === "approval" && socialing.approval_criteria?.trim() && (
-            <NoticeBox title="호스트 승인 기준">{socialing.approval_criteria}</NoticeBox>
-          )}
 
           <section className="flex flex-col gap-sm">
-            <h3 className="text-title-md text-text-primary">호스트</h3>
-            <Suspense
-              fallback={
-                <>
-                  <HostIdentity nickname={socialing.host_nickname} />
-                  <HostStatsSkeleton />
-                </>
-              }
-            >
-              <HostRecordSection hostId={socialing.host_id} nickname={socialing.host_nickname} simulated={simulated} />
-            </Suspense>
+            <h3 className="text-title-lg text-text-primary">호스트</h3>
+            <div className="flex flex-col gap-sm rounded-xl bg-surface p-md shadow-card">
+              <Suspense
+                fallback={
+                  <>
+                    <HostIdentity nickname={socialing.host_nickname} />
+                    <HostStatsSkeleton />
+                  </>
+                }
+              >
+                <HostRecordSection hostId={socialing.host_id} nickname={socialing.host_nickname} simulated={simulated} />
+              </Suspense>
+            </div>
           </section>
         </div>
       </main>
@@ -163,13 +170,13 @@ async function HostTrustLabel({ hostId, simulated }: { hostId: string; simulated
   return values ? <TrustLabelButton values={values} /> : null;
 }
 
-/** 호스트 묶음 맨 위: avatar-initial 48 + 닉네임, 그 아래 등급 라벨 (와이어프레임 04_detail) */
+/** 호스트 카드 맨 위: avatar-initial 48 + 닉네임(700), 그 아래 등급 라벨 (와이어프레임 04_detail, DESIGN.md host-stats/normal) */
 function HostIdentity({ nickname, trust }: { nickname: string; trust?: TrustCriteriaValues | null }) {
   return (
     <div className="flex items-center gap-sm">
       <AvatarInitial nickname={nickname} size={48} />
       <div className="flex min-w-0 flex-col items-start gap-xxs">
-        <p className="max-w-full truncate text-title-md text-text-primary">{nickname}</p>
+        <p className="max-w-full truncate text-title-md font-bold text-text-primary">{nickname}</p>
         {trust && <TrustLabelButton values={trust} />}
       </div>
     </div>
@@ -206,10 +213,20 @@ async function HostRecordSection({
   );
 }
 
+/** 대표 그림 4:3. 사진이 없으면 카테고리 soft → surface-bg 그라데이션 + 가운데 카테고리 선 아이콘 84 (DESIGN.md 상세 배치) */
 function CoverPhoto({ socialing }: { socialing: SocialingDetail }) {
   if (!socialing.cover_photo_path) {
+    const tone = categoryTone(socialing.category_slug);
     return (
-      <CategoryArt slug={socialing.category_slug} className="aspect-[4/3] w-full" iconClassName="size-16" />
+      <div
+        className={cn(
+          "flex aspect-[4/3] w-full items-center justify-center bg-linear-160 to-surface-bg",
+          tone.from,
+          tone.text,
+        )}
+      >
+        <CategoryIcon slug={socialing.category_slug} className="size-[84px]" strokeWidth={1.5} />
+      </div>
     );
   }
   return (
@@ -221,17 +238,23 @@ function CoverPhoto({ socialing }: { socialing: SocialingDetail }) {
 function infoRows(socialing: SocialingDetail) {
   const people = `참가자 ${socialing.accepted_count}/${socialing.capacity}명`;
   return [
-    { label: "소셜링 일시", value: formatDateTime(socialing.starts_at), strong: true },
-    { label: "신청 마감", value: formatDateTime(socialing.apply_deadline_at) },
+    { label: "소셜링 일시", icon: Calendar, value: formatDateTime(socialing.starts_at), strong: true },
+    { label: "신청 마감", icon: Clock, value: formatDateTime(socialing.apply_deadline_at) },
     {
       label: "장소",
+      icon: MapPin,
       value: formatVenue(socialing.venue_type, socialing.venue_name),
       sub: `${socialing.region_sido} ${socialing.region_sigungu}`,
     },
-    { label: "총 참가비", value: formatFee(socialing.fee), strong: true },
-    { label: "모집 방식", value: socialing.join_type === "approval" ? "호스트 승인" : "선착순" },
+    { label: "총 참가비", icon: Wallet, value: formatFee(socialing.fee), strong: true },
+    { label: "모집 방식", icon: UserCheck, value: socialing.join_type === "approval" ? "호스트 승인" : "선착순" },
     socialing.staff_count > 0
-      ? { label: "인원", value: `${people} · 스태프 ${socialing.staff_count}명`, sub: "스태프는 정원에 세지 않아요" }
-      : { label: "인원", value: people },
+      ? {
+          label: "인원",
+          icon: Users,
+          value: `${people} · 스태프 ${socialing.staff_count}명`,
+          sub: "스태프는 정원에 세지 않아요",
+        }
+      : { label: "인원", icon: Users, value: people },
   ];
 }
