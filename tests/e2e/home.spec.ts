@@ -25,12 +25,13 @@ test.describe("MS1 골격", () => {
     await expect(body).toHaveCSS("color", "rgb(17, 24, 39)");
     await expect(body).toHaveCSS("font-family", /Noto Sans KR/);
 
-    // title-xl 22px / 28px / 700 (홈에는 보이는 큰 제목이 없어 탐색 제목으로 확인)
+    // title-xl 22px / 28px / 800, 자간 -0.02em (홈에는 보이는 큰 제목이 없어 탐색 제목으로 확인)
     await page.goto("/explore");
     const heading = page.getByRole("heading", { level: 1, name: "탐색" });
     await expect(heading).toHaveCSS("font-size", "22px");
     await expect(heading).toHaveCSS("line-height", "28px");
-    await expect(heading).toHaveCSS("font-weight", "700");
+    await expect(heading).toHaveCSS("font-weight", "800");
+    await expect(heading).toHaveCSS("letter-spacing", "-0.44px");
 
     // 앱 안에 넣은 글꼴 파일이 실제로 불러와진다 (Google Fonts 접속 없음)
     const loadedFaces = await page.evaluate(async () => {
