@@ -19,7 +19,7 @@
 | A | PM | Supabase에서 새 프로젝트 `socialing-demo` (지역 Seoul, dev를 만들 때와 같은 기본 설정). Authentication의 이메일 설정에서 **Confirm email 끄기**(dev에서 끈 곳과 같은 곳). 비밀번호 최소 길이는 기본값 6 그대로(spec 6장). 무료 프로젝트는 2개까지 |
 | B | PM | GitHub 저장소 Settings → Secrets and variables → Actions → New repository secret으로 4개: `DEMO_SUPABASE_URL`(https://<ref>.supabase.co), `DEMO_SUPABASE_SECRET_KEY`(`sb_secret_…`), `DEMO_SUPABASE_ACCESS_TOKEN`(dev 토큰과 같은 권한, 범위만 socialing-demo), `DEMO_PASSWORD`(데모 계정 비밀번호. dev와 같은 값이면 외울 것이 하나) |
 | C | PM 또는 Claude | Actions → 발표 DB 준비 → Run workflow. 로그 끝에 "적용함: …" 줄들(처음엔 19개)과 "시드 완료 (…초): 데모 계정 9개, …, 소셜링 22개, 신청 44개, 후기 16개"가 나오면 끝 |
-| D | PM | Vercel → Settings → Environment Variables에서 `NEXT_PUBLIC_SUPABASE_URL`·`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`를 **Production만** demo 값으로. 한 줄이 Preview·Production을 같이 쓰고 있으면, 그 줄에서 Production 체크를 빼고 같은 이름으로 Production 전용 줄을 새로 만든다. 그다음 Deployments → 최신 Production → ⋯ → **Redeploy**("Use existing Build Cache"는 끔). `NEXT_PUBLIC_` 값은 빌드할 때 들어가서 Redeploy 전까지는 운영 주소가 dev를 본다 |
+| D | PM | Vercel → Settings → Environment Variables에서 `NEXT_PUBLIC_SUPABASE_URL`·`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`를 이름마다 두 줄로 만든다: dev 값은 **Preview**, demo 값은 **Production**, 종류(Type)는 모두 **Config**(브라우저가 쓰는 공개 값). 기존 줄이 **Secret** 종류면 Config로 바꿀 수 없고 환경만 고쳐도 저장이 막히므로(`NEXT_PUBLIC_`이 붙은 Secret은 저장 불가) 지우고 새로 만든다. 지운 채로 main에 병합하면 운영 빌드에 값이 빠지니 4줄을 다 만든 뒤에 병합한다. 그다음 Deployments → 맨 위 Production 줄 ⋯ → **Redeploy**("Use existing Build Cache"는 끔). 버튼을 못 찾으면 main에 PR 하나를 병합해도 새로 빌드된다. `NEXT_PUBLIC_` 값은 빌드할 때 들어가서 다시 빌드하기 전까지는 운영 주소가 dev를 보고, 빌드가 끝난 뒤 1분쯤은 예전 빌드가 응답할 수 있다 |
 | E | Claude | `npm run test:smoke`: 로그인 쿠키로 운영 주소가 dev가 아닌 DB를 보는지, 홈·탐색·B 상세(등급 라벨)·인증 후기, A·B 로그인과 시연 시작 상태 |
 
 되돌리기: Vercel Production 값을 dev 값으로 돌리고 Redeploy하면 바로 원래대로다(dev는 Claude에게 "dev 시드 다시"를 부탁).
@@ -28,6 +28,7 @@ main에 새 마이그레이션이 합쳐지면 운영 주소의 새 코드가 �
 
 ## 2. 발표 DB 시드 다시 넣기
 
+- **먼저 두 창 모두 로그아웃하고 시크릿 창을 닫는다.** 시드는 데모 계정을 지우고 새로 만든다(이메일·닉네임은 같고 계정 ID가 바뀜). 로그인한 채로 두면 그 창은 지워진 계정으로 로그인된 채 남아서, 내 소셜링이 "불러오지 못했어요"가 되고 로그아웃 버튼도 볼 수 없다(로그인 화면도 열리지 않음). 갇혔으면 6장.
 - 언제: 리허설 뒤, 발표 전날, 발표 당일 아침. 시드는 리허설로 바뀐 데이터를 모두 지우고, 날짜를 **돌린 시점 기준**으로 다시 만든다(X는 2일 전, 4~6단계 소셜링은 4일 뒤).
 - 방법: Actions → 발표 DB 준비 → Run workflow, 또는 스레드에 "발표 DB 시드 다시 넣어 줘". 1분 안팎.
 - 시드는 `@socialing.test` 계정과 데모 데이터만 지우고 다시 만든다. 리허설 중 가입한 다른 이메일 계정은 남는다.
@@ -38,7 +39,7 @@ main에 새 마이그레이션이 합쳐지면 운영 주소의 새 코드가 �
 - [ ] 발표 DB 준비 → 끝나면 운영 점검(`npm run test:smoke`) 4개 통과
 - [ ] 휴대폰과 노트북에서 운영 주소가 열림, A 서윤·B 도현 로그인
 - [ ] 두 브라우저 준비: 일반 창 = A 서윤, 시크릿 창 = B 도현 (로그인 상태는 브라우저마다 따로)
-- [ ] 4장 순서로 한 번 끝까지 → 끝나면 다시 발표 DB 준비
+- [ ] 4장 순서로 한 번 끝까지 → 두 창 로그아웃·시크릿 창 닫기 → 다시 발표 DB 준비
 
 ## 4. 시연 순서 (시드 그대로일 때)
 
@@ -59,7 +60,7 @@ X를 이미 종료했다면 7~9단계는 "영어 뉴스 한 편 같이 읽기"(Y
 
 ## 5. 발표 당일 아침
 
-- [ ] 발표 DB 준비(날짜를 오늘 기준으로) → 운영 점검 통과
+- [ ] 두 창 로그아웃·시크릿 창 닫기 → 발표 DB 준비(날짜를 오늘 기준으로) → 운영 점검 통과
 - [ ] `socialing-demo`가 일시정지가 아닌지
 - [ ] A·B 두 창에 미리 로그인, 휴대폰은 화면 꺼짐 시간 늘리기
 - [ ] 4장 1~3단계만 한 번 눌러 봄 (데이터를 바꾸지 않는 단계)
@@ -71,5 +72,6 @@ X를 이미 종료했다면 7~9단계는 "영어 뉴스 한 편 같이 읽기"(Y
 | 화면마다 "불러오지 못했어요" | `socialing-demo` 일시정지 → 대시보드에서 Restore. 아니면 Vercel Production 값과 Redeploy 확인 |
 | 로그인 "이메일 또는 비밀번호가 맞지 않아요" | GitHub Secrets `DEMO_PASSWORD`와 같은 비밀번호인지. 발표 DB 준비를 다시 돌리면 그 비밀번호로 계정을 다시 만든다 |
 | 데이터가 시연 시작 상태가 아님 | 발표 DB 준비 (1분 안팎) |
+| 내 소셜링이 "불러오지 못했어요"이고 로그아웃 버튼이 없음, 로그인 화면이 열리지 않음 | 로그인한 채 발표 DB 준비를 돌린 창(2장). 그 브라우저에서 주소창 왼쪽 아이콘 → 쿠키 및 사이트 데이터 → socialing-mvp.vercel.app 삭제 → 새로 고침. 시크릿 창은 모두 닫았다가 새로 연다. 다른 브라우저를 써도 된다. 로그인하고 1시간쯤 지나면 저절로 풀린다 |
 | 발표 DB 자체가 안 됨 | Vercel Production 값을 dev로 되돌리고 Redeploy. dev 시드는 Claude에게 |
 | 무슨 오류인지 모름 | Vercel Hobby 로그는 1시간만 남는다. 리허설 직후 Vercel → Logs를 바로 본다 |
