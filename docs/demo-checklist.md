@@ -1,12 +1,13 @@
 # 발표 준비 체크리스트
 
-발표는 운영 주소 https://socialing-mvp.vercel.app 에서 발표용 Supabase `socialing-demo`로 한다(architecture 7장). 개발과 PR 미리보기는 계속 dev(`socialing-mvp`)를 쓴다.
+발표는 운영 주소 https://socialing-mvp.vercel.app 에서 발표용 Supabase `socialing-demo`로 한다(architecture 7장). 운영 주소는 main 브랜치이고, main은 발표용으로 동결한다. 개발은 dev 브랜치에서 하고, 개발과 PR 미리보기는 계속 dev DB(`socialing-mvp`)를 쓴다.
 
 | 무엇 | 어디 |
 |---|---|
-| 발표 DB에 마이그레이션 + 시드 다시 | GitHub 저장소 Actions → **발표 DB 준비** → Run workflow (`.github/workflows/demo-db.yml`) |
+| 발표 DB에 마이그레이션 + 시드 다시 | GitHub 저장소 Actions → **발표 DB 준비** → Run workflow (`.github/workflows/demo-db.yml`). "Use workflow from"은 평소 main, dev → main 병합 직전은 dev(7장) |
 | 운영 주소 읽기 점검 | `npm run test:smoke` (Claude가 클라우드에서 돌림. 데이터를 바꾸지 않음) |
 | 시연 순서 | spec 7장, 아래 4장 |
+| 개발 단계를 운영 주소에 올리기 | 아래 7장 (dev → main) |
 
 값(키·토큰·비밀번호)은 채팅·문서·PR 어디에도 쓰지 않는다.
 
@@ -24,13 +25,13 @@
 
 되돌리기: Vercel Production 값을 dev 값으로 돌리고 Redeploy하면 바로 원래대로다(dev는 Claude에게 "dev 시드 다시"를 부탁).
 
-main에 새 마이그레이션이 합쳐지면 운영 주소의 새 코드가 발표 DB에 없는 함수를 부를 수 있다. 그때는 병합 직후 **발표 DB 준비**를 한 번 돌린다(이미 적용한 파일은 건너뛰고 시드도 다시 넣는다).
+새 마이그레이션이 main에 들어가면 운영 주소의 새 코드가 발표 DB에 없는 함수를 부를 수 있다. 그래서 dev → main 병합 **직전에** dev 기준으로 **발표 DB 준비**를 돌린다(7장). 급한 버그 수정(fix/… → main)에 마이그레이션이 들어 있으면 병합 직후 main 기준으로 돌린다(Vercel 빌드가 끝나기 전에 끝난다). 이미 적용한 파일은 건너뛰고 시드도 다시 넣는다.
 
 ## 2. 발표 DB 시드 다시 넣기
 
 - **먼저 두 창 모두 로그아웃하고 시크릿 창을 닫는다.** 시드는 데모 계정을 지우고 새로 만든다(이메일·닉네임은 같고 계정 ID가 바뀜). 로그인한 채로 두면 그 창은 지워진 계정으로 로그인된 채 남아서, 내 소셜링이 "불러오지 못했어요"가 되고 로그아웃 버튼도 볼 수 없다(로그인 화면도 열리지 않음). 갇혔으면 6장.
 - 언제: 리허설 뒤, 발표 전날, 발표 당일 아침. 시드는 리허설로 바뀐 데이터를 모두 지우고, 날짜를 **돌린 시점 기준**으로 다시 만든다(X는 2일 전, 4~6단계 소셜링은 4일 뒤).
-- 방법: Actions → 발표 DB 준비 → Run workflow, 또는 스레드에 "발표 DB 시드 다시 넣어 줘". 1분 안팎.
+- 방법: Actions → 발표 DB 준비 → Run workflow("Use workflow from"은 main, "목록만 보기"는 끔), 또는 스레드에 "발표 DB 시드 다시 넣어 줘". 1분 안팎.
 - 시드는 `@socialing.test` 계정과 데모 데이터만 지우고 다시 만든다. 리허설 중 가입한 다른 이메일 계정은 남는다.
 
 ## 3. 발표 전날
@@ -75,3 +76,21 @@ X를 이미 종료했다면 7~9단계는 "영어 뉴스 한 편 같이 읽기"(Y
 | 내 소셜링이 "불러오지 못했어요"이고 로그아웃 버튼이 없음, 로그인 화면이 열리지 않음 | 로그인한 채 발표 DB 준비를 돌린 창(2장). 그 브라우저에서 주소창 왼쪽 아이콘 → 쿠키 및 사이트 데이터 → socialing-mvp.vercel.app 삭제 → 새로 고침. 시크릿 창은 모두 닫았다가 새로 연다. 다른 브라우저를 써도 된다. 로그인하고 1시간쯤 지나면 저절로 풀린다 |
 | 발표 DB 자체가 안 됨 | Vercel Production 값을 dev로 되돌리고 Redeploy. dev 시드는 Claude에게 |
 | 무슨 오류인지 모름 | Vercel Hobby 로그는 1시간만 남는다. 리허설 직후 Vercel → Logs를 바로 본다 |
+
+## 7. 단계 끝: dev → main 병합
+
+업그레이드 단계(MS10~)는 dev에 모았다가 단계가 끝나면 한 번에 main(운영 주소)에 올린다. 규칙은 AGENTS.md "브랜치"와 tasks.md 1장.
+
+| 순서 | 누가 | 할 일 |
+|---|---|---|
+| 1 | PM | dev 미리보기에 로그인한 창이 있으면 로그아웃 (2의 시드 때문. 2장과 같은 이유) |
+| 2 | Claude | dev 시드 다시(`npm run seed`) → 전체 E2E(`npm run test:e2e`) 통과 |
+| 3 | Claude | dev → main PR. 설명에 이 단계의 PR 목록, 새 마이그레이션·시드 변경 여부 |
+| 4 | Claude | 발표 DB 준비를 **dev 기준 + 목록만 보기**로 돌려 적용할 마이그레이션을 로그로 확인(발표 DB는 바뀌지 않음) |
+| 5 | PM → Claude | 새 마이그레이션이나 시드 변경이 **있을 때만**: 두 창 로그아웃·시크릿 창 닫기 → 발표 DB 준비를 **dev 기준**으로 실제 실행. 없으면 건너뛴다. 이때부터 병합까지 운영 주소의 main 코드가 dev 마이그레이션이 들어간 DB를 보므로 마이그레이션은 추가만 한다(AGENTS.md) |
+| 6 | PM | GitHub에서 **Create a merge commit**으로 병합 (Squash·Rebase는 쓰지 않는다. dev와 main 기록이 갈라져 다음 병합 때 충돌한다) |
+| 7 | Claude | Vercel 운영 배포가 끝나면(1~2분) `npm run test:smoke` 4개 통과 |
+
+- 저장소 설정 "Automatically delete head branches"는 켜지 않는다. 켜면 dev → main 병합 뒤 dev가 지워진다.
+- 5를 건너뛰면 발표 DB는 리허설 뒤 상태 그대로다. 발표 전에는 2·3·5장대로 시드를 다시 넣는다.
+- 병합 뒤 운영 주소에 문제가 생기면 급한 버그 규칙(fix/… → main, AGENTS.md)으로 고친다. 고칠 시간이 없으면 Vercel Deployments에서 이전 Production 배포로 Instant Rollback한다(그 뒤 새 배포는 운영 주소에 자동으로 붙지 않아서, 고친 배포를 다시 Promote해야 한다). 발표 DB의 추가 마이그레이션은 예전 코드가 쓰지 않으므로 그대로 둔다.

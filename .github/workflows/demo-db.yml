@@ -5,11 +5,19 @@
 # - 저장소 Actions 탭의 "Run workflow" 버튼으로만 돈다(푸시·PR로는 돌지 않음). 쓰기 권한이 있는 사람만 누를 수 있다.
 # - demo 값은 Secrets에만 있고 로그에는 가려진다. 클라우드 Claude Code 환경에는 demo 값을 넣지 않는다(architecture 7장).
 # - 시드는 리허설 데이터를 모두 지운다. 리허설 뒤, 발표 전날, 당일 아침에 다시 돌린다.
+# - 기준 브랜치는 버튼 창의 "Use workflow from"으로 고른다. 그 브랜치의 마이그레이션과 시드를 쓴다.
+#   평소(시드 다시)는 main, dev → main 병합 직전은 dev (docs/demo-checklist.md 7장). 다른 브랜치로는 돌지 않는다.
+# - "목록만 보기"를 켜면 적용할 마이그레이션만 보여 주고 끝난다(적용·시드 없음, 발표 DB가 바뀌지 않음).
 
 name: 발표 DB 준비
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "목록만 보기 (적용·시드 없이 적용할 마이그레이션만 보여 줌)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -29,7 +37,20 @@ jobs:
       SUPABASE_SECRET_KEY: ${{ secrets.DEMO_SUPABASE_SECRET_KEY }}
       SUPABASE_ACCESS_TOKEN: ${{ secrets.DEMO_SUPABASE_ACCESS_TOKEN }}
       DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
+      DRY_RUN: ${{ inputs.dry_run }}
     steps:
+      - name: 기준 브랜치 확인 (main·dev만)
+        run: |
+          echo "기준: ${GITHUB_REF_NAME} @ ${GITHUB_SHA::7}"
+          if [ "$DRY_RUN" = "true" ]; then echo "목록만 보기: 마이그레이션을 적용하지 않고 시드도 넣지 않는다"; fi
+          case "$GITHUB_REF_NAME" in
+            main|dev) ;;
+            *)
+              echo "::error::발표 DB 준비는 main이나 dev에서만 돌린다. Use workflow from에서 고른 브랜치: ${GITHUB_REF_NAME}"
+              exit 1
+              ;;
+          esac
+
       - name: Secrets 4개가 있는지 확인 (값은 보이지 않음)
         run: |
           missing=""
@@ -52,8 +73,14 @@ jobs:
 
       - run: npm ci
 
-      - name: 마이그레이션 적용 (npm run db:push)
-        run: npm run db:push
+      - name: 마이그레이션 적용 (npm run db:push, 목록만 보기면 --dry-run)
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            npm run db:push -- --dry-run
+          else
+            npm run db:push
+          fi
 
       - name: 데모 데이터 다시 넣기 (npm run seed)
+        if: ${{ !inputs.dry_run }}
         run: npm run seed

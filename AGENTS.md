@@ -20,19 +20,34 @@
 
 ## 작업 방식
 1. **마일스톤 하나씩.** 시작하면 코딩 전에 PR 단위 계획(PR마다 범위, 관련 spec 절, 테스트)을 보여 주고 PM 확인을 기다린다.
-2. **PR은 작게**: 화면 하나 또는 DB 함수 하나 정도. 브랜치 → PR → Vercel 미리보기 확인 → main.
+2. **PR은 작게**: 화면 하나 또는 DB 함수 하나 정도. `feat/…` 브랜치 → **dev**로 PR → Vercel 미리보기 확인 → dev에 병합. main은 아래 "브랜치" 규칙으로만.
 3. PR 설명은 한국어로: 사람이 보는 변화, 관련 spec 절과 screen-cases ID, 추가한 테스트, 미리보기 URL에서 확인하는 순서, 범위 밖 아이디어는 "제안"으로만.
 4. 동작이 spec과 달라지면 같은 PR에서 `docs/`를 고친다. 새 결정은 `docs/decisions.md`에 한 줄.
 5. 마일스톤 완료 기준은 `docs/tasks.md`의 체크리스트. 마일스톤을 끝내는 PR에서 체크한다.
 6. 모든 PR은 tasks.md 1장 "모든 PR의 완료 기준"을 지킨다.
+
+## 브랜치 (MS10부터, MVP 업그레이드)
+
+| 브랜치 | 규칙 |
+|---|---|
+| `main` | 발표용(운영 주소 = 발표 DB `socialing-demo`)으로 **동결**. 들어오는 것은 단계 끝 dev → main 병합과 급한 버그 수정뿐. GitHub 기본 브랜치는 main 그대로 |
+| `dev` | 개발 브랜치. 기능·화면·문서 PR은 모두 여기로 |
+| `feat/…` · `chore/…` | dev에서 만들어 dev로 PR. 기능·화면은 `feat/`, 문서·도구는 `chore/` |
+| `fix/…` | 급한 버그만. main에서 만들어 main으로 PR → 병합 뒤 바로 main → dev PR(Create a merge commit)로 dev에 합친다 |
+
+- **작업 시작**: 클론하면 main이 오므로 `git fetch origin dev` 뒤 `git checkout -b feat/… origin/dev`. 규칙·문서는 dev에 있는 것이 기준이니 dev에서 이 파일과 tasks.md를 다시 읽는다.
+- **PR base**: GitHub이 base를 main으로 잡는다. PR을 만들 때 base를 `dev`로 고른다.
+- **단계 끝**: dev → main PR 하나를 **Create a merge commit**으로 병합한다(Squash·Rebase는 dev와 main 기록을 갈라 다음 병합 때 충돌). 순서는 [docs/demo-checklist.md](docs/demo-checklist.md) 7장.
+- 저장소 설정 "Automatically delete head branches"는 켜지 않는다(켜면 dev → main 병합 뒤 dev가 지워짐).
 
 ## 명령 (MS1에서 만든다. 바뀌면 여기를 고친다)
 
 | 명령 | 하는 일 |
 |---|---|
 | `npm run dev` | 로컬 실행 |
-| `npm run build` / `npm run lint` | 빌드, 린트 (PR마다 통과) |
-| `npm run test:e2e` | Playwright E2E (시드한 dev 프로젝트 대상) |
+| `npm run build` / `npm run lint` / `npm run typecheck` | 빌드, 린트, 타입 검사 (PR마다 통과) |
+| `npm run test:e2e` | Playwright E2E 전체 (시드한 dev 프로젝트 대상, 15분쯤) |
+| `npm run test:e2e -- tests/e2e/ms9-scenario.spec.ts tests/e2e/<파일>.spec.ts` | 고른 E2E 파일만 (기능 PR, 아래 테스트) |
 | `npm run test:smoke` | 운영 주소 읽기 점검 (데이터를 바꾸지 않음, 어느 DB를 보는지와 시연 시작 상태, [docs/demo-checklist.md](docs/demo-checklist.md)) |
 | `npm run seed` | 데모 데이터 삭제 후 다시 넣기 (secret 키 사용) |
 | `npm run db:push` | `supabase/migrations`에서 아직 적용하지 않은 파일을 원격 dev에 적용 (Management API). `-- --dry-run`은 목록만 |
@@ -47,6 +62,7 @@ Next.js 16.3.x (App Router) · React 19 · TypeScript 6.0 · Supabase (Postgres,
 - 함수는 정해진 오류 코드를 돌려주고(architecture 5장), 서버 액션이 spec에 적힌 문구로 바꾼다. 화면 문구는 spec에 적힌 그대로 쓴다.
 - 테이블에 직접 쓰기 정책을 열지 않는다. `review_checks`는 누구도 직접 읽지 못하고 집계 함수만 읽는다.
 - DB 변경은 `supabase/migrations`에 새 SQL 파일로 추가한다. 이미 적용한 마이그레이션 파일은 고치지 않는다. 적용 뒤 `db:types`.
+- **마이그레이션은 추가만** (MS10부터): dev 마이그레이션은 dev → main 병합 직전에 발표 DB에 먼저 들어가서 잠깐 main 코드가 그 DB를 본다. 그래서 main 코드가 쓰는 테이블·칸·뷰·함수를 지우거나, 이름·돌려주는 칸·인자를 바꾸지 않는다. 새 인자에는 기본값을 둔다. 꼭 바꿔야 하면 새 이름으로 만들고, 옛 것은 그 단계가 main에 들어간 뒤 다음 단계에서 지운다. 시드도 main 코드가 읽을 수 있게 바꾼다.
 - 입력은 zod로 검증한다(폼과 서버 액션 모두).
 - 날짜는 DB에 `timestamptz`, 화면 표시와 날짜 필터는 Asia/Seoul로 계산한다(`lib/format`).
 - 로그인 복귀 `next`는 `/`로 시작하고 `//`로 시작하지 않는 앱 안 주소만 받는다.
@@ -65,7 +81,17 @@ Next.js 16.3.x (App Router) · React 19 · TypeScript 6.0 · Supabase (Postgres,
 ## 테스트
 - Playwright E2E, 모바일 뷰포트 390px, Chromium. 시드한 dev 프로젝트를 대상으로 한다.
 - 기능을 만들면 spec 7장의 해당 시연 단계 E2E를 함께 추가한다. 테스트 이름에 단계 번호나 screen-cases ID를 넣는다.
-- main에 합치기 전에 전체 E2E가 통과해야 한다.
+- PR마다 돌리는 것 (MS10부터):
+
+| PR | 돌리는 것 |
+|---|---|
+| 기능·화면 PR (→ dev) | `npm run typecheck` · `lint` · `build` + 고친 화면·함수의 E2E 파일 + 시연 흐름 `ms9-scenario` |
+| 마이그레이션이나 시드가 바뀌는 PR (→ dev) | 위 + dev 시드 다시(`npm run seed`) → 전체 E2E |
+| dev → main | dev 시드 다시 → 전체 E2E (발표 DB와 운영 점검은 demo-checklist 7장) |
+| 급한 버그 (`fix/…` → main) | 기능·화면 PR과 같고, 병합 뒤 `npm run test:smoke` |
+
+- 여러 화면을 함께 고치면(공통 부품·색 등) `ms9-screen-sweep`도 고른 파일에 넣는다.
+- 고른 E2E가 시드 날짜 때문에 실패하면(시드를 넣은 지 하루쯤 지나면 생김) dev 시드를 다시 넣고 다시 돌린다. 시드는 데모 계정을 새로 만들어 미리보기에 로그인한 창을 가두므로, PM이 미리보기를 확인하는 중이 아닌지 먼저 묻는다.
 - 테스트가 데이터를 바꿔야 하면 시드 데이터를 건드리지 말고, `tests/e2e/helpers/supabase.ts`로 제목이 `[E2E]`로 시작하는 테스트 전용 소셜링을 만들고 테스트 끝에 지운다(Management API, `SUPABASE_ACCESS_TOKEN`). 가입 테스트 계정은 `e2e-…@socialing.test` 이메일로 만들고 끝에 지운다(`deleteAuthUsers`). 다른 테스트가 시드 계정으로 만드는 소셜링과 섞이면 안 되는 숫자(호스트 기록 등)는 `createTestUser`로 전용 계정을 가입시켜 그 계정을 호스트로 쓴다. 남아도 `npm run seed`가 지운다. 사진 업로드 테스트가 올린 파일은 SQL로 지울 수 없어(Storage 보호) 버킷에 남고, `npm run seed`가 버킷을 비운다.
 - 테스트를 건너뛰거나 지우거나 약하게 바꿔서 통과시키지 않는다. 실패 원인을 고친다.
 
@@ -74,7 +100,7 @@ Next.js 16.3.x (App Router) · React 19 · TypeScript 6.0 · Supabase (Postgres,
 - Supabase 키는 새 방식만 쓴다: 앱은 publishable 키(`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`), 시드는 secret 키(`SUPABASE_SECRET_KEY`). 옛 `anon`·`service_role` 키와 그 이름은 쓰지 않는다(2026년 말 폐지 예정).
 - `SUPABASE_SECRET_KEY`는 `scripts/seed.mts`에서만 쓴다. `app/`, `components/`, `lib/`에서 import하지 않는다. secret 키는 브라우저에서 거부된다(401).
 - `.env*.local`은 커밋하지 않는다. **이 저장소는 공개 상태다.**
-- 클라우드 환경에는 dev(`socialing-mvp`) 키만 있다. 발표용 `socialing-demo`의 값은 GitHub 저장소 Secrets와 Vercel Production에만 있고, 마이그레이션·시드는 GitHub Actions **발표 DB 준비**(버튼으로만 실행)가 한다. 운영 주소가 발표 DB를 보는 동안 main에 새 마이그레이션을 합치면 병합 직후 이 작업을 돌린다([docs/demo-checklist.md](docs/demo-checklist.md)).
+- 클라우드 환경에는 dev(`socialing-mvp`) 키만 있다. 발표용 `socialing-demo`의 값은 GitHub 저장소 Secrets와 Vercel Production에만 있고, 마이그레이션·시드는 GitHub Actions **발표 DB 준비**(버튼으로만 실행, main·dev에서만)가 한다. dev → main 병합 직전에 dev 기준 "목록만 보기"로 새 마이그레이션을 확인하고, 새 마이그레이션이나 시드 변경이 있을 때만 dev 기준으로 실제로 돌린다. 급한 버그 수정에 마이그레이션이 있으면 병합 직후 main 기준으로 돌린다([docs/demo-checklist.md](docs/demo-checklist.md) 7장).
 - Docker는 없다. 클라우드 세션은 HTTPS로만 나가므로 Postgres 직접 접속(`supabase db push`)은 쓰지 않는다. 마이그레이션은 Management API(`api.supabase.com`, `SUPABASE_ACCESS_TOKEN`)로 원격 dev에 적용한다. 토큰은 dev 프로젝트로 범위를 줄인 것이라 권한이 모자라면 우회하지 말고 PM에게 필요한 권한 이름을 알려 준다.
 - **정한 방법 (SP5)**: `npm run db:push`가 `POST /v1/projects/{ref}/database/query`로 파일 하나를 트랜잭션 하나로 적용하고, 같은 트랜잭션에서 `supabase_migrations.schema_migrations`에 **파일 이름의 버전**을 기록한다. 실패하면 SQL과 기록이 함께 취소된다. 파일 이름은 `<14자리 버전>_<이름>.sql`(Supabase CLI 규칙), 파일 안에 `begin`/`commit`을 쓰지 않는다. 타입은 `npm run db:types`(`GET /types/typescript`). Supabase CLI와 Docker는 필요 없다. 클라우드 밖에서는 같은 이름의 변수를 `.env.local`에 넣고 같은 명령을 쓴다(Node 22.18 이상).
 
