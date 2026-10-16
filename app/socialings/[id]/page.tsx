@@ -30,7 +30,8 @@ import { readSimulatedState, type SimulatedState } from "@/lib/simulated-state";
 // 화면 상태 흉내 `?_state=partial`은 호스트 기록만 실패시킨다.
 // 등급 라벨 "믿고 가는 호스트"(spec M5)는 호스트 기록의 등급 칸으로 정해 제목 아래 호스트 줄과 호스트 묶음 닉네임 아래에 붙고,
 // 누르면 O03이 열린다. 기록을 못 읽으면 라벨도 보이지 않는다.
-// 배치는 DESIGN.md 상세(P03) 배치: surface-bg 위에 대표 그림 → 16 겹쳐 올라온 흰 제목 묶음 → 정보 카드 → 소개 카드 → 호스트 카드.
+// 배치는 DESIGN.md 상세(P03) 배치: surface-bg 위에 대표 그림 → 16 겹쳐 올라온 흰 제목 묶음 → 정보 카드 → 소개 카드 → 호스트 카드
+// → "신청 전에 확인해 주세요"(소셜링 규칙, 아래 고정 영역 바로 위).
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -138,12 +139,46 @@ export default async function SocialingPage({ params, searchParams }: Props) {
               </Suspense>
             </div>
           </section>
+
+          <BeforeApplySection />
         </div>
       </main>
       <ApplyBar socialing={socialing} viewer={viewer} />
       {/* 다른 화면에서 보내며 남긴 안내 (예: 호스트가 아닌 사람이 관리 주소 → "호스트만 볼 수 있어요") */}
       <UrlNotice message={noticeMessage(query.notice)} />
     </div>
+  );
+}
+
+/** 소셜링 규칙: 호스트와 참가자 모두 하면 안 되는 행동 (spec M4·6장, SH4a). 호스트가 바꾸거나 끌 수 없다 */
+const SOCIALING_RULES = [
+  "종교 활동이나 영업 권유하기",
+  "앱에 적힌 금액 외에 돈을 요구하기",
+  "운영 스태프를 참가자인 것처럼 소개하기",
+] as const;
+
+/**
+ * "신청 전에 확인해 주세요" (spec M4·8.9 P03): 신청 버튼 바로 위에서 읽히게 상세 맨 아래에 둔다.
+ * 소셜링 규칙(notice-box/caution)은 모든 상세에 늘 펼쳐 보인다(호스트 본인·지난 소셜링 포함). 신청 확인 창(O02)에는 넣지 않는다.
+ */
+function BeforeApplySection() {
+  return (
+    <section className="flex flex-col gap-sm">
+      <h3 className="text-title-lg text-text-primary">신청 전에 확인해 주세요</h3>
+      <div className="flex flex-col gap-md rounded-xl bg-surface p-md shadow-card">
+        <NoticeBox variant="caution" title="소셜링 규칙">
+          <p>호스트와 참가자 모두 아래 행동을 할 수 없어요</p>
+          <ul className="mt-xxs flex flex-col gap-xxs">
+            {SOCIALING_RULES.map((rule) => (
+              <li key={rule} className="flex gap-xs">
+                <span aria-hidden>•</span>
+                {rule}
+              </li>
+            ))}
+          </ul>
+        </NoticeBox>
+      </div>
+    </section>
   );
 }
 
