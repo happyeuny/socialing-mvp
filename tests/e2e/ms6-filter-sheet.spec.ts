@@ -21,7 +21,7 @@ test.describe("MS6 필터 칩과 필터 시트", () => {
     page,
   }) => {
     await page.goto("/explore");
-    await expect(chips(page).getByRole("button")).toHaveText(["", "날짜", "장소", "카테고리", "참가비"]);
+    await expect(chips(page).getByRole("button")).toHaveText(["", "날짜", "장소", "카테고리", "참가비", "술 여부"]);
     await toggle(page).click();
     await expect(page).toHaveURL("/explore?hide_party=1");
 
@@ -68,7 +68,7 @@ test.describe("MS6 필터 칩과 필터 시트", () => {
 
     // 구 목록: 맨 위 "‹ 서울특별시"(시·도로 돌아감, 목록을 바꾸면 장소 묶음 맨 위로), "서울특별시 전체", 구 25곳
     await expect(sheet(page).getByRole("button", { name: "서울특별시" })).toBeInViewport();
-    await expect(sheet(page).getByRole("radio")).toHaveCount(4 + 2 + 1 + 25 + 5); // 날짜 4칸 + 장소 갈래 2칸 + 서울특별시 전체 + 구 + 참가비 5칸
+    await expect(sheet(page).getByRole("radio")).toHaveCount(4 + 2 + 1 + 25 + 5 + 2); // 날짜 4칸 + 장소 갈래 2칸 + 서울특별시 전체 + 구 + 참가비 5칸 + 술 여부 2칸
     await sheet(page).getByText("마포구", { exact: true }).click();
     await expect(sheet(page).getByRole("radio", { name: "마포구" })).toBeChecked();
     const count = await sheetCount(page);
@@ -156,7 +156,7 @@ test.describe("MS6 필터 칩과 필터 시트", () => {
     await sheet(page).getByRole("button", { name: "초기화" }).click();
     await showButton(page).click();
     await expect(page).toHaveURL("/explore?hide_party=1");
-    await expect(chips(page).getByRole("button")).toHaveText(["", "날짜", "장소", "카테고리", "참가비"]);
+    await expect(chips(page).getByRole("button")).toHaveText(["", "날짜", "장소", "카테고리", "참가비", "술 여부"]);
   });
 
   test("390·320px: 칩 줄과 열린 시트에 가로 스크롤이 없다", async ({ page }) => {

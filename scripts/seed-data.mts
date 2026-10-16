@@ -374,6 +374,25 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       status: "recruiting",
       applications: accepted(["P5"], seoulDateAt(-1, 9, 0, now)),
     },
+    {
+      // 술 있는 배움 소셜링: "파티·사교 숨기기"를 켜도 남는 술 자리라 "술 없음" 필터와 결과가 갈린다 (MS12 U2)
+      key: "D_LEARNING_ALCOHOL",
+      host: "D",
+      title: "퇴근 후 영어 스몰토크: 맥주 한 잔과 함께",
+      description:
+        "회사 밖에서 영어로 가볍게 이야기해요. 주제 카드로 3명씩 대화하고 자리를 바꿔 가며 말해 봐요.\n맥주 한 잔이 참가비에 들어 있어요.",
+      category: "learning",
+      has_alcohol: true,
+      venue: "yeoksam_lounge",
+      starts_at: seoulDateAt(7, 19, 30, now),
+      apply_deadline_at: seoulDateAt(7, 12, 0, now),
+      fee: 15000,
+      capacity: 8,
+      staff_count: 0,
+      join_type: "first_come",
+      status: "recruiting",
+      applications: accepted(["P1", "P3"], seoulDateAt(-1, 21, 0, now)),
+    },
 
     // ---------------------------------------------------------------- 지난 소셜링
     {

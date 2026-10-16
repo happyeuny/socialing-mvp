@@ -102,6 +102,8 @@ test.describe("시드 조건 (spec 7장)", () => {
     has("확정 안 된 채 일시 지남", (s) => s.status === "recruiting" && !future(s));
     has("파티·사교(취소 아님)", (s) => s.category === "party" && s.status !== "canceled");
     has("술 있음", (s) => s.has_alcohol);
+    // 파티·사교를 숨겨도 남는 술 자리 → "술 없음" 필터와 "파티·사교 숨기기"의 결과가 갈린다 (MS12 U2)
+    has("술 있는 배움(모집중, 일시 미래)", (s) => s.has_alcohol && s.category === "learning" && s.status === "recruiting" && future(s));
     has("외부 장소", (s) => ["yeonnam_cafe", "seongsu_studio", "yeoksam_lounge", "jamsil_court"].includes(s.venue));
 
     const learning = definitions.filter((s) => s.category === "learning").length;

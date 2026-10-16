@@ -33,11 +33,11 @@ import {
 import { shortSido } from "@/lib/format";
 
 // P01 필터 칩 줄 + "파티·사교 숨기기" + 필터 시트 O01 (spec M2, M3, 8.2, 8.9 · 시안 P01·O01).
-// 시트 순서는 카테고리 → 날짜 → 장소 → 참가비, 칩 줄은 날짜 · 장소 · 카테고리 · 참가비.
+// 시트 순서는 카테고리 → 날짜 → 장소 → 참가비 → 술 여부, 칩 줄은 날짜 · 장소 · 카테고리 · 참가비 · 술 여부.
 // 값은 주소에만 있다. 칩·토글·시트 적용은 주소를 바꿔 끼우고(뒤로 가기에 쌓이지 않음) 서버가 다시 거른 목록을 그린다.
 // 시트 안에서 고르는 값은 적용 전까지 시트에만 있고, "소셜링 N개 보기"는 목록과 같은 함수로 센다.
 
-type Section = "all" | "date" | "place" | "category" | "fee";
+type Section = "all" | "date" | "place" | "category" | "fee" | "alcohol";
 type PlaceTab = "branch" | "region";
 
 const DATE_OPTIONS = [
@@ -47,6 +47,10 @@ const DATE_OPTIONS = [
 const FEE_OPTIONS = [
   { value: "all", label: "전체" },
   ...FEE_FILTERS.map((value) => ({ value, label: FEE_FILTER_LABELS[value] })),
+] as const;
+const ALCOHOL_OPTIONS = [
+  { value: "all", label: "전체" },
+  { value: "none", label: "술 없음" },
 ] as const;
 const PLACE_TABS = [
   { value: "branch", label: "스터디지점" },
@@ -72,7 +76,7 @@ export function ExploreFilters({
   const [placeTab, setPlaceTab] = useState<PlaceTab>("branch");
   const [sidoView, setSidoView] = useState<string | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
-  const ids = { date: useId(), place: useId(), category: useId(), fee: useId() };
+  const ids = { date: useId(), place: useId(), category: useId(), fee: useId(), alcohol: useId() };
 
   const chips = filterChipValues(current, catalog);
   const applied = normalizeFilter(draft, catalog);
@@ -139,6 +143,7 @@ export function ExploreFilters({
         <FilterChip label="장소" value={chips.place} onClick={() => openSheet("place")} />
         <FilterChip label="카테고리" value={chips.category} onClick={() => openSheet("category")} />
         <FilterChip label="참가비" value={chips.fee} onClick={() => openSheet("fee")} />
+        <FilterChip label="술 여부" value={chips.alcohol} onClick={() => openSheet("alcohol")} />
       </div>
 
       <div className="mt-xs border-b border-border-divider">
@@ -308,6 +313,20 @@ export function ExploreFilters({
               />
             ))}
           </div>
+        </section>
+
+        {/* "파티·사교 숨기기"와 따로 움직인다. 파티·사교를 골라도 꺼지지 않는다 */}
+        <section data-section="alcohol" aria-labelledby={ids.alcohol} className="flex flex-col gap-sm">
+          <h3 id={ids.alcohol} className="text-title-md text-text-primary">
+            술 여부
+          </h3>
+          <SegmentedChoice
+            name="filter-alcohol"
+            labelledBy={ids.alcohol}
+            options={ALCOHOL_OPTIONS}
+            value={draft.noAlcohol ? "none" : "all"}
+            onChange={(value) => setDraft((d) => ({ ...d, noAlcohol: value === "none" }))}
+          />
         </section>
       </FilterSheet>
     </>
