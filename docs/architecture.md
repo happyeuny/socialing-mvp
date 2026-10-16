@@ -97,7 +97,7 @@ erDiagram
 | `status_tag` | 꼬리표 `closed`(신청 마감) / `full`(정원 마감) / null |
 | `closed_reason` | 신청할 수 없는 이유. spec 8.4의 2·13줄 순서로 `host_canceled` / `started`(소셜링 일시 지남) / `not_open`(종료) / `deadline` / `full`, 신청 가능하면 null |
 
-탐색 필터(MS6, spec M3)는 DB가 아니라 `lib/explore-filter.ts`가 거른다. P01 서버 컴포넌트가 현재 소셜링(`listExploreSocialings`: 카드 칸 + `venue_id`·`category_is_party`·`region_sido`)과 필터 목록(`getFilterCatalog`: 카테고리·스터디지점·지역)을 읽고, 주소 값(`parseExploreFilter`)으로 거른다(`filterSocialings`). 필터 시트의 "소셜링 N개 보기"도 같은 함수로 센다. 날짜는 Asia/Seoul 기준(`dateFilterRange`). 지역 코드(2자리 시·도, 5자리 시·군·구)는 `regions` 이름으로 바꿔 스터디지점·외부 장소 모두와 맞춘다.
+탐색 필터(MS6, spec M3)는 DB가 아니라 `lib/explore-filter.ts`가 거른다. P01 서버 컴포넌트가 현재 소셜링(`listExploreSocialings`: 카드 칸 + `venue_id`·`category_is_party`·`region_sido`)과 필터 목록(`getFilterCatalog`: 카테고리·스터디지점·지역)을 읽고, 주소 값(`parseExploreFilter`)으로 거른다(`filterSocialings`). 필터 시트의 "소셜링 N개 보기"도 같은 함수로 센다. 날짜는 Asia/Seoul 기준(`dateFilterRange`). 참가비(MS12)는 뷰의 총 참가비 `fee`를 겹치지 않는 네 구간(`feeInRange`)으로, 술 없음(MS12)은 뷰의 `has_alcohol`로 거른다. 지역 코드(2자리 시·도, 5자리 시·군·구)는 `regions` 이름으로 바꿔 스터디지점·외부 장소 모두와 맞춘다.
 
 뷰는 `security_invoker`라 보는 사람 권한으로 읽는다. 비로그인은 applications를 못 읽으므로 참여 확정 인원만 SECURITY DEFINER 함수 `socialing_accepted_count(socialing_id)`가 숫자로 돌려준다. 누가 신청했는지는 이 경로로 나가지 않는다.
 
@@ -173,7 +173,7 @@ erDiagram
                           password-field, header-main, header-sub, header-login-link, tab-bar (+ 뒤로 판단용
                           navigation-tracker), top-tabs, status-badge, status-tag, application-chip, count-pill,
                           socialing-card, category-art(사진 없을 때 카테고리 그림), skeleton, empty-state,
-                          error-state, host-profile-row, info-list, notice-box, intro-text(소개 5줄 접기),
+                          error-state, host-profile-row, info-list, notice-box(feed-criteria·info·caution), intro-text(소개 5줄 접기),
                           apply-bar(spec 8.4 순서표 13줄), hero-card, section-header, shortcut-category,
                           shortcut-branch, review-card, toast(짧은 안내),
                           bottom-sheet · dialog(Radix Dialog 위, decisions.md), confirm-apply-sheet(O02),
@@ -183,7 +183,8 @@ erDiagram
                           textarea, question-block(비공개 질문 예/아니오), review-summary,
                           host-stats(상세 호스트 기록, 기록만 실패하면 그 칸만 다시 시도),
                           toggle(줄 전체가 스위치), filter-chip, choice-chip, radio-row, filter-sheet(O01 틀),
-                          segmented에 SegmentedChoice(하나 고르는 칸: 날짜, 장소 갈래), select-field(고르기 칸)
+                          segmented에 SegmentedChoice(하나 고르는 칸: 날짜, 장소 갈래), select-field(고르기 칸),
+                          collapsible-row(접는 줄), refund-policy-list(취소·환불 규칙 글)
 /lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)
 /lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). auth.ts, applications.ts(신청·신청 취소),
                           manage.ts(승인·거절, 확정·종료·호스트 취소), reviews.ts(후기 올리기), socialings.ts(소셜링 열기·저장)
@@ -193,13 +194,14 @@ erDiagram
 /lib/focus-first-error.ts 제출 뒤 화면 순서상 첫 오류 칸으로 이동 (라디오 묶음은 첫 칸)
 /lib/notices.ts           다른 화면으로 보내며 남기는 짧은 안내 `?notice=` (예: "호스트만 볼 수 있어요")
 /lib/in-app-history.ts    머리글 뒤로 버튼: 앱 안 이전 화면이 없으면 홈 (spec 8.7)
+/lib/refund-policy.ts     취소·환불 규칙 안내 계산 (spec 6장 환불 기준). 상세 접는 줄·신청 확인 O02·신청 취소 확인 O05가 같이 씀. 실제 환불은 없음
 /lib/queries              읽기 함수. viewer.ts(지금 보는 사람, 닉네임은 로그인 토큰에서), socialings.ts(socialing_summaries 뷰),
                           my-socialings.ts("나" 기준 뷰: 상세 아래 영역의 보는 사람, 내 소셜링 두 탭 목록),
                           catalog.ts(카테고리·스터디지점, 탐색 필터·등록 양식 목록), reviews.ts(인증 후기),
                           manage.ts(P11: my_hosted_socialings 관리 칸, hosted_socialing_applicants · P08: 지금 값과 잠금 기준),
                           host-record.ts(get_host_record. 상세가 본문과 따로 읽는다)
 /lib/format               날짜(Asia/Seoul)·금액·시·도 짧은 이름 표시, 날짜·시간 고르기 칸 값 ↔ 일시(한국 시간)
-/lib/explore-filter.ts    탐색 필터: 주소 값 읽기·만들기, 날짜 범위(Asia/Seoul), 거르기 (목록과 필터 시트가 같이 씀)
+/lib/explore-filter.ts    탐색 필터: 주소 값 읽기·만들기, 날짜 범위(Asia/Seoul), 참가비 구간, 술 없음, 거르기 (목록과 필터 시트가 같이 씀)
 /lib/simulated-state.ts   화면 상태 흉내 `?_state=empty|error|loading|partial` (운영 주소에서는 무시, decisions.md).
                           partial = 묶음 하나만 실패: 홈은 최근 인증 후기, 상세는 호스트 기록
 /supabase/migrations      테이블·enum·RLS·함수 SQL (파일 하나 = 변경 하나)

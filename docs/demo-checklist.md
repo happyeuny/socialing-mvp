@@ -19,7 +19,7 @@
 |---|---|---|
 | A | PM | Supabase에서 새 프로젝트 `socialing-demo` (지역 Seoul, dev를 만들 때와 같은 기본 설정). Authentication의 이메일 설정에서 **Confirm email 끄기**(dev에서 끈 곳과 같은 곳). 비밀번호 최소 길이는 기본값 6 그대로(spec 6장). 무료 프로젝트는 2개까지 |
 | B | PM | GitHub 저장소 Settings → Secrets and variables → Actions → New repository secret으로 4개: `DEMO_SUPABASE_URL`(https://<ref>.supabase.co), `DEMO_SUPABASE_SECRET_KEY`(`sb_secret_…`), `DEMO_SUPABASE_ACCESS_TOKEN`(dev 토큰과 같은 권한, 범위만 socialing-demo), `DEMO_PASSWORD`(데모 계정 비밀번호. dev와 같은 값이면 외울 것이 하나) |
-| C | PM 또는 Claude | Actions → 발표 DB 준비 → Run workflow. 로그 끝에 "적용함: …" 줄들(처음엔 19개)과 "시드 완료 (…초): 데모 계정 9개, …, 소셜링 22개, 신청 44개, 후기 16개"가 나오면 끝 |
+| C | PM 또는 Claude | Actions → 발표 DB 준비 → Run workflow. 로그 끝에 "적용함: …" 줄들(처음엔 19개)과 "시드 완료 (…초): 데모 계정 9개, …, 소셜링 23개, 신청 46개, 후기 16개"가 나오면 끝 |
 | D | PM | Vercel → Settings → Environment Variables에서 `NEXT_PUBLIC_SUPABASE_URL`·`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`를 이름마다 두 줄로 만든다: dev 값은 **Preview**, demo 값은 **Production**, 종류(Type)는 모두 **Config**(브라우저가 쓰는 공개 값). 기존 줄이 **Secret** 종류면 Config로 바꿀 수 없고 환경만 고쳐도 저장이 막히므로(`NEXT_PUBLIC_`이 붙은 Secret은 저장 불가) 지우고 새로 만든다. 지운 채로 main에 병합하면 운영 빌드에 값이 빠지니 4줄을 다 만든 뒤에 병합한다. 그다음 Deployments → 맨 위 Production 줄 ⋯ → **Redeploy**("Use existing Build Cache"는 끔). 버튼을 못 찾으면 main에 PR 하나를 병합해도 새로 빌드된다. `NEXT_PUBLIC_` 값은 빌드할 때 들어가서 다시 빌드하기 전까지는 운영 주소가 dev를 보고, 빌드가 끝난 뒤 1분쯤은 예전 빌드가 응답할 수 있다 |
 | E | Claude | `npm run test:smoke`: 로그인 쿠키로 운영 주소가 dev가 아닌 DB를 보는지, 홈·탐색·B 상세(등급 라벨)·인증 후기, A·B 로그인과 시연 시작 상태 |
 
@@ -85,7 +85,7 @@ X를 이미 종료했다면 7~9단계는 "영어 뉴스 한 편 같이 읽기"(Y
 |---|---|---|
 | 1 | PM | dev 미리보기에 로그인한 창이 있으면 로그아웃 (2의 시드 때문. 2장과 같은 이유) |
 | 2 | Claude | dev 시드 다시(`npm run seed`) → 전체 E2E(`npm run test:e2e`) 통과 |
-| 3 | Claude | dev → main PR. 설명에 이 단계의 PR 목록, 새 마이그레이션·시드 변경 여부 |
+| 3 | Claude → PM | 2의 결과를 보여 주고 **PM 승인을 받은 뒤** dev → main PR. 설명에 이 단계의 PR 목록, 새 마이그레이션·시드 변경 여부 |
 | 4 | Claude | 발표 DB 준비를 **dev 기준 + 목록만 보기**로 돌려 적용할 마이그레이션을 로그로 확인(발표 DB는 바뀌지 않음) |
 | 5 | PM → Claude | 새 마이그레이션이나 시드 변경이 **있을 때만**: 두 창 로그아웃·시크릿 창 닫기 → 발표 DB 준비를 **dev 기준**으로 실제 실행. 없으면 건너뛴다. 이때부터 병합까지 운영 주소의 main 코드가 dev 마이그레이션이 들어간 DB를 보므로 마이그레이션은 추가만 한다(AGENTS.md) |
 | 6 | PM | GitHub에서 **Create a merge commit**으로 병합 (Squash·Rebase는 쓰지 않는다. dev와 main 기록이 갈라져 다음 병합 때 충돌한다) |

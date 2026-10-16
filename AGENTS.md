@@ -37,7 +37,7 @@
 
 - **작업 시작**: 클론하면 main이 오므로 `git fetch origin dev` 뒤 `git checkout -b feat/… origin/dev`. 규칙·문서는 dev에 있는 것이 기준이니 dev에서 이 파일과 tasks.md를 다시 읽는다.
 - **PR base**: GitHub이 base를 main으로 잡는다. PR을 만들 때 base를 `dev`로 고른다.
-- **단계 끝**: dev → main PR 하나를 **Create a merge commit**으로 병합한다(Squash·Rebase는 dev와 main 기록을 갈라 다음 병합 때 충돌). 순서는 [docs/demo-checklist.md](docs/demo-checklist.md) 7장.
+- **단계 끝**: dev → main PR은 **PM 승인을 받은 뒤** 만든다(테스트·발표 DB 준비 결과를 보여 주고 묻는다). PR 하나를 **Create a merge commit**으로 병합한다(Squash·Rebase는 dev와 main 기록을 갈라 다음 병합 때 충돌). 순서는 [docs/demo-checklist.md](docs/demo-checklist.md) 7장.
 - 저장소 설정 "Automatically delete head branches"는 켜지 않는다(켜면 dev → main 병합 뒤 dev가 지워짐).
 
 ## 명령 (MS1에서 만든다. 바뀌면 여기를 고친다)
@@ -105,7 +105,7 @@ Next.js 16.3.x (App Router) · React 19 · TypeScript 6.0 · Supabase (Postgres,
 - **정한 방법 (SP5)**: `npm run db:push`가 `POST /v1/projects/{ref}/database/query`로 파일 하나를 트랜잭션 하나로 적용하고, 같은 트랜잭션에서 `supabase_migrations.schema_migrations`에 **파일 이름의 버전**을 기록한다. 실패하면 SQL과 기록이 함께 취소된다. 파일 이름은 `<14자리 버전>_<이름>.sql`(Supabase CLI 규칙), 파일 안에 `begin`/`commit`을 쓰지 않는다. 타입은 `npm run db:types`(`GET /types/typescript`). Supabase CLI와 Docker는 필요 없다. 클라우드 밖에서는 같은 이름의 변수를 `.env.local`에 넣고 같은 명령을 쓴다(Node 22.18 이상).
 
 ## 하지 않는 것 (전체는 spec 10장)
-채팅·메시지, 알림(푸시·메일·문자), 결제·환불·정산, 비용 항목 내역, 최소 인원·자동 확정·자동 취소·예약 작업(cron), 별점·좋아요·댓글·찜, 점수·온도·랭킹·뱃지·포인트, 추천·인기순·유료 노출·넘기는 배너, 지도·검색창·공유 버튼, 이메일 인증·소셜 로그인·비밀번호 찾기·프로필 사진, 어드민 화면·신고 처리·출석 체크, 다크 모드, "이성 교류" 같은 표현, 다른 앱(문토 등)의 이름·디자인·문구·사진.
+채팅·메시지, 알림(푸시·메일·문자), 실제 결제·환불·정산, 비용 항목 내역, 최소 인원·자동 확정·자동 취소·예약 작업(cron), 별점·좋아요·댓글·찜, 점수·온도·랭킹·뱃지·포인트, 추천·인기순·유료 노출·넘기는 배너, 지도·검색창·공유 버튼, 이메일 인증·소셜 로그인·비밀번호 찾기·프로필 사진, 어드민 화면·신고 처리·출석 체크, 다크 모드, "이성 교류" 같은 표현, 다른 앱(문토 등)의 이름·디자인·문구·사진.
 
 ## 용어 (화면 → 코드)
 

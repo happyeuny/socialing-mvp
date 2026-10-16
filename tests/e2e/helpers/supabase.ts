@@ -78,6 +78,8 @@ export type FixtureOptions = {
   description?: string;
   staffCount?: number;
   approvalCriteria?: string;
+  /** 총 참가비(원). 기본 0 */
+  fee?: number;
 };
 
 /** 테스트 전용 소셜링을 만들고 id를 돌려준다. 제목은 "[E2E]"로 시작한다. */
@@ -93,6 +95,7 @@ export async function createFixtureSocialing(options: FixtureOptions): Promise<n
     description = "자동 테스트가 만들고 지우는 소셜링",
     staffCount = 0,
     approvalCriteria,
+    fee = 0,
   } = options;
   const title = `[E2E] 테스트 소셜링 ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const acceptedEmails = accepted.map((u) => sqlText(DEMO_USERS[u].email)).join(", ");
@@ -109,7 +112,7 @@ export async function createFixtureSocialing(options: FixtureOptions): Promise<n
         (select id from public.venues order by id limit 1),
         now() + interval '${startsInHours} hours',
         now() + interval '${deadlineInHours} hours',
-        0, ${capacity}, ${staffCount}, '${joinType}', ${approvalCriteria ? sqlText(approvalCriteria) : "null"}, '${status}'
+        ${Math.trunc(fee)}, ${capacity}, ${staffCount}, '${joinType}', ${approvalCriteria ? sqlText(approvalCriteria) : "null"}, '${status}'
       from host
       returning id
     )

@@ -45,6 +45,9 @@
   --category-culture-soft: #f1ebfd;
   --category-party: #b8336a;
   --category-party-soft: #fceaf2;
+  /* 주의 안내 상자(notice-box/caution): 상세 "신청 전에 확인해 주세요"의 소셜링 규칙 */
+  --caution: #8a4b00;
+  --caution-soft: #fff4e0;
   /* hero-card/no-photo 바탕과 왼쪽 아래 primary 빛 (DESIGN.md hero-card/no-photo) */
   --hero-no-photo: linear-gradient(155deg, #17586b 0%, var(--deep) 55%, var(--on-primary) 100%);
   --hero-no-photo-glow: radial-gradient(120% 80% at 0% 100%, rgb(89 203 232 / 0.28), transparent 60%);
@@ -108,6 +111,8 @@
   --color-category-culture-soft: var(--category-culture-soft);
   --color-category-party: var(--category-party);
   --color-category-party-soft: var(--category-party-soft);
+  --color-caution: var(--caution);
+  --color-caution-soft: var(--caution-soft);
 
   /* shadcn/ui 색 이름 */
   --color-background: var(--background);
