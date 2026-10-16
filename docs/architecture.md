@@ -249,7 +249,7 @@ erDiagram
 
 **테스트**: E2E는 시드를 넣은 dev 프로젝트를 대상으로 돌린다. 기능·화면 PR(→ dev)은 고친 화면·함수의 E2E와 시연 흐름 `ms9-scenario`, 마이그레이션·시드가 바뀌는 PR과 dev → main은 dev 시드를 다시 넣고 전체 E2E를 돌린다(AGENTS.md "테스트", GitHub Actions 자동 실행은 Should). 발표 DB에는 E2E를 돌리지 않는다(테스트가 데이터를 만들고 지움).
 
-**운영 점검**: `npm run test:smoke`(`playwright.smoke.config.ts`, `tests/smoke/`)는 운영 주소(또는 `PLAYWRIGHT_BASE_URL`)를 열고 로그인만 해서 데이터를 바꾸지 않는다. 로그인 쿠키 이름(`sb-<ref>-auth-token`)의 프로젝트 ref를 dev 주소와 비교해 운영 주소가 발표 DB를 보는지 확인하고(`SMOKE_DB=dev`면 dev인지), 시드 그대로의 시연 시작 상태인지 본다. Vercel 미리보기는 Vercel 로그인이 필요해 클라우드에서 열 수 없다.
+**운영 점검**: `npm run test:smoke`(`playwright.smoke.config.ts`, `tests/smoke/`)는 운영 주소(또는 `PLAYWRIGHT_BASE_URL`)를 열고 로그인만 해서 데이터를 바꾸지 않는다. 로그인 쿠키 이름(`sb-<ref>-auth-token`)의 프로젝트 ref를 dev 주소와 비교해 운영 주소가 발표 DB를 보는지 확인하고(`SMOKE_DB=dev`면 dev인지), 시드 그대로의 시연 시작 상태인지(3단계 상세의 시드 대표 사진이 그 DB에서 열리는지 포함) 본다. Vercel 미리보기는 Vercel 로그인이 필요해 클라우드에서 열 수 없다.
 
 ## 8. 기술 위험
 

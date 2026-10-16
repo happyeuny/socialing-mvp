@@ -44,7 +44,7 @@ test.describe("운영 주소 점검 (읽기만)", () => {
     expect(isDev, message).toBe(expectedDb === "dev");
   });
 
-  test("1·3단계: 홈 → 탐색 → B 상세에 모집중과 등급 라벨, 인증 후기", async ({ page }) => {
+  test("1·3단계: 홈 → 탐색 → B 상세에 모집중과 등급 라벨·대표 사진, 인증 후기", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("article").first()).toBeVisible();
     await expectNoScreenError(page);
@@ -56,6 +56,14 @@ test.describe("운영 주소 점검 (읽기만)", () => {
     await expect(page.getByRole("heading", { level: 2, name: SEED.approval })).toBeVisible();
     await expect(page.getByText("모집중").first()).toBeVisible();
     await expect(page.getByRole("button", { name: /믿고 가는 호스트/ })).toHaveCount(2);
+    // 시드 대표 사진(MS13)이 그 DB의 Storage에서 열린다: 발표 DB 준비가 사진까지 올렸는지
+    const cover = page.getByRole("main").locator("img").first();
+    await expect(cover).toHaveAttribute("src", /\/storage\/v1\/object\/public\/socialing-photos\/[0-9a-f-]{36}\/thumb-02-three-minute-speech\.jpg$/);
+    await expect
+      .poll(() => cover.evaluate((img: HTMLImageElement) => (img.complete ? img.naturalWidth : 0)), {
+        message: "대표 사진이 열리지 않으면 발표 DB 준비(시드 다시)를 돌려 주세요",
+      })
+      .toBe(1024);
     await expectNoScreenError(page);
 
     await page.goto("/reviews");
