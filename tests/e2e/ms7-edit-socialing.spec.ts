@@ -73,7 +73,8 @@ const startsAtField = (page: Page) => page.getByLabel("소셜링 일시", { exac
 const deadlineField = (page: Page) => page.getByLabel("신청 마감 일시", { exact: true });
 const feeField = (page: Page) => page.getByLabel("총 참가비");
 const capacityField = (page: Page) => page.getByLabel("정원", { exact: true });
-const criteriaField = (page: Page) => page.getByRole("textbox", { name: "승인 기준 (선택)" });
+const criteriaField = (page: Page) => page.getByRole("textbox", { name: "승인 기준", exact: true });
+const feeNoteField = (page: Page) => page.getByRole("textbox", { name: "참가비 설명" });
 const saveButton = (page: Page) => page.getByRole("button", { name: "저장하기" });
 const errorOf = (page: Page, field: string) => page.locator(`#field-${field}-error`);
 const lockReason = (page: Page, reason: string) => page.locator("main").getByText(reason, { exact: true });
@@ -135,6 +136,8 @@ test.describe("MS7 소셜링 수정 P08", () => {
     await startsAtField(page).fill(startsAt);
     await deadlineField(page).fill(deadline);
     await feeField(page).fill("20000");
+    // 유료면 참가비 설명이 필수다 (MS14 U3)
+    await feeNoteField(page).fill("교재 복사비와 음료 값이에요");
     await capacityField(page).fill("6");
     await pick(page, "모집 방식", "선착순");
     await saveButton(page).click();
@@ -222,6 +225,7 @@ test.describe("MS7 소셜링 수정 P08", () => {
     const title = `[E2E] 그사이 확정 ${tag()}`;
     await titleField(page).fill(title);
     await feeField(page).fill("30000");
+    await feeNoteField(page).fill("장소 대여비예요");
     await addApplication(id, "A", "accepted");
 
     await saveButton(page).click();

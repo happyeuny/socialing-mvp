@@ -146,6 +146,75 @@ test.describe("시드 조건 (spec 7장)", () => {
     expect(acceptedRows.length).toBe(row.capacity);
   });
 
+  test("MS14 2묶음 시드: 유료는 모두 참가비 설명, 필름 카메라는 승인 기준·연령 조건·서윤 거절, 배움 3개에 자료 링크", async ({
+    request,
+  }) => {
+    const paid = definitions.filter((s) => s.fee > 0);
+    expect(paid).toHaveLength(21);
+    for (const s of paid) {
+      expect(s.fee_note?.trim(), `${s.title}: 참가비 설명`).toBeTruthy();
+      expect(s.fee_note!.length, `${s.title}: 100자까지`).toBeLessThanOrEqual(100);
+    }
+    // 현장에서 따로 내는 돈을 적은 소셜링이 있다 (03 9장)
+    expect(paid.filter((s) => s.fee_note!.includes("현장에서 각자")).length).toBeGreaterThanOrEqual(2);
+    // 호스트 승인 소셜링은 모두 승인 기준이 있다 (U5)
+    for (const s of definitions.filter((d) => d.join_type === "approval")) {
+      expect(s.approval_criteria?.trim(), `${s.title}: 승인 기준`).toBeTruthy();
+    }
+    const withMaterial = definitions.filter((s) => s.material_url);
+    expect(withMaterial.map((s) => s.key).sort()).toEqual(["B_LEARNING_LATER", "C_ONE_SEAT_LEFT", "D_CONFIRMED"]);
+    for (const s of withMaterial) {
+      expect(s.category).toBe("learning");
+      expect(s.material_url).toMatch(/^https:\/\/ko\.wikipedia\.org\/wiki\//);
+    }
+
+    // DB: 필름 카메라(하린, 호스트 승인)
+    const hobby = definitions.find((s) => s.key === "C_HOBBY")!;
+    const [row] = await (
+      await request.get(
+        `${supabaseUrl}/rest/v1/socialing_summaries?select=id,join_type,approval_criteria,min_age,max_age,fee_note,accepted_count,can_apply&title=eq.${encodeURIComponent(hobby.title)}`,
+        { headers },
+      )
+    ).json();
+    expect(row).toMatchObject({
+      join_type: "approval",
+      approval_criteria: hobby.approval_criteria,
+      min_age: 20,
+      max_age: 39,
+      fee_note: hobby.fee_note,
+      accepted_count: 0,
+      can_apply: true,
+    });
+
+    // 서윤의 가장 최근 신청은 거절 + 사유 (F4). 자리가 남아 있어 다시 신청할 수 있다
+    const token = await signIn(request, DEMO_USERS.A.email);
+    const applied = await (
+      await request.get(
+        `${supabaseUrl}/rest/v1/my_applied_socialings?select=application_status,reject_reason,reject_note&id=eq.${row.id}`,
+        { headers: { ...headers, Authorization: `Bearer ${token}` } },
+      )
+    ).json();
+    expect(applied).toEqual([
+      {
+        application_status: "rejected",
+        reject_reason: "criteria",
+        reject_note: "이번에는 사진을 많이 찍어 볼 분들로 모셨어요. 다음에 함께해요!",
+      },
+    ]);
+
+    // 유료 시드 소셜링은 DB에서도 모두 참가비 설명이 있고, 자료 링크는 정의한 3개뿐
+    const rows: { title: string; fee: number; fee_note: string | null; material_url: string | null }[] = await (
+      await request.get(`${supabaseUrl}/rest/v1/socialings?select=title,fee,fee_note,material_url`, { headers })
+    ).json();
+    const seeded = rows.filter((r) => !r.title.startsWith("[E2E]"));
+    for (const r of seeded.filter((s) => s.fee > 0)) {
+      expect(r.fee_note, r.title).toBe(definitions.find((s) => s.title === r.title)!.fee_note);
+    }
+    expect(seeded.filter((r) => r.material_url).map((r) => r.title).sort()).toEqual(
+      withMaterial.map((s) => s.title).sort(),
+    );
+  });
+
   test("지역은 전국 시·도 16개 > 시·군·구 256곳이고, 장소는 정의한 구에 있다 (MS6 지역 필터)", async ({ request }) => {
     const regions: { code: string; sido: string; sigungu: string }[] = await (
       await request.get(`${supabaseUrl}/rest/v1/regions?select=code,sido,sigungu`, { headers })

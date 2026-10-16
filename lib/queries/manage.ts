@@ -1,5 +1,6 @@
 import { type ApplicationStatus, type SocialingDetail, getSocialing } from "@/lib/queries/socialings";
 import { createClient } from "@/lib/supabase/server";
+import type { RejectReason } from "@/lib/validation/reject";
 
 // 소셜링 관리(P11, spec 8.8) 읽기. 뷰 my_hosted_socialings의 관리 칸과 hosted_socialing_applicants(architecture 3.2)를
 // 그대로 쓴다. 버튼을 보일지·막을지와 이유는 DB가 계산한 값이고 화면에서 다시 계산하지 않는다.
@@ -48,27 +49,37 @@ export type Applicant = {
   nickname: string;
   status: ApplicationStatus;
   applied_at: string;
+  /** 호스트가 고른 거절 사유 (MS14 전에 거절했거나 거절이 아니면 null) */
+  reject_reason: RejectReason | null;
 };
 
 export type ManagePageData =
-  | { kind: "host"; socialing: ManagedSocialing; applicants: Applicant[] }
+  | {
+      kind: "host";
+      socialing: ManagedSocialing;
+      applicants: Applicant[];
+      /** 연령 조건이 있음 → 거절 사유에 "연령 조건과 맞지 않아요" (reject_application과 같은 기준) */
+      hasAgeLimit: boolean;
+    }
   /** 소셜링은 있지만 보는 사람이 호스트가 아님 → 상세 + "호스트만 볼 수 있어요" (spec 8.7) */
   | { kind: "not-host" }
   | { kind: "not-found" };
 
 export async function getManagePageData(id: number): Promise<ManagePageData> {
   const supabase = await createClient();
-  const [hosted, applicants] = await Promise.all([
+  const [hosted, applicants, age] = await Promise.all([
     supabase.from("my_hosted_socialings").select(MANAGED_COLUMNS).eq("id", id).maybeSingle(),
     supabase
       .from("hosted_socialing_applicants")
-      .select("application_id, nickname, status, applied_at")
+      .select("application_id, nickname, status, applied_at, reject_reason")
       .eq("socialing_id", id)
       .order("applied_at", { ascending: true })
       .order("application_id", { ascending: true }),
+    supabase.from("socialing_summaries").select("min_age, max_age").eq("id", id).maybeSingle(),
   ]);
   if (hosted.error) throw new Error(`관리할 소셜링을 불러오지 못했습니다: ${hosted.error.message}`);
   if (applicants.error) throw new Error(`신청자를 불러오지 못했습니다: ${applicants.error.message}`);
+  if (age.error) throw new Error(`연령 조건을 불러오지 못했습니다: ${age.error.message}`);
 
   if (!hosted.data) {
     // 호스트인 소셜링에 없으면 남의 소셜링인지 없는 소셜링인지 나눈다
@@ -79,6 +90,7 @@ export async function getManagePageData(id: number): Promise<ManagePageData> {
     kind: "host",
     socialing: hosted.data as unknown as ManagedSocialing,
     applicants: applicants.data as unknown as Applicant[],
+    hasAgeLimit: age.data?.min_age != null || age.data?.max_age != null,
   };
 }
 
@@ -101,11 +113,20 @@ export type EditableSocialing = Pick<
   | "join_type"
   | "approval_criteria"
   | "cover_photo_path"
-> & { category_id: number; venue_id: number };
+> & {
+  category_id: number;
+  venue_id: number;
+  /** MS14 2묶음 칸 (참가비 설명, 연령 조건, 자료 링크) */
+  fee_note: string | null;
+  min_age: number | null;
+  max_age: number | null;
+  material_url: string | null;
+};
 
 const EDITABLE_COLUMNS =
   "id, title, description, category_id, has_alcohol, venue_id, venue_type, venue_name, region_sido, region_sigungu, " +
-  "starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, cover_photo_path";
+  "starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, cover_photo_path, " +
+  "fee_note, min_age, max_age, material_url";
 
 export type EditPageData =
   | {
@@ -113,7 +134,7 @@ export type EditPageData =
       socialing: EditableSocialing;
       /** 수정할 수 없으면 이유: 종료 / 호스트 취소 */
       closed: "completed" | "canceled" | null;
-      /** 잠금 기준 (spec M8 수정): 참여 확정이 있으면 일시·장소·참가비, 승인 대기가 있으면 모집 방식 */
+      /** 잠금 기준 (spec M8 수정): 참여 확정이 있으면 일시·장소·참가비(설명은 이미 썼을 때), 승인 대기가 있으면 모집 방식 */
       acceptedCount: number;
       pendingCount: number;
     }

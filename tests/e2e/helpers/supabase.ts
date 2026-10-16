@@ -80,6 +80,17 @@ export type FixtureOptions = {
   approvalCriteria?: string;
   /** 총 참가비(원). 기본 0 */
   fee?: number;
+  /** 참가비 설명 (MS14 U3). 기본 없음 */
+  feeNote?: string;
+  /** 연령 조건 (MS14 SH1b). 기본 없음 */
+  minAge?: number;
+  maxAge?: number;
+  /** 자료 링크 (MS14 SH3). 기본 없음 */
+  materialUrl?: string;
+  /** 제목에서 "[E2E]" 뒤. 주면 제목이 "[E2E]<titleTail>"(40자까지)가 된다. 기본은 "[E2E] 테스트 소셜링 <시각>" */
+  titleTail?: string;
+  /** 주면 이 이름의 외부 장소를 만들어 쓴다("[E2E]"로 시작, 40자까지. 끝에 deleteTestVenues). 기본은 첫 장소 */
+  externalPlaceName?: string;
 };
 
 /** 테스트 전용 소셜링을 만들고 id를 돌려준다. 제목은 "[E2E]"로 시작한다. */
@@ -96,23 +107,45 @@ export async function createFixtureSocialing(options: FixtureOptions): Promise<n
     staffCount = 0,
     approvalCriteria,
     fee = 0,
+    feeNote,
+    minAge,
+    maxAge,
+    materialUrl,
+    titleTail,
+    externalPlaceName,
   } = options;
-  const title = `[E2E] 테스트 소셜링 ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const sqlOrNull = (value: string | number | undefined) =>
+    value === undefined ? "null" : typeof value === "number" ? String(Math.trunc(value)) : sqlText(value);
+  const title =
+    titleTail !== undefined ? `[E2E]${titleTail}` : `[E2E] 테스트 소셜링 ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  if (externalPlaceName !== undefined && !externalPlaceName.startsWith("[E2E]")) {
+    throw new Error('테스트 외부 장소 이름은 "[E2E]"로 시작해야 지울 수 있습니다.');
+  }
   const acceptedEmails = accepted.map((u) => sqlText(DEMO_USERS[u].email)).join(", ");
 
   const rows = await runQuery<{ id: number }>(`
     with host as (
       select id from auth.users where email = ${sqlText(emailOf(host))}
+    ), place as (
+      ${
+        externalPlaceName !== undefined
+          ? `insert into public.venues (type, name, region_id)
+             select 'external', ${sqlText(externalPlaceName)}, (select region_id from public.venues order by id limit 1)
+             returning id`
+          : "select id from public.venues order by id limit 1"
+      }
     ), inserted as (
       insert into public.socialings
         (host_id, title, description, category_id, has_alcohol, venue_id,
-         starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, status)
+         starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, status,
+         fee_note, min_age, max_age, material_url)
       select host.id, ${sqlText(title)}, ${sqlText(description)},
         (select id from public.categories where slug = 'learning'), false,
-        (select id from public.venues order by id limit 1),
+        (select id from place),
         now() + interval '${startsInHours} hours',
         now() + interval '${deadlineInHours} hours',
-        ${Math.trunc(fee)}, ${capacity}, ${staffCount}, '${joinType}', ${approvalCriteria ? sqlText(approvalCriteria) : "null"}, '${status}'
+        ${Math.trunc(fee)}, ${capacity}, ${staffCount}, '${joinType}', ${approvalCriteria ? sqlText(approvalCriteria) : "null"}, '${status}',
+        ${sqlOrNull(feeNote)}, ${sqlOrNull(minAge)}, ${sqlOrNull(maxAge)}, ${sqlOrNull(materialUrl)}
       from host
       returning id
     )
@@ -174,12 +207,16 @@ export async function addApplication(
   socialingId: number,
   user: DemoUserKey,
   status: "pending" | "accepted" | "rejected" | "canceled",
+  /** 거절이면 거절 사유와 덧붙인 말 (MS14 U10). 없으면 MS14 전처럼 사유 없는 거절 */
+  reject?: { reason: "criteria" | "age" | "full" | "host" | "other"; note?: string },
 ): Promise<number> {
   const rows = await runQuery<{ id: number }>(`
-    insert into public.applications (socialing_id, user_id, status, decided_at, canceled_at)
+    insert into public.applications (socialing_id, user_id, status, decided_at, canceled_at, reject_reason, reject_note)
     select ${socialingId}, id, '${status}',
       case when '${status}' in ('accepted', 'rejected') then now() end,
-      case when '${status}' = 'canceled' then now() end
+      case when '${status}' = 'canceled' then now() end,
+      ${reject ? sqlText(reject.reason) : "null"},
+      ${reject?.note ? sqlText(reject.note) : "null"}
     from auth.users where email = ${sqlText(DEMO_USERS[user].email)}
     returning id;
   `);
@@ -324,7 +361,7 @@ export async function callInDbHolding(user: DemoUserKey, call: string, holdSecon
     return "OK";
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    const code = /\b(FULL|ALREADY_APPLIED|ALREADY_PROCESSED|DEADLINE_PASSED|HOST_CANCELED|IS_HOST|NOT_OPEN)\b/.exec(message);
+    const code = /\b(FULL|ALREADY_APPLIED|ALREADY_PROCESSED|ALREADY_REPORTED|DEADLINE_PASSED|HOST_CANCELED|IS_HOST|NOT_OPEN)\b/.exec(message);
     return code ? code[1] : message;
   }
 }

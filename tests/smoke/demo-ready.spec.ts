@@ -44,7 +44,7 @@ test.describe("운영 주소 점검 (읽기만)", () => {
     expect(isDev, message).toBe(expectedDb === "dev");
   });
 
-  test("1·3단계: 홈 → 탐색 → B 상세에 모집중과 등급 라벨·대표 사진, 인증 후기", async ({ page }) => {
+  test("1·3단계: 홈 → 탐색 → B 상세에 모집중과 등급 라벨·대표 사진·참가비 설명, 인증 후기", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("article").first()).toBeVisible();
     await expectNoScreenError(page);
@@ -64,6 +64,10 @@ test.describe("운영 주소 점검 (읽기만)", () => {
         message: "대표 사진이 열리지 않으면 발표 DB 준비(시드 다시)를 돌려 주세요",
       })
       .toBe(1024);
+    // 2묶음 칸(MS14): 발표 DB에 마이그레이션과 시드가 들어갔는지
+    await expect(page.getByRole("main"), "참가비 설명이 없으면 발표 DB 준비(마이그레이션·시드)를 돌려 주세요").toContainText(
+      "스터디룸 이용 5,000원 + 음료 한 잔 10,000원. 현장에서 따로 내는 돈은 없어요",
+    );
     await expectNoScreenError(page);
 
     await page.goto("/reviews");

@@ -193,7 +193,9 @@ test.describe("MS4 거절", () => {
     await expect(dialog(page)).toHaveCount(0);
     expect(await applicationsOf(id)).toEqual([{ email: DEMO_USERS.P1.email, status: "pending" }]);
 
+    // 거절 사유를 골라야 거절된다 (MS14 U10, 사유 화면은 ms14-reject-reason)
     await row(page, "P1").getByRole("button", { name: "거절" }).click();
+    await dialog(page).getByText("호스트 사정으로 함께하기 어려워요", { exact: true }).click();
     await dialog(page).getByRole("button", { name: "거절" }).click();
     await expect(dialog(page)).toHaveCount(0);
     await expect(toast(page)).toHaveText("거절했어요");
@@ -212,6 +214,7 @@ test.describe("MS4 거절", () => {
 
     await abortActions(page, id);
     await row(page, "P1").getByRole("button", { name: "거절" }).click();
+    await dialog(page).getByText("정원이 다 찼어요", { exact: true }).click();
     await dialog(page).getByRole("button", { name: "거절" }).click();
     await expect(dialog(page).getByRole("alert")).toHaveText(RETRY);
     await expect(dialog(page).getByRole("button", { name: "다시 시도" })).toBeEnabled();

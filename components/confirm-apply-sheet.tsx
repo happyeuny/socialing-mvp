@@ -16,6 +16,7 @@ import { REFUND_TEXT, type RefundPolicyText } from "@/lib/refund-policy";
 // 누른 순간 신청할 수 없게 됨: 결과 창(dialog/result) "신청하지 못했어요" + 이유 → 확인 → 상세를 새로 고친다.
 // 네트워크·서버 오류: 창을 연 채 안내 + "다시 시도". 로그인이 끊겼으면 서버 액션이 로그인 화면으로 보낸다.
 // 참가비가 있으면 맨 아래 "취소·환불 규칙"(상세 접는 줄과 같은 글, 접지 않음). 0원이면 없다(spec M7, 6장 환불 기준).
+// MS14: 요약의 총 참가비 아래 "참가비 설명: …"(U3), 승인 기준 상자 위에 "연령 조건 20~39세"(SH1b). 없으면 줄이 없다.
 
 export const JOIN_RESULT = {
   approval: "호스트가 승인하면 참여가 확정돼요",
@@ -29,8 +30,12 @@ type ConfirmApplySheetProps = {
   startsAt: string;
   place: string;
   fee: string;
+  /** 참가비 설명 (없으면 null) */
+  feeNote: string | null;
   joinType: keyof typeof JOIN_RESULT;
   approvalCriteria: string | null;
+  /** 연령 조건 글자 `20~39세` (호스트 승인이고 조건이 있을 때만, 아니면 null) */
+  ageRange: string | null;
   /** 취소·환불 규칙 (참가비 0원이면 null). 상세를 그릴 때 서버가 계산한다(lib/refund-policy.ts) */
   refundPolicy: RefundPolicyText | null;
   /** 상세 아래 영역의 버튼 글자. 거절·신청 취소 뒤 9줄은 "다시 신청" */
@@ -96,12 +101,15 @@ export function ConfirmApplySheet(props: ConfirmApplySheetProps) {
         title="신청할까요?"
         description={
           <>
-            <span className="block">
+            <span className="block break-words">
               {props.title} · {props.startsAt}
             </span>
-            <span className="block">
+            <span className="block break-words">
               {props.place} · {props.fee}
             </span>
+            {props.feeNote ? (
+              <span className="block break-words whitespace-pre-line">참가비 설명: {props.feeNote}</span>
+            ) : null}
           </>
         }
         footer={
@@ -115,6 +123,12 @@ export function ConfirmApplySheet(props: ConfirmApplySheetProps) {
           </>
         }
       >
+        {props.ageRange ? (
+          <p className="flex gap-xs text-body-md text-text-primary">
+            <span aria-hidden>•</span>
+            연령 조건 {props.ageRange}
+          </p>
+        ) : null}
         {criteria ? <NoticeBox title="호스트 승인 기준">{criteria}</NoticeBox> : null}
         <p className="flex gap-xs text-body-md text-text-secondary">
           <span aria-hidden>•</span>

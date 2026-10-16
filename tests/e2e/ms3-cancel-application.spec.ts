@@ -62,11 +62,30 @@ test.describe("MS3 cancel_application", () => {
   });
 
   test("취소할 수 없으면 정해진 오류 코드를 돌려준다", async ({ request }) => {
-    const [p1, p2, host] = await Promise.all([signIn(request, "P1"), signIn(request, "P2"), signIn(request, "C")]);
+    // 소셜링·신청은 Management API로 만들어 한 번에 하나씩이면 30초 제한에 닿는다 → 미리 한꺼번에 만든다
+    const [p1, p2, host, open, rejectedIn, withdrawnIn, canceledIn, started] = await Promise.all([
+      signIn(request, "P1"),
+      signIn(request, "P2"),
+      signIn(request, "C"),
+      fixture({ host: "C" }),
+      fixture({ host: "C" }),
+      fixture({ host: "C" }),
+      fixture({ host: "C", status: "canceled" }),
+      fixture({ host: "C", status: "confirmed", deadlineInHours: -3, startsInHours: -1 }),
+    ]);
+    const [mine, rejected, withdrawn, hostCanceled, startedApplications] = await Promise.all([
+      addApplication(open, "P1", "accepted"),
+      addApplication(rejectedIn, "P1", "rejected"),
+      addApplication(withdrawnIn, "P1", "canceled"),
+      addApplication(canceledIn, "P1", "accepted"),
+      // 신청 순서를 지키려고 이 둘만 차례로
+      addApplication(started, "P1", "pending").then(async (pending) => ({
+        pending,
+        accepted: await addApplication(started, "P2", "accepted"),
+      })),
+    ]);
 
     // 남의 신청과 없는 신청은 같게 답한다 (호스트도 참여자의 신청을 취소할 수 없다)
-    const open = await fixture({ host: "C" });
-    const mine = await addApplication(open, "P1", "accepted");
     expect((await rpc(request, "cancel_application", { p_application_id: mine }, p2)).body.message).toBe(
       "INVALID_INPUT",
     );
@@ -78,28 +97,24 @@ test.describe("MS3 cancel_application", () => {
     );
 
     // 이미 거절됐거나 취소한 신청
-    const rejected = await addApplication(await fixture({ host: "C" }), "P1", "rejected");
     expect((await rpc(request, "cancel_application", { p_application_id: rejected }, p1)).body.message).toBe(
       "ALREADY_PROCESSED",
     );
-    const withdrawn = await addApplication(await fixture({ host: "C" }), "P1", "canceled");
     expect((await rpc(request, "cancel_application", { p_application_id: withdrawn }, p1)).body.message).toBe(
       "ALREADY_PROCESSED",
     );
 
     // 호스트 취소된 소셜링: 호스트 취소 기록이 줄지 않게 막는다
-    const hostCanceled = await addApplication(await fixture({ host: "C", status: "canceled" }), "P1", "accepted");
     expect((await rpc(request, "cancel_application", { p_application_id: hostCanceled }, p1)).body.message).toBe(
       "HOST_CANCELED",
     );
 
     // 소셜링 일시가 지남 (승인 대기·참여 확정 모두)
-    const started = await fixture({ host: "C", status: "confirmed", deadlineInHours: -3, startsInHours: -1 });
     for (const status of ["pending", "accepted"] as const) {
-      const application = await addApplication(started, status === "pending" ? "P1" : "P2", status);
       const token = status === "pending" ? p1 : p2;
       expect(
-        (await rpc(request, "cancel_application", { p_application_id: application }, token)).body.message,
+        (await rpc(request, "cancel_application", { p_application_id: startedApplications[status] }, token)).body
+          .message,
         status,
       ).toBe("STARTED");
     }

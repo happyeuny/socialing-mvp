@@ -87,17 +87,31 @@ export type SeedSocialing = {
   starts_at: string;
   apply_deadline_at: string;
   fee: number;
+  /** 참가비 설명 (MS14 U3). 유료 소셜링은 모두 넣는다 */
+  fee_note?: string;
   capacity: number;
   staff_count: number;
   join_type: "first_come" | "approval";
   approval_criteria?: string;
+  /** 연령 조건 (MS14 SH1b). 호스트 승인일 때만 */
+  min_age?: number;
+  max_age?: number;
+  /** 자료 링크 (MS14 SH3) */
+  material_url?: string;
   status: "recruiting" | "confirmed" | "completed" | "canceled";
   /** 대표 사진: scripts/seed-assets/의 파일 이름 (출처 SOURCES.md). 없으면 카테고리 그림 */
   cover_photo?: string;
   confirmed_at?: string;
   completed_at?: string;
   canceled_at?: string;
-  applications: { user: DemoUserKey; status: "pending" | "accepted" | "rejected" | "canceled"; created_at: string }[];
+  applications: {
+    user: DemoUserKey;
+    status: "pending" | "accepted" | "rejected" | "canceled";
+    created_at: string;
+    /** 거절 사유와 덧붙인 말 (MS14 U10). 거절일 때만 */
+    reject_reason?: "criteria" | "age" | "full" | "host" | "other";
+    reject_note?: string;
+  }[];
   reviews?: SeedReview[];
 };
 
@@ -131,6 +145,7 @@ export function demoSocialings(now = new Date()): SeedSocialing[] {
       starts_at: seoulDateAt(-2, 19, 30, now),
       apply_deadline_at: seoulDateAt(-3, 23, 0, now),
       fee: 15000,
+      fee_note: "상황 카드 인쇄 5,000원 + 음료 한 잔 10,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 6,
       staff_count: 1,
       join_type: "first_come",
@@ -150,6 +165,7 @@ export function demoSocialings(now = new Date()): SeedSocialing[] {
       starts_at: seoulDateAt(-9, 19, 30, now),
       apply_deadline_at: seoulDateAt(-10, 23, 0, now),
       fee: 12000,
+      fee_note: "기사 인쇄물 2,000원 + 음료 한 잔 10,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 6,
       staff_count: 0,
       join_type: "first_come",
@@ -172,6 +188,7 @@ export function demoSocialings(now = new Date()): SeedSocialing[] {
       starts_at: seoulDateAt(4, 19, 30, now),
       apply_deadline_at: seoulDateAt(3, 23, 0, now),
       fee: 15000,
+      fee_note: "스터디룸 이용 5,000원 + 음료 한 잔 10,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 6,
       staff_count: 1,
       join_type: "approval",
@@ -234,6 +251,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       // 마감을 시드 당일 밤으로 두면 밤 11시 뒤에 시드를 넣거나 점검할 때 이미 마감이라 홈 히어로가 바뀐다 → 시작 1시간 전
       apply_deadline_at: seoulDateAt(1, 6, 0, now),
       fee: 8000,
+      fee_note: "스터디룸 이용 5,000원 + 커피 3,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 8,
       staff_count: 0,
       join_type: "first_come",
@@ -252,6 +270,8 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       starts_at: seoulDateAt(2, 19, 30, now),
       apply_deadline_at: seoulDateAt(1, 23, 0, now),
       fee: 20000,
+      fee_note: "라운지 대여 12,000원 + 예제 파일·교재 8,000원. 현장에서 따로 내는 돈은 없어요",
+      material_url: "https://ko.wikipedia.org/wiki/%EC%8A%A4%ED%94%84%EB%A0%88%EB%93%9C%EC%8B%9C%ED%8A%B8",
       capacity: 6,
       staff_count: 1,
       join_type: "first_come",
@@ -272,6 +292,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       starts_at: hoursFromNow(20, now),
       apply_deadline_at: hoursFromNow(-2, now),
       fee: 10000,
+      fee_note: "전시 입장료 5,000원 + 카페 음료 5,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 6,
       staff_count: 0,
       join_type: "first_come",
@@ -309,6 +330,8 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       starts_at: seoulDateAt(6, 14, 0, now),
       apply_deadline_at: seoulDateAt(5, 23, 0, now),
       fee: 10000,
+      fee_note: "스터디룸 이용 5,000원 + 음료 5,000원. 책은 각자 준비해 와요",
+      material_url: "https://ko.wikipedia.org/wiki/%EC%88%98%ED%95%84",
       capacity: 3,
       staff_count: 0,
       join_type: "first_come",
@@ -327,6 +350,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       starts_at: seoulDateAt(3, 20, 0, now),
       apply_deadline_at: seoulDateAt(3, 12, 0, now),
       fee: 25000,
+      fee_note: "공방 대여 10,000원 + 와인 두 잔·간단한 안주 15,000원. 안주를 더 먹고 싶으면 현장에서 각자 주문해요",
       capacity: 10,
       staff_count: 1,
       join_type: "first_come",
@@ -345,6 +369,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       starts_at: seoulDateAt(3, 19, 0, now),
       apply_deadline_at: seoulDateAt(2, 23, 0, now),
       fee: 30000,
+      fee_note: "맥주 시음 네 잔 30,000원. 안주는 현장에서 각자 주문해요",
       capacity: 8,
       staff_count: 0,
       join_type: "first_come",
@@ -364,11 +389,25 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       starts_at: seoulDateAt(8, 15, 0, now),
       apply_deadline_at: seoulDateAt(7, 23, 0, now),
       fee: 5000,
+      fee_note: "출발 장소 카페 음료 5,000원. 필름은 각자 준비하고, 현장에서 따로 내는 돈은 없어요",
       capacity: 8,
       staff_count: 0,
       join_type: "approval",
+      // 승인 기준(MS14 U5)과 연령 조건(SH1b). 시연 1~10단계 소셜링이 아니라 여기에 둔다
+      approval_criteria: "필름 카메라나 휴대폰 카메라로 30장 이상 찍어 볼 분이면 좋아요. 사진 경험은 묻지 않아요.",
+      min_age: 20,
+      max_age: 39,
       status: "recruiting",
-      applications: [],
+      // A가 신청했다가 거절됨(MS14 U10). 자리가 남아 있어 A의 상세 아래 영역은 "다시 신청"
+      applications: [
+        {
+          user: "A",
+          status: "rejected",
+          created_at: seoulDateAt(-2, 21, 0, now),
+          reject_reason: "criteria",
+          reject_note: "이번에는 사진을 많이 찍어 볼 분들로 모셨어요. 다음에 함께해요!",
+        },
+      ],
     },
     {
       key: "B_LEARNING_LATER",
@@ -381,6 +420,8 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       starts_at: seoulDateAt(10, 19, 30, now),
       apply_deadline_at: seoulDateAt(9, 23, 0, now),
       fee: 15000,
+      fee_note: "스터디룸 이용 5,000원 + 음료 한 잔 10,000원. 현장에서 따로 내는 돈은 없어요",
+      material_url: "https://ko.wikipedia.org/wiki/%ED%94%84%EB%A0%88%EC%A0%A0%ED%85%8C%EC%9D%B4%EC%85%98",
       capacity: 8,
       staff_count: 1,
       join_type: "first_come",
@@ -400,6 +441,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       starts_at: seoulDateAt(7, 19, 30, now),
       apply_deadline_at: seoulDateAt(7, 12, 0, now),
       fee: 15000,
+      fee_note: "라운지 이용 5,000원 + 맥주 한 잔 10,000원. 두 잔째부터는 현장에서 각자 주문해요",
       capacity: 8,
       staff_count: 0,
       join_type: "first_come",
@@ -421,6 +463,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       starts_at: seoulDateAt(-1, 14, 0, now),
       apply_deadline_at: seoulDateAt(-2, 23, 0, now),
       fee: 12000,
+      fee_note: "붓펜·종이 재료비 7,000원 + 스터디룸 이용 5,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 6,
       staff_count: 0,
       join_type: "first_come",
@@ -438,6 +481,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: false,
       venue: "gangnam",
       fee: 15000,
+      fee_note: "스터디룸 이용 5,000원 + 음료 한 잔 10,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 6,
       staff_count: 1,
       join_type: "first_come",
@@ -458,6 +502,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: false,
       venue: "hongdae",
       fee: 15000,
+      fee_note: "스터디룸 이용 5,000원 + 음료·간식 10,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 6,
       staff_count: 0,
       join_type: "first_come",
@@ -477,6 +522,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: false,
       venue: "gangnam",
       fee: 12000,
+      fee_note: "스터디룸 이용 5,000원 + 음료 7,000원. 원서는 복사본을 나눠 드려요",
       capacity: 6,
       staff_count: 0,
       join_type: "approval",
@@ -497,6 +543,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: false,
       venue: "seongsu",
       fee: 15000,
+      fee_note: "스터디룸 이용 5,000원 + 질문 목록 자료·음료 10,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 8,
       staff_count: 1,
       join_type: "first_come",
@@ -517,6 +564,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: false,
       venue: "gangnam",
       fee: 10000,
+      fee_note: "스터디룸 이용 5,000원 + 음료 5,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 6,
       staff_count: 0,
       join_type: "first_come",
@@ -538,6 +586,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: false,
       venue: "yeonnam_cafe",
       fee: 5000,
+      fee_note: "출발 장소 카페 음료 5,000원. 책은 사고 싶은 분만 각자 사요",
       capacity: 6,
       staff_count: 0,
       join_type: "first_come",
@@ -556,6 +605,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: false,
       venue: "yeoksam_lounge",
       fee: 15000,
+      fee_note: "라운지 대여 10,000원 + 단축키 표 인쇄 5,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 8,
       staff_count: 0,
       join_type: "first_come",
@@ -588,6 +638,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: true,
       venue: "seongsu_studio",
       fee: 35000,
+      fee_note: "공방 대여 10,000원 + 와인 세 가지 시음 25,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 8,
       staff_count: 0,
       join_type: "first_come",

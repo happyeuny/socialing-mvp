@@ -87,7 +87,7 @@ async function uploadPhoto(
   return path;
 }
 
-/** 데모 데이터 전부 삭제. 순서: 사진 → 신청·후기 → 소셜링 → 장소·지역·카테고리 → 데모 계정 */
+/** 데모 데이터 전부 삭제. 순서: 사진 → 신고·신청·후기 → 소셜링 → 장소·지역·카테고리 → 데모 계정 */
 async function wipe() {
   // 사진 버킷을 비운다 (지난 시드, 테스트, 실기기 확인에서 올린 사진). SQL로는 지울 수 없어 Storage API로 지운다
   for (const bucket of ["socialing-photos", "review-photos"]) {
@@ -95,7 +95,8 @@ async function wipe() {
   }
 
   // review_checks는 reviews 삭제 때 함께 지워진다 (on delete cascade)
-  for (const table of ["reviews", "applications", "socialings", "venues", "regions", "categories"] as const) {
+  // reports(MS14 신고 접수)는 소셜링을 지울 때도 함께 지워지지만, 테스트·리허설이 남긴 신고를 먼저 비운다
+  for (const table of ["reports", "reviews", "applications", "socialings", "venues", "regions", "categories"] as const) {
     ok(`${table} 삭제`, await supabase.from(table).delete().gte("id", 0));
   }
 
@@ -183,6 +184,10 @@ async function main() {
           staff_count: s.staff_count,
           join_type: s.join_type,
           approval_criteria: s.approval_criteria ?? null,
+          fee_note: s.fee_note ?? null,
+          min_age: s.min_age ?? null,
+          max_age: s.max_age ?? null,
+          material_url: s.material_url ?? null,
           status: s.status,
           confirmed_at: s.confirmed_at ?? null,
           completed_at: s.completed_at ?? null,
@@ -202,6 +207,8 @@ async function main() {
       created_at: a.created_at,
       decided_at: a.status === "pending" ? null : a.created_at,
       canceled_at: a.status === "canceled" ? a.created_at : null,
+      reject_reason: a.reject_reason ?? null,
+      reject_note: a.reject_note ?? null,
     })),
   );
   ok("신청", await supabase.from("applications").insert(applications));
