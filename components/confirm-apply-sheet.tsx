@@ -96,10 +96,10 @@ export function ConfirmApplySheet(props: ConfirmApplySheetProps) {
         title="신청할까요?"
         description={
           <>
-            <span className="block">
+            <span className="block break-words">
               {props.title} · {props.startsAt}
             </span>
-            <span className="block">
+            <span className="block break-words">
               {props.place} · {props.fee}
             </span>
           </>

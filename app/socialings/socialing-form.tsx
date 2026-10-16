@@ -33,10 +33,12 @@ import {
 } from "@/lib/validation/socialing";
 
 // 소셜링 등록(P07)·수정(P08) 양식 (spec M8, 8.6, 8.7, 시안 P07): 대표 사진 → 제목 → 카테고리 → 술 여부 → 소개 →
-// 장소 → 소셜링 일시 → 신청 마감 일시 → 총 참가비 → 정원 → 스태프 인원 → 모집 방식 → 승인 기준(호스트 승인일 때만),
-// 아래 고정 "소셜링 열기"(등록) · "저장하기"(수정). 제출하면 칸마다 이유를 보이고 첫 오류 칸으로 간다.
+// 자료 링크 → 장소 → 소셜링 일시 → 신청 마감 일시 → 총 참가비 → 참가비 설명 → 정원 → 스태프 인원 → 모집 방식 →
+// 승인 기준 + 연령 조건(호스트 승인일 때만), 아래 고정 "소셜링 열기"(등록) · "저장하기"(수정).
+// 제출하면 칸마다 이유를 보이고 첫 오류 칸으로 간다.
 // 등록: 글 입력은 열기 전까지 이 브라우저에 계정별로 임시 저장한다(사진 제외). 다시 오면 채우고, 열면 지운다.
-// 수정: 지금 값을 채운다. 참여 확정자가 있으면 일시·장소·참가비, 승인 대기 신청이 있으면 모집 방식이 잠긴다.
+// 수정: 지금 값을 채운다. 참여 확정자가 있으면 일시·장소·참가비·참가비 설명, 승인 대기 신청이 있으면 모집 방식이 잠긴다.
+// 참가비 설명은 비어 있으면(MS14 전에 연 유료 소셜링) 참여 확정자가 있어도 채울 수 있다 (decisions 2026-10-16).
 // 잠긴 칸은 언제나 지금 값을 보이고 그 값을 보낸다. 정원은 참여 확정 인원보다 적게 할 수 없다.
 
 const L = SOCIALING_LIMITS;
@@ -56,6 +58,10 @@ const JOIN_OPTIONS = [
   { value: "first_come", label: "선착순" },
   { value: "approval", label: "호스트 승인" },
 ] as const;
+const AGE_OPTIONS = [
+  { value: "none", label: "제한 없음" },
+  { value: "range", label: "나이 정하기" },
+] as const;
 
 // 임시 저장 -------------------------------------------------------------------------------------------
 
@@ -64,6 +70,7 @@ const ENUMS: Partial<Record<SocialingField, readonly string[]>> = {
   hasAlcohol: ["no", "yes"],
   placeKind: ["branch", "region"],
   joinType: ["first_come", "approval"],
+  ageLimit: ["none", "range"],
 };
 
 function readDraft(key: string): SocialingFormValues | null {
@@ -171,6 +178,7 @@ function withLockedValues(values: SocialingFormValues, edit: SocialingEditTarget
     next.regionCode = original.regionCode;
     next.placeName = original.placeName;
     next.fee = original.fee;
+    if (original.feeNote.trim() !== "") next.feeNote = original.feeNote;
   }
   if (edit.pendingCount > 0) next.joinType = original.joinType;
   return next;
@@ -227,6 +235,7 @@ function SocialingFormFields({
 
   const lockedByAccepted = edit && edit.acceptedCount > 0 ? LOCKED_BY_ACCEPTED : undefined;
   const lockedByPending = edit && edit.pendingCount > 0 ? LOCKED_BY_PENDING : undefined;
+  const feeNoteLocked = lockedByAccepted && edit?.original.feeNote.trim() ? lockedByAccepted : undefined;
 
   /** 칸 값을 바꾸고 그 칸(과 함께 묶인 칸)의 오류를 지운다 */
   function change(patch: Partial<SocialingFormValues>, clear: SocialingField[] = []) {
@@ -304,6 +313,7 @@ function SocialingFormFields({
   const branch = catalog.branches.find((item) => String(item.id) === values.branchId);
   const descriptionLength = textLength(values.description);
   const criteriaLength = textLength(values.approvalCriteria);
+  const feeNoteLength = textLength(values.feeNote);
 
   return (
     <form ref={formRef} onSubmit={onSubmit} noValidate className="flex min-h-[calc(100dvh-56px)] flex-col">
@@ -399,6 +409,21 @@ function SocialingFormFields({
           />
           <FieldMessage id="field-description-error" error={errors.description} />
         </div>
+
+        <TextField
+          name="materialUrl"
+          label="자료 링크 (선택)"
+          labelTone="form"
+          type="url"
+          inputMode="url"
+          placeholder="https://…"
+          value={values.materialUrl}
+          onChange={(event) => change({ materialUrl: event.target.value })}
+          error={errors.materialUrl}
+          helper="신청 전에 누구나 볼 수 있어요. 미리 읽을 자료 주소를 넣어 주세요"
+          maxLength={L.materialUrlMax}
+          autoComplete="off"
+        />
 
         <div className="flex flex-col gap-sm">
           <p id="label-place" className={fieldLabelClass("form")}>
@@ -496,11 +521,33 @@ function SocialingFormFields({
           placeholder="예: 15,000"
           suffix="원"
           value={feeDisplay(values.fee)}
-          onChange={(event) => change({ fee: digitsOnly(event.target.value, 7) })}
+          onChange={(event) => change({ fee: digitsOnly(event.target.value, 7) }, ["feeNote"])}
           error={errors.fee}
           locked={lockedByAccepted}
           autoComplete="off"
         />
+
+        <div className="flex flex-col gap-xxs">
+          <Textarea
+            name="feeNote"
+            label="참가비 설명"
+            labelTone="form"
+            placeholder="예: 장소 대여 10,000원 + 음료 5,000원. 현장에서 따로 내는 돈은 없어요"
+            value={values.feeNote}
+            onChange={(event) => change({ feeNote: event.target.value })}
+            counter={counterText(feeNoteLength, L.feeNoteMax)}
+            invalid={Boolean(errors.feeNote) || feeNoteLength > L.feeNoteMax}
+            maxLength={L.feeNoteMax}
+            locked={Boolean(feeNoteLocked)}
+            aria-describedby={errors.feeNote ? "field-feeNote-error" : "field-feeNote-helper"}
+          />
+          <FieldMessage
+            id={errors.feeNote ? "field-feeNote-error" : "field-feeNote-helper"}
+            error={errors.feeNote}
+            locked={feeNoteLocked}
+            helper="무엇에 쓰는 돈인지, 현장에서 따로 내는 돈이 있는지 적어 주세요"
+          />
+        </div>
 
         <TextField
           name="capacity"
@@ -540,7 +587,7 @@ function SocialingFormFields({
             labelledBy="label-join-type"
             options={JOIN_OPTIONS}
             value={values.joinType}
-            onChange={(joinType) => change({ joinType }, ["approvalCriteria"])}
+            onChange={(joinType) => change({ joinType }, ["approvalCriteria", "minAge", "maxAge"])}
             disabled={Boolean(lockedByPending)}
             describedBy={lockedByPending ? "field-joinType-helper" : undefined}
           />
@@ -548,19 +595,68 @@ function SocialingFormFields({
         </div>
 
         {values.joinType === "approval" ? (
-          <div className="flex flex-col gap-xxs">
-            <Textarea
-              name="approvalCriteria"
-              label="승인 기준 (선택)"
-              labelTone="form"
-              placeholder="함께할 참여자를 승인할 때 참고할 기준을 적어 주세요 (예: 책을 1장 이상 미리 읽어 올 수 있는 분이면 좋아요)"
-              value={values.approvalCriteria}
-              onChange={(event) => change({ approvalCriteria: event.target.value })}
-              counter={counterText(criteriaLength, L.criteriaMax)}
-              invalid={Boolean(errors.approvalCriteria) || criteriaLength > L.criteriaMax}
-            />
-            <FieldMessage id="field-approvalCriteria-error" error={errors.approvalCriteria} />
-          </div>
+          <>
+            <div className="flex flex-col gap-xxs">
+              <Textarea
+                name="approvalCriteria"
+                label="승인 기준"
+                labelTone="form"
+                placeholder="함께할 참여자를 승인할 때 참고할 기준을 적어 주세요 (예: 책을 1장 이상 미리 읽어 올 수 있는 분이면 좋아요)"
+                value={values.approvalCriteria}
+                onChange={(event) => change({ approvalCriteria: event.target.value })}
+                counter={counterText(criteriaLength, L.criteriaMax)}
+                invalid={Boolean(errors.approvalCriteria) || criteriaLength > L.criteriaMax}
+                aria-describedby={errors.approvalCriteria ? "field-approvalCriteria-error" : "field-approvalCriteria-helper"}
+              />
+              <FieldMessage
+                id={errors.approvalCriteria ? "field-approvalCriteria-error" : "field-approvalCriteria-helper"}
+                error={errors.approvalCriteria}
+                helper="신청하기 전에 누구나 볼 수 있어요"
+              />
+            </div>
+
+            <div className="flex flex-col gap-sm">
+              <p id="label-age-limit" className={fieldLabelClass("form")}>
+                연령 조건 (선택)
+              </p>
+              <SegmentedChoice
+                name="ageLimit"
+                labelledBy="label-age-limit"
+                options={AGE_OPTIONS}
+                value={values.ageLimit}
+                onChange={(ageLimit) => change({ ageLimit }, ["minAge", "maxAge"])}
+              />
+              {values.ageLimit === "range" ? (
+                <>
+                  <div className="grid grid-cols-2 gap-xs">
+                    <TextField
+                      name="minAge"
+                      label="최소 나이"
+                      inputMode="numeric"
+                      placeholder="예: 20"
+                      suffix="세"
+                      value={values.minAge}
+                      onChange={(event) => change({ minAge: digitsOnly(event.target.value, 2) }, ["maxAge"])}
+                      error={errors.minAge}
+                      autoComplete="off"
+                    />
+                    <TextField
+                      name="maxAge"
+                      label="최대 나이"
+                      inputMode="numeric"
+                      placeholder="예: 39"
+                      suffix="세"
+                      value={values.maxAge}
+                      onChange={(event) => change({ maxAge: digitsOnly(event.target.value, 2) }, ["minAge"])}
+                      error={errors.maxAge}
+                      autoComplete="off"
+                    />
+                  </div>
+                  <p className="text-body-sm text-text-muted">만 나이로 적어 주세요</p>
+                </>
+              ) : null}
+            </div>
+          </>
         ) : null}
       </div>
 

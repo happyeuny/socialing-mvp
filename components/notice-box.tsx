@@ -35,7 +35,7 @@ export function NoticeBox({ title, variant = "feed-criteria", children }: Notice
         ) : (
           <p className="font-medium text-text-primary">{title}</p>
         ))}
-      <div className="whitespace-pre-line">{children}</div>
+      <div className="break-words whitespace-pre-line">{children}</div>
     </div>
   );
 }

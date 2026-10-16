@@ -22,7 +22,7 @@ export function ReviewSummary({ socialing }: ReviewSummaryProps) {
         <ApplicationChip variant="accepted" />
       </div>
       <h2 className="text-title-lg break-words break-keep text-text-primary">{socialing.title}</h2>
-      <p className="text-body-md break-keep text-text-secondary">
+      <p className="text-body-md break-words break-keep text-text-secondary">
         {formatDateTime(socialing.starts_at)} · {formatVenue(socialing.venue_type, socialing.venue_name)} · 호스트{" "}
         {socialing.host_nickname}
       </p>
