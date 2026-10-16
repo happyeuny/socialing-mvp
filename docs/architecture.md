@@ -173,7 +173,7 @@ erDiagram
                           password-field, header-main, header-sub, header-login-link, tab-bar (+ 뒤로 판단용
                           navigation-tracker), top-tabs, status-badge, status-tag, application-chip, count-pill,
                           socialing-card, category-art(사진 없을 때 카테고리 그림), skeleton, empty-state,
-                          error-state, host-profile-row, info-list, notice-box, intro-text(소개 5줄 접기),
+                          error-state, host-profile-row, info-list, notice-box(feed-criteria·info·caution), intro-text(소개 5줄 접기),
                           apply-bar(spec 8.4 순서표 13줄), hero-card, section-header, shortcut-category,
                           shortcut-branch, review-card, toast(짧은 안내),
                           bottom-sheet · dialog(Radix Dialog 위, decisions.md), confirm-apply-sheet(O02),
@@ -183,7 +183,8 @@ erDiagram
                           textarea, question-block(비공개 질문 예/아니오), review-summary,
                           host-stats(상세 호스트 기록, 기록만 실패하면 그 칸만 다시 시도),
                           toggle(줄 전체가 스위치), filter-chip, choice-chip, radio-row, filter-sheet(O01 틀),
-                          segmented에 SegmentedChoice(하나 고르는 칸: 날짜, 장소 갈래), select-field(고르기 칸)
+                          segmented에 SegmentedChoice(하나 고르는 칸: 날짜, 장소 갈래), select-field(고르기 칸),
+                          collapsible-row(접는 줄), refund-policy-list(취소·환불 규칙 글)
 /lib/supabase             server.ts(서버), client.ts(브라우저), proxy.ts(세션 갱신), env.ts, database.types.ts(생성)
 /lib/actions              서버 액션 (RPC 호출과 오류 코드 → 문구 변환만). auth.ts, applications.ts(신청·신청 취소),
                           manage.ts(승인·거절, 확정·종료·호스트 취소), reviews.ts(후기 올리기), socialings.ts(소셜링 열기·저장)
@@ -193,6 +194,7 @@ erDiagram
 /lib/focus-first-error.ts 제출 뒤 화면 순서상 첫 오류 칸으로 이동 (라디오 묶음은 첫 칸)
 /lib/notices.ts           다른 화면으로 보내며 남기는 짧은 안내 `?notice=` (예: "호스트만 볼 수 있어요")
 /lib/in-app-history.ts    머리글 뒤로 버튼: 앱 안 이전 화면이 없으면 홈 (spec 8.7)
+/lib/refund-policy.ts     취소·환불 규칙 안내 계산 (spec 6장 환불 기준). 상세 접는 줄·신청 확인 O02·신청 취소 확인 O05가 같이 씀. 실제 환불은 없음
 /lib/queries              읽기 함수. viewer.ts(지금 보는 사람, 닉네임은 로그인 토큰에서), socialings.ts(socialing_summaries 뷰),
                           my-socialings.ts("나" 기준 뷰: 상세 아래 영역의 보는 사람, 내 소셜링 두 탭 목록),
                           catalog.ts(카테고리·스터디지점, 탐색 필터·등록 양식 목록), reviews.ts(인증 후기),
