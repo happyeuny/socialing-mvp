@@ -86,6 +86,7 @@ function filterableOf(s: ExploreSocialing): FilterableSocialing {
     region_sido: s.region_sido,
     region_sigungu: s.region_sigungu,
     starts_at: s.starts_at,
+    fee: s.fee,
   };
 }
 

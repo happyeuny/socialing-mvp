@@ -14,6 +14,8 @@ import {
   DATE_FILTERS,
   EMPTY_FILTER,
   exploreSearch,
+  FEE_FILTER_LABELS,
+  FEE_FILTERS,
   filterChipValues,
   filterSocialings,
   normalizeFilter,
@@ -23,6 +25,7 @@ import {
   withHideParty,
   type DateFilter,
   type ExploreFilter,
+  type FeeFilter,
   type FilterableSocialing,
   type FilterCatalog,
   type PlaceFilter,
@@ -30,15 +33,20 @@ import {
 import { shortSido } from "@/lib/format";
 
 // P01 필터 칩 줄 + "파티·사교 숨기기" + 필터 시트 O01 (spec M2, M3, 8.2, 8.9 · 시안 P01·O01).
+// 시트 순서는 카테고리 → 날짜 → 장소 → 참가비, 칩 줄은 날짜 · 장소 · 카테고리 · 참가비.
 // 값은 주소에만 있다. 칩·토글·시트 적용은 주소를 바꿔 끼우고(뒤로 가기에 쌓이지 않음) 서버가 다시 거른 목록을 그린다.
 // 시트 안에서 고르는 값은 적용 전까지 시트에만 있고, "소셜링 N개 보기"는 목록과 같은 함수로 센다.
 
-type Section = "all" | "date" | "place" | "category";
+type Section = "all" | "date" | "place" | "category" | "fee";
 type PlaceTab = "branch" | "region";
 
 const DATE_OPTIONS = [
   { value: "all", label: "전체" },
   ...DATE_FILTERS.map((value) => ({ value, label: DATE_FILTER_LABELS[value] })),
+] as const;
+const FEE_OPTIONS = [
+  { value: "all", label: "전체" },
+  ...FEE_FILTERS.map((value) => ({ value, label: FEE_FILTER_LABELS[value] })),
 ] as const;
 const PLACE_TABS = [
   { value: "branch", label: "스터디지점" },
@@ -64,7 +72,7 @@ export function ExploreFilters({
   const [placeTab, setPlaceTab] = useState<PlaceTab>("branch");
   const [sidoView, setSidoView] = useState<string | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
-  const ids = { date: useId(), place: useId(), category: useId() };
+  const ids = { date: useId(), place: useId(), category: useId(), fee: useId() };
 
   const chips = filterChipValues(current, catalog);
   const applied = normalizeFilter(draft, catalog);
@@ -130,6 +138,7 @@ export function ExploreFilters({
         <FilterChip label="날짜" value={chips.date} onClick={() => openSheet("date")} />
         <FilterChip label="장소" value={chips.place} onClick={() => openSheet("place")} />
         <FilterChip label="카테고리" value={chips.category} onClick={() => openSheet("category")} />
+        <FilterChip label="참가비" value={chips.fee} onClick={() => openSheet("fee")} />
       </div>
 
       <div className="mt-xs border-b border-border-divider">
@@ -277,6 +286,27 @@ export function ExploreFilters({
                 ))}
               </>
             )}
+          </div>
+        </section>
+
+        {/* 다섯 칸은 회색 틀 칸에 안 들어가서 카테고리와 같은 칩을 줄바꿈으로, 하나만 고른다 */}
+        <section data-section="fee" aria-labelledby={ids.fee} className="flex flex-col gap-sm">
+          <h3 id={ids.fee} className="text-title-md text-text-primary">
+            참가비
+          </h3>
+          <div role="radiogroup" aria-labelledby={ids.fee} className="flex flex-wrap gap-xs">
+            {FEE_OPTIONS.map((o) => (
+              <ChoiceChip
+                key={o.value}
+                name="filter-fee"
+                value={o.value}
+                label={o.label}
+                checked={(draft.fee ?? "all") === o.value}
+                onCheckedChange={() =>
+                  setDraft((d) => ({ ...d, fee: o.value === "all" ? null : (o.value as FeeFilter) }))
+                }
+              />
+            ))}
           </div>
         </section>
       </FilterSheet>

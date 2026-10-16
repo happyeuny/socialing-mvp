@@ -494,7 +494,7 @@ components:
 | filter-chip/default | surface 바탕, text-primary, border-default 1px, 높이 36, 모서리 full, "카테고리 ⌄" | 탐색 필터 칩 (값 없음) |
 | filter-chip/selected | primary-soft 바탕, primary-strong 글자와 테두리 1.5px, 고른 값 표시 "강남점 ⌄" | 값이 적용된 필터 칩 |
 | filter-chip/all | 지름 36 동그라미, surface 바탕, border-default 1px, 필터 아이콘(줄 3개)만 | 칩 줄 맨 앞 "전체 필터" (시안 P01). 칩은 모두 보이는 높이 36, 누르는 영역은 위아래로 넓혀 44 |
-| choice-chip/off | surface 바탕, text-secondary, border-default 1px | 여러 개 고르는 칩 (필터 시트 카테고리). 하나만 고르는 칩(등록·수정의 카테고리, 시안 P07)도 같은 모양이고 라디오로 읽힌다 |
+| choice-chip/off | surface 바탕, text-secondary, border-default 1px | 여러 개 고르는 칩 (필터 시트 카테고리). 하나만 고르는 칩(등록·수정의 카테고리, 시안 P07, 필터 시트 참가비)도 같은 모양이고 라디오로 읽힌다 |
 | choice-chip/on | primary-soft 바탕, primary-strong 글자와 테두리 1.5px | 고른 칩 |
 | segmented/date-filter/selected | surface-muted 틀(모서리 md, 안쪽 4), 칸 높이 44(누르는 영역), 고른 칸은 surface + border-default + primary-strong 글자, 나머지 text-secondary | 날짜 하나 고르기 "전체 · 오늘 · 이번 주 · 이번 주말", 필터 시트 장소 갈래 "스터디지점 · 지역 (시·도 → 구)" (시안 O01), 등록·수정의 술 여부 "없음 · 있음"·장소 갈래·모집 방식 "선착순 · 호스트 승인" (시안 P07) |
 | segmented/date-filter/locked | 같은 틀, 고른 칸 글자 text-secondary, 나머지 text-disabled, 누를 수 없음. 아래 자물쇠 + 이유(text-field/locked와 같은 줄) | 수정 화면의 장소 갈래(참여 확정자가 있음), 모집 방식("승인 대기 신청이 있어 바꿀 수 없어요") |
@@ -633,7 +633,7 @@ components:
 | bottom-sheet/confirm-apply | surface, 위 모서리 2xl, 손잡이 36×4, 뒤 dim. 제목 title-lg "신청할까요?" + 소셜링 요약 두 줄(body-md, text-secondary: "제목 · 일시" / "장소 · 총 참가비") + notice-box 승인 기준(있을 때) + 결과 안내("• …", body-md) + 총 참가비가 있으면 notice-box/feed-criteria "취소·환불 규칙"(상세 collapsible-row와 같은 글, 접지 않음, 마지막 데모 안내만 body-sm text-muted), 아래 secondary "돌아가기" + primary "신청하기"(폭 1:2). 네트워크 오류면 버튼 위에 오류 문구(body-sm, danger)와 "다시 시도" (문구는 docs/spec.md M7·8.4) | 신청 확인(O02) |
 | bottom-sheet/trust-criteria | bottom-sheet와 같은 틀. 제목 줄 trust-label + "등급 조건"(title-lg), 설명 "최근 6개월 기록으로 아래 3가지를 모두 채운 호스트예요"(body-md, text-secondary), 조건 3행 상자(border-default, 모서리 xl, 행 사이 border-divider, 행마다 채움 ✓ 원(text-primary) · 조건(body-md) · 이 호스트의 값(title-md, 소개 일치는 뒤에 "(응답 N건)" body-sm text-muted)), 아래 "별점이나 점수가 아니라 공개된 기록으로만 정해요"(body-sm, text-muted), primary "확인"(전체 폭) | 등급 조건(O03) |
 | bottom-sheet/confirm-cancel-application | bottom-sheet와 같은 틀. 제목 "신청을 취소할까요?", 선착순일 때만 본문 "취소하면 다른 사람이 자리를 채울 수 있어요.", 총 참가비가 있으면 그 아래 환불 기준 한 줄("지금 취소하면 전액 환불 기준이에요" 등, body-md text-secondary), 버튼 secondary "돌아가기" + danger "신청 취소"(폭 1:1). 네트워크 오류면 버튼 위에 오류 문구와 "다시 시도" | 신청 취소 확인(O05), 상세에서 "신청 취소"를 누를 때 |
-| bottom-sheet/filter-sheet | surface, 위 모서리 2xl, 손잡이 36×4, 제목 "필터" + 닫기 X(아래 옅은 구분선), 스크롤 내용(카테고리 "여러 개 선택" · 날짜 · 장소, 묶음 사이 24), 아래 고정 secondary "초기화" + primary "소셜링 4개 보기"(폭 1:2, 위 옅은 구분선) | 탐색 필터(O01) |
+| bottom-sheet/filter-sheet | surface, 위 모서리 2xl, 손잡이 36×4, 제목 "필터" + 닫기 X(아래 옅은 구분선), 스크롤 내용(카테고리 "여러 개 선택" · 날짜 · 장소 · 참가비, 묶음 사이 24), 아래 고정 secondary "초기화" + primary "소셜링 4개 보기"(폭 1:2, 위 옅은 구분선) | 탐색 필터(O01) |
 | empty-state/filter-no-results | 48px 원(surface-muted) 아이콘, 제목 title-md, 설명 body-sm, secondary "필터 초기화", 여백 48·20 | "조건에 맞는 소셜링이 없어요" |
 | empty-state/no-applications | 아이콘 원 primary-soft, primary "탐색하기" | "아직 신청한 소셜링이 없어요" (다른 빈 화면도 이 모양에 글과 버튼만 바꿈) |
 | error-state/full | 아이콘 원 danger-soft, "불러오지 못했어요", "연결을 확인하고 다시 시도해 주세요", primary "다시 시도" + text-link "홈으로" | 화면 전체 실패 |

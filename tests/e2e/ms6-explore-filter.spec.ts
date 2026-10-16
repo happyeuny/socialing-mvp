@@ -80,11 +80,12 @@ test.describe("MS6 필터 주소와 거르기 규칙", () => {
         { category: "party,learning,unknown", date: "week", branch: "9", region: "11440", hide_party: "1" },
         CATALOG,
       ),
-    ).toEqual({ categories: ["learning", "party"], date: "week", place: { kind: "region", code: "11440" }, hideParty: false });
+    ).toEqual({ categories: ["learning", "party"], date: "week", place: { kind: "region", code: "11440" }, fee: null, hideParty: false });
     expect(parseExploreFilter({ branch: "2", region: "11440", date: "tomorrow", hide_party: "1" }, CATALOG)).toEqual({
       categories: [],
       date: null,
       place: { kind: "branch", branchId: 2 },
+      fee: null,
       hideParty: true,
     });
     expect(parseExploreFilter({ branch: "all" }, CATALOG).place).toEqual({ kind: "branch", branchId: "all" });
@@ -101,12 +102,12 @@ test.describe("MS6 필터 주소와 거르기 규칙", () => {
 
   test("거르기: 지역은 그 지역의 스터디지점과 외부 장소 모두, 스터디지점은 지점만, 숨기기는 파티·사교만 뺀다", () => {
     const now = new Date("2026-10-14T06:00:00Z");
-    const base = { category_is_party: false, starts_at: "2026-10-14T10:00:00Z" };
+    const base = { category_is_party: false, starts_at: "2026-10-14T10:00:00Z", fee: 0 };
     const items: (FilterableSocialing & { key: string })[] = [
       { key: "hongdae", ...base, category_slug: "learning", venue_type: "branch", venue_id: 2, region_sido: "서울특별시", region_sigungu: "마포구" },
       { key: "mapo-cafe", ...base, category_slug: "hobby", venue_type: "external", venue_id: 5, region_sido: "서울특별시", region_sigungu: "마포구" },
       { key: "gangnam-lounge", ...base, category_slug: "learning", venue_type: "external", venue_id: 6, region_sido: "서울특별시", region_sigungu: "강남구" },
-      { key: "party", category_is_party: true, starts_at: "2026-10-17T10:00:00Z", category_slug: "party", venue_type: "external", venue_id: 7, region_sido: "부산광역시", region_sigungu: "해운대구" },
+      { key: "party", category_is_party: true, starts_at: "2026-10-17T10:00:00Z", fee: 0, category_slug: "party", venue_type: "external", venue_id: 7, region_sido: "부산광역시", region_sigungu: "해운대구" },
     ];
     const keys = (params: Record<string, string>) =>
       filterSocialings(items, parseExploreFilter(params, CATALOG), CATALOG, now).map((s) => s.key);
