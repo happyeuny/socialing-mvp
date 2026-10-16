@@ -564,7 +564,7 @@ components:
 |---|---|---|
 | socialing-card/photo | surface, 테두리 없음 + shadow-card, 모서리 xl, 여백 16. 왼쪽 96px 정사각 사진(모서리 lg), 오른쪽 위에서부터: status-badge(+status-tag), 제목 1줄 말줄임(title-md, 700), "카테고리 · 술 여부"(카테고리 이름은 카테고리 색 600 + 앞에 6px 점, 술 여부는 text-secondary), "일시 · 장소", avatar-initial 20 + "호스트 · 4/8명 · 총 참가비"(닉네임은 text-primary, 총 참가비는 text-primary 700) | 홈·탐색·지난 소셜링 목록 |
 | socialing-card/no-photo | 왼쪽 칸이 category-art(그 카테고리 soft 바탕 + 카테고리 색 선 아이콘) | 대표 사진이 없을 때 |
-| socialing-card/my-application | photo 카드 + status-badge 뒤에 application-chip(승인 대기·참여 확정·거절. 호스트 취소면 배지 하나만, 내가 신청 취소한 소셜링은 목록에 없음). 후기를 쓸 수 있으면(참여 확정 + 종료 + 아직 안 씀) 카드 아래 구분선(border-divider) + 오른쪽 sm primary "후기 쓰기" | 내 소셜링 "신청한 소셜링" 탭 |
+| socialing-card/my-application | photo 카드 + status-badge 뒤에 application-chip(승인 대기·참여 확정·거절. 호스트 취소면 배지 하나만, 내가 신청 취소한 소셜링은 목록에 없음). 후기를 쓸 수 있으면(참여 확정 + 종료 + 아직 안 씀) 카드 아래 구분선(border-divider) + 오른쪽 sm primary "후기 쓰기". 거절이고 사유가 있으면 같은 아래 줄에 "거절 사유: 승인 기준과 맞지 않아요"(body-sm, text-secondary) | 내 소셜링 "신청한 소셜링" 탭 |
 | socialing-card/host | photo 카드 + 카드 아래 구분선(border-divider), 왼쪽 "승인 대기" + count-pill(0이면 없음), 오른쪽 "소셜링 관리 ›"(body-md, primary-strong). 카드 전체가 P11로 가는 링크 | 내 소셜링 "호스트인 소셜링" 탭 |
 | category-art/default | 그 카테고리 soft 바탕 + 가운데 카테고리 선 아이콘(카테고리 색). 아이콘: 배움·자기계발 책, 취미 웃는 얼굴, 운동·활동 번개, 문화·예술 팔레트, 파티·사교 사람들 | 사진 없는 카드의 사진 칸 |
 | hero-card/default | 대표 사진 전체, 아래쪽 어두운 그라데이션 위 흰 글자, 모서리 2xl, 여백 20, 최소 높이 280. 왼쪽 위 작은 라벨 "지금 신청할 수 있는 가장 가까운 소셜링", 아래 status-badge, 제목(title-lg), 일시 · 장소, 호스트 · 참가자 · 총 참가비 | 홈 맨 위 1개. 넘기는 배너가 아니다. 카드 아래 기준 문구(body-sm) |
@@ -595,7 +595,7 @@ components:
 | applicant-row/pending | surface, 아래 구분선, 높이 72. avatar-initial 40, "서윤", "10/12 오전 8:40 신청", sm secondary "거절" + sm primary "승인" | 소셜링 관리 승인 대기 탭 |
 | applicant-row/approve-disabled | 승인 버튼 disabled(일시가 지나면 거절도) + 이유: "정원이 차서 승인할 수 없어요" 또는 "소셜링 일시가 지나 승인할 수 없어요". 이유는 줄마다가 아니라 승인 대기 목록 아래 한 줄(body-sm, text-secondary), 승인할 수 있으면 그 자리에 "남은 자리 4 · 정원이 차면 승인할 수 없어요"(시안) | 승인할 수 없을 때 |
 | applicant-row/accepted | 높이 64, application-chip/accepted | 참여 확정 탭 |
-| applicant-row/rejected | 높이 64, application-chip/rejected 또는 withdrawn | 거절·취소 탭 |
+| applicant-row/rejected | 높이 64, application-chip/rejected 또는 withdrawn. 거절에 사유가 있으면 신청 시각 아래 "거절 사유: …"(body-sm, text-secondary, 줄바꿈 가능) | 거절·취소 탭 |
 | info-list/default | 흰 카드(모서리 xl, shadow-card, 여백 6·14, 화면 좌우 16 띄움) 안 라벨·값 행, 행 사이 border-divider 1px. 라벨 앞에 아이콘 칸 30×30(모서리 md, primary-soft 바탕, primary-strong 아이콘 17): 소셜링 일시 calendar · 신청 마감 clock · 장소 map-pin · 총 참가비 wallet · 모집 방식 user-check · 연령 조건 id-card · 인원 users · 자료 file-text. 값은 700, **소셜링 일시·총 참가비 값은 primary-strong**. 인원 값 아래 보조 글("스태프는 정원에 세지 않아요") 그대로. 긴 보조 글(총 참가비의 참가비 설명)은 행 아래 줄 전체에 라벨 글자 시작(왼쪽 38)에 맞춰 왼쪽 정렬, body-sm text-secondary, 줄바꿈 그대로. 자료 값은 링크 "자료 보기"(primary-strong, 바깥 링크 아이콘 14, 누르는 영역 44) + 보조 글 사이트 이름 | 상세 정보 |
 | section-header/default | 제목 title-lg(800), 오른쪽 text-link "전체 보기 ›"(primary-strong, 600), 아래 기준 문구 body-sm text-secondary | 홈·목록 묶음 머리 ("기준: 가까운 일시 순") |
 | notice-box/feed-criteria | surface-muted 바탕, text-secondary, 모서리 lg, 여백 14·16 | 회색 안내: 신청 확인(O02)의 승인 기준, 관리 화면의 종료·취소 안내 등 |
@@ -629,7 +629,8 @@ components:
 
 토스트 공통: 한 번에 하나, 약 4초 뒤 사라진다. 좌우 16px 안쪽 전체 폭. 자리는 아래 탭이나 apply-bar 바로 위 8px, 둘 다 없으면 화면 아래 16px(+ 아이폰 안전 영역). 화면을 옮겨도 남는다(가입 → 홈).
 | dialog/confirm | surface, 모서리 xl, 여백 20, 뒤 dim. 제목 + 본문 + secondary "돌아가기" + primary 행동 | 호스트 동작 확인(O04)의 확정·종료: "확정할까요? 확정하면 되돌릴 수 없어요." |
-| dialog/confirm-danger | confirm과 같고 행동 버튼이 button/danger/default | O04의 호스트 취소·거절: "호스트 취소할까요?" |
+| dialog/confirm-danger | confirm과 같고 행동 버튼이 button/danger/default | O04의 호스트 취소: "호스트 취소할까요?" |
+| dialog/reject | confirm-danger에 입력을 더한다. 제목 → "거절 사유"(title-md) 아래 radio-row 4~5줄 → textarea "덧붙일 말 (선택)"(100자, "0 / 100") + 칸 아래 "서윤 님에게 그대로 보여요. 외모나 성별을 이유로 쓰지 마세요"(body-sm, text-secondary) → 본문 "거절하면 되돌릴 수 없어요." → 돌아가기 · danger "거절". 창은 화면 높이의 90%까지, 넘으면 버튼은 그대로 두고 위쪽만 스크롤 | O04 거절: "서윤 님의 신청을 거절할까요?" |
 | dialog/result | 버튼 하나 primary "확인" | 결과 안내: "신청하지 못했어요 · 방금 정원이 찼어요" |
 | bottom-sheet/confirm-apply | surface, 위 모서리 2xl, 손잡이 36×4, 뒤 dim. 제목 title-lg "신청할까요?" + 소셜링 요약 두 줄(body-md, text-secondary: "제목 · 일시" / "장소 · 총 참가비", 참가비 설명이 있으면 셋째 줄 "참가비 설명: …") + 연령 조건(있을 때, "• 연령 조건 20~39세" body-md text-primary) + notice-box 승인 기준(있을 때) + 결과 안내("• …", body-md) + 총 참가비가 있으면 notice-box/feed-criteria "취소·환불 규칙"(상세 collapsible-row와 같은 글, 접지 않음, 마지막 데모 안내만 body-sm text-muted), 아래 secondary "돌아가기" + primary "신청하기"(폭 1:2). 네트워크 오류면 버튼 위에 오류 문구(body-sm, danger)와 "다시 시도" (문구는 docs/spec.md M7·8.4) | 신청 확인(O02) |
 | bottom-sheet/trust-criteria | bottom-sheet와 같은 틀. 제목 줄 trust-label + "등급 조건"(title-lg), 설명 "최근 6개월 기록으로 아래 3가지를 모두 채운 호스트예요"(body-md, text-secondary), 조건 3행 상자(border-default, 모서리 xl, 행 사이 border-divider, 행마다 채움 ✓ 원(text-primary) · 조건(body-md) · 이 호스트의 값(title-md, 소개 일치는 뒤에 "(응답 N건)" body-sm text-muted)), 아래 "별점이나 점수가 아니라 공개된 기록으로만 정해요"(body-sm, text-muted), primary "확인"(전체 폭) | 등급 조건(O03) |
@@ -664,8 +665,8 @@ components:
 | apply-bar/pending-cancel | 7 (승인 대기) | application-chip/pending + "호스트가 승인하면 참여 확정돼요" + secondary "신청 취소" → bottom-sheet/confirm-cancel-application |
 | apply-bar/accepted-cancel | 7 (참여 확정) | application-chip/accepted + "10/14(화) 오후 7:30에 만나요" + secondary "신청 취소" → bottom-sheet/confirm-cancel-application |
 | apply-bar/pending-expired | 8 | application-chip/pending + 상태 상자 "소셜링 일시가 지났어요" + 안내 "호스트가 응답하지 않았어요" |
-| apply-bar/reapply | 9 | application-chip/rejected 또는 withdrawn(실제 상태) + "자리가 남아 있어 다시 신청할 수 있어요" + primary "다시 신청" |
-| apply-bar/closed-after-application | 10 | application-chip/rejected 또는 withdrawn + 신청할 수 없는 이유(예: "신청 마감 일시가 지나 다시 신청할 수 없어요") + text-link "다른 소셜링 보기 ›" |
+| apply-bar/reapply | 9 | application-chip/rejected 또는 withdrawn(실제 상태) + "자리가 남아 있어 다시 신청할 수 있어요" + primary "다시 신청". 거절이고 사유가 있으면 칩 줄 위에 "거절 사유: …"(body-md, text-primary) + 덧붙인 말(body-sm, text-secondary, 따옴표 없이, 있을 때만) |
+| apply-bar/closed-after-application | 10 | application-chip/rejected 또는 withdrawn + 신청할 수 없는 이유(예: "신청 마감 일시가 지나 다시 신청할 수 없어요") + text-link "다른 소셜링 보기 ›". 거절 사유 줄은 9와 같다 |
 | apply-bar/apply | 11, 12 | 모집 방식 안내 + primary "신청하기". 호스트 승인: "신청하면 호스트가 승인한 뒤 참여가 확정돼요". 선착순: "신청하면 바로 참여가 확정돼요" |
 | apply-bar/closed | 13 | button/primary/disabled + 이유 + text-link "다른 소셜링 보기 ›". 버튼·이유: "정원 마감" / "참여 확정 인원이 정원에 찼어요", "신청 마감" / "신청 마감 일시가 지났어요", "지난 소셜링" / "소셜링 일시가 지났어요" |
 

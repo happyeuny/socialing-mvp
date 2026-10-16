@@ -19,12 +19,14 @@ import { type Applicant, type ManagedSocialing, getManagePageData } from "@/lib/
 import { getViewer } from "@/lib/queries/viewer";
 import { withNext } from "@/lib/routes";
 import { readSimulatedState } from "@/lib/simulated-state";
+import { rejectReasonLabel } from "@/lib/validation/reject";
 
 // P11 소셜링 관리 (spec M8, 8.8, 8.6, 8.7). 그 소셜링의 호스트만 들어온다.
 // 위에 요약 카드와 "상세 보기 ›", 소셜링 상태(진행 단계), 신청자 목록.
 // 호스트 승인 방식은 탭 "승인 대기 · 참여 확정 · 거절·취소"(`?tab=accepted|closed`), 선착순은 참여 확정 목록만.
 // 버튼을 보일지·막을지는 뷰(my_hosted_socialings)가 계산한 값을 쓴다.
 // 상태 버튼(확정하기 · 종료하기 · 수정 · 호스트 취소)과 승인 대기 건의 승인·거절. 종료·호스트 취소 뒤에는 안내와 목록 보기만.
+// 거절·취소 탭의 거절한 신청에는 호스트가 고른 거절 사유 한 줄(MS14 U10).
 
 export const metadata: Metadata = { title: "소셜링 관리 · 문화소셜링" };
 
@@ -78,7 +80,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
   // 호스트가 아닌 사람 → 상세 + "호스트만 볼 수 있어요" (spec 8.7, screen-cases E05)
   if (data.kind === "not-host") redirect(withNotice(`/socialings/${id}`, "host-only"));
 
-  const { socialing, applicants } = data;
+  const { socialing, applicants, hasAgeLimit } = data;
 
   return (
     <>
@@ -130,7 +132,13 @@ export default async function ManagePage({ params, searchParams }: Props) {
             신청자
           </h2>
           {socialing.join_type === "approval" ? (
-            <ApprovalApplicants socialing={socialing} applicants={applicants} tab={tab} managePath={managePath} />
+            <ApprovalApplicants
+              socialing={socialing}
+              applicants={applicants}
+              tab={tab}
+              managePath={managePath}
+              hasAgeLimit={hasAgeLimit}
+            />
           ) : (
             <FirstComeApplicants applicants={applicants} />
           )}
@@ -169,11 +177,13 @@ function ApprovalApplicants({
   applicants,
   tab,
   managePath,
+  hasAgeLimit,
 }: {
   socialing: ManagedSocialing;
   applicants: Applicant[];
   tab: ApplicantTab;
   managePath: string;
+  hasAgeLimit: boolean;
 }) {
   const rows = applicants.filter((a) => inTab(a, tab));
   const note = tab === "pending" && rows.length > 0 ? approveNote(socialing) : null;
@@ -202,6 +212,7 @@ function ApprovalApplicants({
                   nickname={applicant.nickname}
                   canDecide={socialing.can_decide}
                   canApprove={socialing.can_approve}
+                  hasAgeLimit={hasAgeLimit}
                   describedBy={note ? APPROVE_NOTE_ID : undefined}
                 />
               )
@@ -248,6 +259,9 @@ function ApplicantList({
           nickname={applicant.nickname}
           appliedAt={applicant.applied_at}
           status={applicant.status}
+          rejectReason={
+            applicant.status === "rejected" && applicant.reject_reason ? rejectReasonLabel(applicant.reject_reason) : null
+          }
           actions={applicant.status === "pending" ? actions?.(applicant) : undefined}
         />
       ))}

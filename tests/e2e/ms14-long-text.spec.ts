@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoOverflowingContent, submitLogin } from "./helpers/auth";
 import {
+  addApplication,
   createFixtureSocialing,
   deleteFixtureSocialings,
   deleteTestVenues,
@@ -86,5 +87,19 @@ test("P09 긴 글: 후기 쓰기 화면의 소셜링 요약 (390·320px)", async
   const id = await longTextSocialing({ status: "completed", deadlineInHours: -48, startsInHours: -24, accepted: ["A"] });
   await loginAs(page, "A", `/socialings/${id}/review`);
   await expect(page.getByRole("heading", { level: 2, name: new RegExp(unbroken(20)) })).toBeVisible();
+  await expectFits(page, page.getByRole("main"));
+});
+
+test("P03·P06 긴 글: 신청자가 보는 거절 사유의 덧붙일 말 (390·320px)", async ({ page }) => {
+  const id = await longTextSocialing();
+  await addApplication(id, "A", "rejected", { reason: "other", note: unbroken(100) });
+  await loginAs(page, "A", `/socialings/${id}`);
+  const bar = page.getByRole("region", { name: "신청" });
+  await expect(bar).toContainText("거절 사유: 그 밖의 이유");
+  await expectFits(page, bar);
+
+  await page.goto("/me");
+  const card = page.locator(`article:has(a[href="/socialings/${id}"])`);
+  await expect(card).toContainText("거절 사유: 그 밖의 이유");
   await expectFits(page, page.getByRole("main"));
 });

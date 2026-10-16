@@ -1,6 +1,7 @@
 import { CARD_COLUMNS, type ApplicationStatus, type SocialingCardData } from "@/lib/queries/socialings";
 import { getViewer } from "@/lib/queries/viewer";
 import { createClient } from "@/lib/supabase/server";
+import type { RejectReason } from "@/lib/validation/reject";
 
 // "나" 기준 읽기. 뷰 my_hosted_socialings · my_applied_socialings(architecture 3.2)가 보는 사람 권한으로 계산한 값을 그대로 쓴다.
 
@@ -10,7 +11,16 @@ export type ApplyBarViewer =
   /** 호스트 본인. pendingCount = 승인 대기 건수 */
   | { kind: "host"; pendingCount: number }
   /** 로그인한 다른 사람. application = 이 소셜링에 한 가장 최근 신청(없으면 null) */
-  | { kind: "member"; application: { id: number; status: ApplicationStatus; hasReview: boolean } | null };
+  | { kind: "member"; application: ViewerApplication | null };
+
+/** 보는 사람의 가장 최근 신청. 거절이면 호스트가 고른 사유와 덧붙인 말(MS14 전 거절은 null) */
+export type ViewerApplication = {
+  id: number;
+  status: ApplicationStatus;
+  hasReview: boolean;
+  rejectReason: RejectReason | null;
+  rejectNote: string | null;
+};
 
 export async function getApplyBarViewer(socialingId: number): Promise<ApplyBarViewer> {
   const viewer = await getViewer();
@@ -21,7 +31,7 @@ export async function getApplyBarViewer(socialingId: number): Promise<ApplyBarVi
     supabase.from("my_hosted_socialings").select("pending_count").eq("id", socialingId).maybeSingle(),
     supabase
       .from("my_applied_socialings")
-      .select("application_id, application_status, has_review")
+      .select("application_id, application_status, has_review, reject_reason, reject_note")
       .eq("id", socialingId)
       .maybeSingle(),
   ]);
@@ -34,7 +44,13 @@ export async function getApplyBarViewer(socialingId: number): Promise<ApplyBarVi
   if (!row?.application_id || !row.application_status) return { kind: "member", application: null };
   return {
     kind: "member",
-    application: { id: row.application_id, status: row.application_status, hasReview: row.has_review ?? false },
+    application: {
+      id: row.application_id,
+      status: row.application_status,
+      hasReview: row.has_review ?? false,
+      rejectReason: row.reject_reason,
+      rejectNote: row.reject_note,
+    },
   };
 }
 
@@ -43,6 +59,8 @@ export type MyAppliedSocialing = SocialingCardData & {
   is_past: boolean;
   application_status: ApplicationStatus;
   has_review: boolean;
+  /** 거절 사유 (덧붙인 말은 상세에서만) */
+  reject_reason: RejectReason | null;
 };
 
 /** 내 소셜링(P06) 호스트인 소셜링 탭의 카드 */
@@ -62,7 +80,7 @@ export async function listMyAppliedSocialings(): Promise<SplitByPast<MyAppliedSo
   // 호스트 취소는 신청 상태를 바꾸지 않으므로(spec 3.3) 여기 걸리지 않고 "호스트 취소"로 남는다
   const { data, error } = await supabase
     .from("my_applied_socialings")
-    .select(`${CARD_COLUMNS}, is_past, application_status, has_review`)
+    .select(`${CARD_COLUMNS}, is_past, application_status, has_review, reject_reason`)
     .neq("application_status", "canceled")
     .order("starts_at", { ascending: true })
     .order("id", { ascending: true });

@@ -6,6 +6,8 @@ import { useReturnFocus } from "@/lib/return-focus";
 // DESIGN.md dialog. surface, 모서리 xl, 여백 20, 뒤 dim, 화면 가운데.
 // dialog/result: 결과 안내 + primary "확인" 하나 ("신청하지 못했어요 · 방금 정원이 찼어요").
 // dialog/confirm · confirm-danger: 호스트 동작 확인(O04). 네트워크 오류 문구는 alert로 받아 버튼 위에 보인다.
+// dialog/reject: confirm-danger에 입력 칸(거절 사유·덧붙일 말)을 body로 더한다. 순서는 제목 → body → 본문 → 오류 → 버튼.
+// 창이 화면보다 길면(320px 등) 버튼은 그대로 두고 위쪽만 스크롤된다.
 // 버튼은 footer로 받는다. 바텀시트 위에도 뜰 수 있게 바텀시트보다 위(z-50)에 놓는다.
 // 닫으면 포커스는 창을 연 버튼으로 돌아간다(lib/return-focus).
 
@@ -14,6 +16,8 @@ type DialogProps = {
   onOpenChange: (open: boolean) => void;
   title: string;
   children?: React.ReactNode;
+  /** 제목과 본문 사이 입력 칸 (dialog/reject) */
+  body?: React.ReactNode;
   /** 버튼 위 오류 문구(body-sm, danger). 예: "처리하지 못했어요. 연결을 확인하고 다시 시도해 주세요" */
   alert?: React.ReactNode;
   footer: React.ReactNode;
@@ -21,7 +25,7 @@ type DialogProps = {
   returnFocusRef?: React.RefObject<HTMLElement | null>;
 };
 
-export function Dialog({ open, onOpenChange, title, children, alert, footer, returnFocusRef }: DialogProps) {
+export function Dialog({ open, onOpenChange, title, children, body, alert, footer, returnFocusRef }: DialogProps) {
   const returnFocus = useReturnFocus(returnFocusRef);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
@@ -31,10 +35,12 @@ export function Dialog({ open, onOpenChange, title, children, alert, footer, ret
           role="alertdialog"
           onOpenAutoFocus={returnFocus.onOpenAutoFocus}
           onCloseAutoFocus={returnFocus.onCloseAutoFocus}
-          className="fixed top-1/2 left-1/2 z-50 flex w-[calc(100%-2*var(--spacing-page-x))] max-w-[358px] -translate-x-1/2 -translate-y-1/2 flex-col gap-lg rounded-xl bg-surface p-lg outline-none"
+          className="fixed top-1/2 left-1/2 z-50 flex max-h-[90dvh] w-[calc(100%-2*var(--spacing-page-x))] max-w-[358px] -translate-x-1/2 -translate-y-1/2 flex-col gap-lg rounded-xl bg-surface p-lg outline-none"
         >
-          <div className="flex flex-col gap-xs">
+          {/* 포커스 테두리가 잘리지 않게 좌우 4px 여유 */}
+          <div className="-mx-xxs flex min-h-0 flex-col gap-xs overflow-y-auto px-xxs">
             <DialogPrimitive.Title className="text-title-lg text-text-primary">{title}</DialogPrimitive.Title>
+            {body ? <div className="flex flex-col gap-md py-xs">{body}</div> : null}
             {children ? (
               <DialogPrimitive.Description className="text-body-md text-text-secondary">
                 {children}
@@ -46,7 +52,7 @@ export function Dialog({ open, onOpenChange, title, children, alert, footer, ret
               </p>
             ) : null}
           </div>
-          <div className="flex gap-xs">{footer}</div>
+          <div className="flex shrink-0 gap-xs">{footer}</div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

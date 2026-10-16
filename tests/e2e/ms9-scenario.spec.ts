@@ -148,6 +148,9 @@ test.describe("MS9 시연 시나리오", () => {
         await page.goto("/me");
         const pills = cardOf(page, meetup).locator("h2").locator("xpath=preceding-sibling::div[1]");
         await expect(pills).toHaveText(/^확정\s*참여 확정$/);
+        // 시드: 하린의 "필름 카메라로 골목 산책"에서 거절된 카드에는 거절 사유 (MS14 U10, P06-15)
+        const film = page.locator("article").filter({ has: page.getByRole("heading", { name: "필름 카메라로 골목 산책" }) });
+        await expect(film).toContainText("거절 사유: 승인 기준과 맞지 않아요");
       });
 
       // 7단계 (B): 일시가 지난 확정 소셜링 X를 내 소셜링 → 관리 → 종료(O04)

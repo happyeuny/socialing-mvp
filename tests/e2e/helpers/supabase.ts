@@ -207,12 +207,16 @@ export async function addApplication(
   socialingId: number,
   user: DemoUserKey,
   status: "pending" | "accepted" | "rejected" | "canceled",
+  /** 거절이면 거절 사유와 덧붙인 말 (MS14 U10). 없으면 MS14 전처럼 사유 없는 거절 */
+  reject?: { reason: "criteria" | "age" | "full" | "host" | "other"; note?: string },
 ): Promise<number> {
   const rows = await runQuery<{ id: number }>(`
-    insert into public.applications (socialing_id, user_id, status, decided_at, canceled_at)
+    insert into public.applications (socialing_id, user_id, status, decided_at, canceled_at, reject_reason, reject_note)
     select ${socialingId}, id, '${status}',
       case when '${status}' in ('accepted', 'rejected') then now() end,
-      case when '${status}' = 'canceled' then now() end
+      case when '${status}' = 'canceled' then now() end,
+      ${reject ? sqlText(reject.reason) : "null"},
+      ${reject?.note ? sqlText(reject.note) : "null"}
     from auth.users where email = ${sqlText(DEMO_USERS[user].email)}
     returning id;
   `);
