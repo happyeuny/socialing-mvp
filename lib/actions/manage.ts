@@ -6,6 +6,7 @@ import { z } from "zod";
 import { withNotice } from "@/lib/notices";
 import { withNext } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
+import { type RejectReason, rejectSchema } from "@/lib/validation/reject";
 
 // 소셜링 관리 P11의 호스트 버튼 (spec M8, 8.8). 버튼 하나 = 서버 액션 하나 = DB 함수 하나.
 // 호스트 본인인지, 지금 누를 수 있는지는 함수가 소셜링 행을 잠그고 다시 확인한다(architecture 5장).
@@ -41,7 +42,7 @@ function decideReason(code: string, approve: boolean): string | undefined {
   }
 }
 
-/** 승인 대기 신청을 승인(참여 확정)하거나 거절한다 */
+/** 승인 대기 신청을 승인(참여 확정)한다. 거절은 사유를 받는 rejectApplication(MS14). approve=false는 옛 길로 남겨 둔다 */
 export async function decideApplication(
   socialingId: number,
   applicationId: number,
@@ -71,6 +72,45 @@ export async function decideApplication(
   }
 
   // 관리 화면의 탭·건수·요약, 상세의 인원·아래 영역, 내 소셜링 목록이 바뀐다
+  revalidatePath(managePath);
+  revalidatePath(detailPath);
+  revalidatePath("/me");
+  return { ok: true };
+}
+
+/** 승인 대기 신청을 사유와 함께 거절한다 (U10, spec 8.8 O04 거절). 사유·덧붙일 말 검사는 창이 먼저 하고 함수가 다시 한다 */
+export async function rejectApplication(
+  socialingId: number,
+  applicationId: number,
+  reason: RejectReason,
+  note: string,
+): Promise<ManageActionResult> {
+  const parsed = rejectSchema.safeParse({ socialingId, applicationId, reason, note });
+  // 창이 막는 입력이라 여기 오면 화면이 낡은 것 → 새로 고치게 한다
+  if (!parsed.success) return { ok: false, reason: "이미 처리된 신청이에요" };
+  const managePath = `/socialings/${parsed.data.socialingId}/manage`;
+  const detailPath = `/socialings/${parsed.data.socialingId}`;
+
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getClaims();
+  if (!auth?.claims?.sub) redirect(withNext("/login", managePath));
+
+  const trimmedNote = parsed.data.note.trim();
+  const { error } = await supabase.rpc("reject_application", {
+    p_application_id: parsed.data.applicationId,
+    p_reason: parsed.data.reason,
+    ...(trimmedNote ? { p_note: trimmedNote } : {}),
+  });
+  if (error) {
+    if (error.message === "NOT_AUTHENTICATED") redirect(withNext("/login", managePath));
+    if (error.message === "NOT_HOST") redirect(withNotice(detailPath, "host-only"));
+    // INVALID_INPUT은 그 사이 신청이 없어졌거나, 다른 화면에서 연령 조건을 지운 뒤 "연령 조건"을 고른 경우
+    const reason = decideReason(error.message, false);
+    if (reason) return { ok: false, reason };
+    console.error("reject_application", error);
+    return { ok: false, retry: true };
+  }
+
   revalidatePath(managePath);
   revalidatePath(detailPath);
   revalidatePath("/me");

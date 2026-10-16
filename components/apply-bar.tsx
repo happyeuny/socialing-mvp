@@ -12,11 +12,12 @@ import type { ApplyBarViewer } from "@/lib/queries/my-socialings";
 import type { ClosedReason, SocialingDetail } from "@/lib/queries/socialings";
 import { withNext } from "@/lib/routes";
 import { cn } from "@/lib/utils";
+import { type RejectReason, rejectReasonLabel } from "@/lib/validation/reject";
 
 // DESIGN.md C4 apply-bar: 상세 맨 아래에 붙는 영역. spec 8.4 표의 위에서부터 먼저 맞는 줄 하나만 보인다.
 // 신청 가능 여부와 이유, 보는 사람의 신청·후기·승인 대기 건수는 DB(뷰)가 계산한 값을 그대로 쓴다.
 // 1(호스트), 2(호스트 취소), 3·4(종료 뒤 후기), 5·6(참여 확정 · 일시 지남), 7(신청함 → 신청 취소 O05),
-// 8(승인 대기 · 일시 지남), 9·10(거절·신청 취소 뒤 다시 신청 / 불가), 11(비로그인 신청하기 → 로그인 → 상세 복귀),
+// 8(승인 대기 · 일시 지남), 9·10(거절·신청 취소 뒤 다시 신청 / 불가, 거절이면 사유와 덧붙인 말), 11(비로그인 신청하기 → 로그인 → 상세 복귀),
 // 12(신청하기 → O02), 13(신청 마감·정원 마감·지난 소셜링).
 
 const JOIN_GUIDE = {
@@ -161,9 +162,14 @@ export function ApplyBar({ socialing, viewer }: { socialing: SocialingDetail; vi
   // 9·10줄: 거절 또는 신청 취소 뒤. 지금 신청할 수 있으면 다시 신청(O02), 아니면 이유 + 다른 소셜링 보기
   if (application && (application.status === "rejected" || application.status === "canceled")) {
     const chip = <ApplicationChip variant={chipVariantOf(application.status)} />;
+    const rejected =
+      application.status === "rejected" && application.rejectReason ? (
+        <RejectReasonLines reason={application.rejectReason} note={application.rejectNote} />
+      ) : null;
     if (socialing.can_apply) {
       return (
         <Shell>
+          {rejected}
           <ChipLine>
             {chip}
             자리가 남아 있어 다시 신청할 수 있어요
@@ -174,6 +180,7 @@ export function ApplyBar({ socialing, viewer }: { socialing: SocialingDetail; vi
     }
     return (
       <Shell>
+        {rejected}
         <ChipLine>
           {chip}
           {REAPPLY_CLOSED[(socialing.closed_reason ?? "started") as keyof typeof REAPPLY_CLOSED]}
@@ -259,6 +266,16 @@ function ChipLine({ children }: { children: React.ReactNode }) {
     <p className="flex flex-wrap items-center justify-center gap-xs text-center text-body-sm text-text-secondary">
       {children}
     </p>
+  );
+}
+
+/** 9·10줄 거절: "거절 사유: …" + 덧붙인 말(있으면, 따옴표 없이 회색 글). 신청자 본인만 본다 */
+function RejectReasonLines({ reason, note }: { reason: RejectReason; note: string | null }) {
+  return (
+    <div className="flex w-full flex-col gap-xxs text-center">
+      <p className="text-body-md break-keep text-text-primary">거절 사유: {rejectReasonLabel(reason)}</p>
+      {note ? <p className="text-body-sm break-words whitespace-pre-line text-text-secondary">{note}</p> : null}
+    </div>
   );
 }
 
