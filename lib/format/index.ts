@@ -50,6 +50,24 @@ export function formatFee(fee: number): string {
   return fee === 0 ? "무료" : `${wonFormat.format(fee)}원`;
 }
 
+/** 연령 조건 (SH1b, 만 나이). 둘 다 `20~39세`, 최소만 `30세 이상`, 최대만 `39세 이하`, 조건 없음 null */
+export function formatAgeRange(minAge: number | null, maxAge: number | null): string | null {
+  if (minAge !== null && maxAge !== null) return `${minAge}~${maxAge}세`;
+  if (minAge !== null) return `${minAge}세 이상`;
+  if (maxAge !== null) return `${maxAge}세 이하`;
+  return null;
+}
+
+/** 자료 링크의 사이트 이름 (SH3, 누르기 전에 어디로 가는지). 예: `ko.wikipedia.org`. 읽을 수 없는 주소면 null */
+export function linkHost(url: string): string | null {
+  try {
+    const { protocol, hostname } = new URL(url);
+    return protocol === "https:" && hostname ? hostname : null;
+  } catch {
+    return null;
+  }
+}
+
 const monthDayTimeFormat = new Intl.DateTimeFormat("ko-KR", {
   timeZone: "Asia/Seoul",
   month: "numeric",

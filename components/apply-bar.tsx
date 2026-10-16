@@ -6,7 +6,7 @@ import { Button, buttonVariants } from "@/components/button";
 import { ConfirmApplySheet } from "@/components/confirm-apply-sheet";
 import { ConfirmCancelApplicationSheet } from "@/components/confirm-cancel-application-sheet";
 import { CountPill } from "@/components/count-pill";
-import { formatDateTime, formatFee } from "@/lib/format";
+import { formatAgeRange, formatDateTime, formatFee } from "@/lib/format";
 import { refundPolicyText, showsRefundPolicy } from "@/lib/refund-policy";
 import type { ApplyBarViewer } from "@/lib/queries/my-socialings";
 import type { ClosedReason, SocialingDetail } from "@/lib/queries/socialings";
@@ -230,8 +230,10 @@ function applySheetProps(socialing: SocialingDetail) {
     startsAt: formatDateTime(socialing.starts_at),
     place: socialing.venue_type === "branch" ? `스터디지점 ${socialing.venue_name}` : socialing.venue_name,
     fee: formatFee(socialing.fee),
+    feeNote: socialing.fee_note?.trim() || null,
     joinType: socialing.join_type,
     approvalCriteria: socialing.approval_criteria,
+    ageRange: socialing.join_type === "approval" ? formatAgeRange(socialing.min_age, socialing.max_age) : null,
     refundPolicy: showsRefundPolicy(socialing.fee, socialing.starts_at, now)
       ? refundPolicyText(socialing.starts_at, socialing.join_type, now)
       : null,
