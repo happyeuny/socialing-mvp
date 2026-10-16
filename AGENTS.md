@@ -37,7 +37,7 @@
 
 - **작업 시작**: 클론하면 main이 오므로 `git fetch origin dev` 뒤 `git checkout -b feat/… origin/dev`. 규칙·문서는 dev에 있는 것이 기준이니 dev에서 이 파일과 tasks.md를 다시 읽는다.
 - **PR base**: GitHub이 base를 main으로 잡는다. PR을 만들 때 base를 `dev`로 고른다.
-- **단계 끝**: dev → main PR 하나를 **Create a merge commit**으로 병합한다(Squash·Rebase는 dev와 main 기록을 갈라 다음 병합 때 충돌). 순서는 [docs/demo-checklist.md](docs/demo-checklist.md) 7장.
+- **단계 끝**: dev → main PR은 **PM 승인을 받은 뒤** 만든다(테스트·발표 DB 준비 결과를 보여 주고 묻는다). PR 하나를 **Create a merge commit**으로 병합한다(Squash·Rebase는 dev와 main 기록을 갈라 다음 병합 때 충돌). 순서는 [docs/demo-checklist.md](docs/demo-checklist.md) 7장.
 - 저장소 설정 "Automatically delete head branches"는 켜지 않는다(켜면 dev → main 병합 뒤 dev가 지워짐).
 
 ## 명령 (MS1에서 만든다. 바뀌면 여기를 고친다)
