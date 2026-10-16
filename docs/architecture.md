@@ -54,10 +54,11 @@ flowchart LR
 | `regions` | id, sido, sigungu, code | 시드. 전국 시·도 > 시·군·구 |
 | `venues` | id, type(`branch`/`external`), name, region_id, address_text | 지점도 region_id를 가진다 |
 | `categories` | id, slug, name, sort_order, is_party | 5개 고정 시드. slug: `learning`, `hobby`, `activity`, `culture`, `party` |
-| `socialings` | id, host_id, title, description, category_id, has_alcohol, venue_id, starts_at, apply_deadline_at, fee, capacity, staff_count, join_type(`first_come`/`approval`), approval_criteria(null 가능), cover_photo_path(null 가능), status(`recruiting`/`confirmed`/`completed`/`canceled`, 기본 `recruiting`), confirmed_at, completed_at, canceled_at, created_at, updated_at | apply_deadline_at ≤ starts_at, capacity 2~20, fee ≥ 0, staff_count ≥ 0 |
-| `applications` | id, socialing_id, user_id, status(`pending`/`accepted`/`rejected`/`canceled`), created_at, decided_at, canceled_at | (socialing_id, user_id)는 status가 pending·accepted인 행이 하나만 (부분 유니크 인덱스) |
+| `socialings` | id, host_id, title, description, category_id, has_alcohol, venue_id, starts_at, apply_deadline_at, fee, capacity, staff_count, join_type(`first_come`/`approval`), approval_criteria(null 가능), cover_photo_path(null 가능), status(`recruiting`/`confirmed`/`completed`/`canceled`, 기본 `recruiting`), confirmed_at, completed_at, canceled_at, created_at, updated_at. MS14: fee_note(참가비 설명), min_age·max_age(연령 조건), material_url(자료 링크), 모두 null 가능 | apply_deadline_at ≤ starts_at, capacity 2~20, fee ≥ 0, staff_count ≥ 0. MS14: fee_note 100자·material_url 500자 이하, 나이 1~99·min_age ≤ max_age. "유료면 참가비 설명"·"호스트 승인이면 승인 기준"은 테이블이 아니라 등록·수정 함수가 막는다(이미 있는 행 때문) |
+| `applications` | id, socialing_id, user_id, status(`pending`/`accepted`/`rejected`/`canceled`), created_at, decided_at, canceled_at. MS14: reject_reason(`criteria`/`age`/`full`/`host`/`other`, null 가능), reject_note(null 가능) | (socialing_id, user_id)는 status가 pending·accepted인 행이 하나만 (부분 유니크 인덱스). reject_note 100자 이하 |
 | `reviews` | id, socialing_id, user_id, body, photo_path(null 가능), created_at | (socialing_id, user_id) 유니크, body 10~500자 |
 | `review_checks` | review_id(PK, FK), members_match, extra_money, content_match (boolean) | **직접 SELECT 정책 없음**. 집계 함수만 읽는다 |
+| `reports` (MS14) | id, socialing_id, user_id, reason(`solicitation` 종교·영업 권유 / `extra_money` 적힌 금액 외 돈 / `fake_participant` 스태프가 참가자인 척 / `unwanted_contact` 호스트의 원치 않는 연락·만남 / `other`), note(null 가능), created_at | (socialing_id, user_id) 유니크, note 1~300자, `other`면 note 필수. 소셜링·계정이 지워지면 함께 지워진다. 신고 수는 호스트 기록·등급에 쓰지 않는다 |
 
 enum 이름과 값은 위와 같다. 코드의 타입은 `supabase gen types`로 만든다.
 
@@ -69,6 +70,8 @@ erDiagram
     socialings ||--o{ applications : ""
     socialings ||--o{ reviews : ""
     reviews ||--|| review_checks : "비공개"
+    socialings ||--o{ reports : "신고"
+    profiles ||--o{ reports : "신고한 사람"
     categories ||--o{ socialings : ""
     venues ||--o{ socialings : ""
     regions ||--o{ venues : ""
@@ -87,7 +90,7 @@ erDiagram
 
 호스트 기록은 SECURITY DEFINER 함수 `get_host_record(p_host_id)`가 집계값만 돌려준다(MS6). 칸: `opened_count`, `canceled_count`, `review_count`, `response_count`(비공개 응답 수), `match_rate`(0~1, 반올림 안 함, 응답 5건 미만이면 null), `is_new_host`, `is_trusted_host`(MS8 기준 공개 등급. 반올림 전 비율로 판단하고, 비율이 없으면 false). "최근 6개월"은 소셜링 일시가 6개월 전 이후인 소셜링(앞으로 열릴 소셜링 포함)이고, 시드 쪽 `hostRecordFromSeed`와 같은 규칙이다. 비로그인도 부를 수 있다. 개별 응답은 어떤 경로로도 나가지 않는다.
 
-목록·상세는 뷰 `socialing_summaries` 하나를 읽는다(MS2). 소셜링 칸에 호스트 닉네임·카테고리·장소·지역을 붙이고, 위 표를 계산한 칸을 더한다.
+목록·상세는 뷰 `socialing_summaries` 하나를 읽는다(MS2). 소셜링 칸에 호스트 닉네임·카테고리·장소·지역을 붙이고, 위 표를 계산한 칸을 더한다. MS14에서 끝에 `fee_note`·`min_age`·`max_age`·`material_url`을 더했다(앞 칸 이름·순서는 그대로, 마이그레이션은 추가만).
 
 | 칸 | 값 |
 |---|---|
@@ -105,9 +108,9 @@ erDiagram
 
 | 뷰 | 행 | 더한 칸 |
 |---|---|---|
-| `my_applied_socialings` | 내가 신청한 소셜링마다 **가장 최근 신청** 하나 (거절·신청 취소 뒤 다시 신청하면 새 행) | `application_id`, `application_status`(호스트 취소돼도 그대로), `applied_at`, `has_review`(내가 후기를 썼는지) |
+| `my_applied_socialings` | 내가 신청한 소셜링마다 **가장 최근 신청** 하나 (거절·신청 취소 뒤 다시 신청하면 새 행) | `application_id`, `application_status`(호스트 취소돼도 그대로), `applied_at`, `has_review`(내가 후기를 썼는지), MS14 `reject_reason`·`reject_note`(가장 최근 신청의 거절 사유). `socialing_summaries`의 MS14 칸은 없다(상세가 따로 읽음) |
 | `my_hosted_socialings` | 내가 호스트인 소셜링 | `pending_count`(승인 대기 건수. applications는 호스트가 읽을 수 있어 함수 없이 센다). MS4 관리 화면(P11) 칸: `closed_count`(거절·취소 탭 건수, 사람마다 가장 최근 신청 기준), `can_confirm` · `confirm_blocked_reason`(`started`), `can_complete` · `complete_blocked_reason`(`confirm_first` 모집중·일시 전 / `not_confirmed` 모집중·일시 지남 / `not_started` 확정·일시 전), `can_cancel`, `can_edit`, `can_decide`(승인·거절), `can_approve` · `approve_blocked_reason`(`started` / `full`). 함수와 같은 조건이다 |
-| `hosted_socialing_applicants` | 내가 호스트인 소셜링의 신청자마다 **가장 최근 신청** 하나 (MS4, P11 신청자 목록) | `socialing_id`, `application_id`, `nickname`, `status`(호스트 취소돼도 그대로), `applied_at`, `decided_at`, `canceled_at`. 신청자 본인에게는 비어 보인다 |
+| `hosted_socialing_applicants` | 내가 호스트인 소셜링의 신청자마다 **가장 최근 신청** 하나 (MS4, P11 신청자 목록) | `socialing_id`, `application_id`, `nickname`, `status`(호스트 취소돼도 그대로), `applied_at`, `decided_at`, `canceled_at`, MS14 `reject_reason`·`reject_note`. 신청자 본인에게는 비어 보인다 |
 
 ## 4. 권한 (RLS)
 
@@ -117,6 +120,7 @@ erDiagram
 | applications | 본인, 그 소셜링의 호스트 | 함수로만 |
 | reviews | 모두 | 함수로만 |
 | review_checks | 아무도 직접 못 읽음 | `create_review` 함수로만 |
+| reports (MS14) | 신고한 본인 행만 (신고했는지 보이려고). 호스트·다른 사람·비로그인은 못 읽음. 쌓인 신고는 Supabase 대시보드에서만 | `create_report` 함수로만 |
 | 호스트 기록 | 모두 (집계 함수 `get_host_record`) | 계산 값 |
 | `socialing_summaries` 뷰 (목록·상세) | 모두 (참여 확정 인원은 숫자만) | 없음 (SELECT 권한만) |
 | `my_applied_socialings`, `my_hosted_socialings`, `hosted_socialing_applicants` 뷰 | 로그인한 본인 행만, 신청자 목록은 그 소셜링의 호스트만 (비로그인 거부) | 없음 (SELECT 권한만) |
@@ -134,7 +138,7 @@ erDiagram
 
 ## 5. 쓰기 함수 (RPC)
 
-모든 함수는 실패할 때 **정해진 오류 코드**를 돌려주고, 서버 액션이 그것을 spec 8.4·8.6·8.8의 문구로 바꾼다. 방식(SP2에서 정함): `raise exception using errcode = 'P0001', message = 'FULL'`처럼 오류 코드를 message에 넣는다. supabase-js에서는 `error.message`가 오류 코드다. 성공하면 바뀐 행을 돌려준다(`apply_to_socialing`은 만든 `applications` 행). 오류 코드 예: `NOT_AUTHENTICATED`, `NOT_HOST`, `IS_HOST`, `NOT_OPEN`(신청 불가), `DEADLINE_PASSED`, `FULL`, `HOST_CANCELED`, `ALREADY_APPLIED`, `STARTED`(소셜링 일시 지남), `NOT_STARTED`, `INVALID_STATE`, `ALREADY_PROCESSED`, `NOT_ELIGIBLE`(후기 조건), `ALREADY_REVIEWED`, `LOCKED_FIELD`, `BELOW_ACCEPTED`(정원 < 참여 확정 인원), `INVALID_INPUT`.
+모든 함수는 실패할 때 **정해진 오류 코드**를 돌려주고, 서버 액션이 그것을 spec 8.4·8.6·8.8의 문구로 바꾼다. 방식(SP2에서 정함): `raise exception using errcode = 'P0001', message = 'FULL'`처럼 오류 코드를 message에 넣는다. supabase-js에서는 `error.message`가 오류 코드다. 성공하면 바뀐 행을 돌려준다(`apply_to_socialing`은 만든 `applications` 행). 오류 코드 예: `NOT_AUTHENTICATED`, `NOT_HOST`, `IS_HOST`, `NOT_OPEN`(신청 불가), `DEADLINE_PASSED`, `FULL`, `HOST_CANCELED`, `ALREADY_APPLIED`, `STARTED`(소셜링 일시 지남), `NOT_STARTED`, `INVALID_STATE`, `ALREADY_PROCESSED`, `NOT_ELIGIBLE`(후기 조건), `ALREADY_REVIEWED`, `LOCKED_FIELD`, `BELOW_ACCEPTED`(정원 < 참여 확정 인원), `INVALID_INPUT`, `ALREADY_REPORTED`(MS14 이미 신고함).
 
 | 함수 | 호출 화면 | 검사 |
 |---|---|---|
@@ -146,6 +150,10 @@ erDiagram
 | `cancel_socialing(id)` | P11 → O04 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), completed·canceled 아님(`INVALID_STATE`). 일시가 지나도 종료 전이면 된다. 신청 상태는 바꾸지 않는다. 소셜링 행 잠금. 성공하면 바뀐 소셜링 행 |
 | `create_socialing(title, description, category_id, has_alcohol, branch_id, region_code, place_name, starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, cover_photo_path)` | P07 | 로그인(`NOT_AUTHENTICATED`), 입력 범위(spec 6장, 글은 앞뒤 공백을 빼고 셈), 신청 마감 ≤ 소셜링 일시, 소셜링 일시 > now(), 장소는 스터디지점 id 하나 또는 지역(시·군·구 코드 5자리) + 장소 이름(외부 장소 행을 새로 만든다), 대표 사진은 null이거나 쓰는 사람 폴더에 실제로 올라간 `socialing-photos` 파일. 모두 아니면 `INVALID_INPUT`. 승인 기준은 호스트 승인일 때만 남기고 비면 null. host_id = auth.uid(), status = recruiting. 성공하면 만든 소셜링 행 |
 | `update_socialing(id, …등록과 같은 입력)` | P08 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), 종료·호스트 취소 아님(`INVALID_STATE`), 입력 범위는 등록과 같음(소셜링 일시 > now()는 바꿀 때만). 소셜링 행을 잠근 뒤 센다: 참여 확정자가 있으면 소셜링 일시·장소·총 참가비 변경, 승인 대기가 있으면 모집 방식 변경 `LOCKED_FIELD`, 정원 < 참여 확정 인원 `BELOW_ACCEPTED`. 일시는 같은 분이면 바꾸지 않은 것으로 보고 지금 값을 둔다. 장소는 같으면(외부 장소는 지역·이름이 같으면) 그대로, 바뀐 외부 장소는 새 행. 사진은 지금 경로 그대로 · null(지움) · 쓰는 사람 폴더의 새 파일. 성공하면 바뀐 소셜링 행 |
+| `create_socialing_v2(…등록과 같은 입력, fee_note, min_age, max_age, material_url)` (MS14) | P07 | `create_socialing` 검사 전부 + 참가비 설명은 앞뒤 공백을 뺀 100자까지이고 총 참가비 > 0이면 비울 수 없음, 호스트 승인이면 승인 기준을 비울 수 없음, 연령 조건은 각각 null이거나 1~99·최소 ≤ 최대(호스트 승인일 때만 남기고 선착순이면 버림, 둘 다 null = 제한 없음), 자료 링크는 비었거나 `https://`로 시작하고 공백 없이 주소 이름에 점이 있는 500자 이하. 모두 아니면 `INVALID_INPUT`. 새 인자 4개는 기본값 null. 같은 이름에 인자를 더하면 main 코드의 호출이 깨져서 새 이름이고, 옛 `create_socialing`은 MS15 첫 PR에서 지운다 |
+| `update_socialing_v2(id, …create_socialing_v2와 같은 입력)` (MS14) | P08 | `update_socialing` 검사 전부 + 등록 v2의 입력 범위. 참여 확정자가 있으면 이미 적힌 참가비 설명을 바꿀 때 `LOCKED_FIELD`(앞뒤 공백만 다르면 같은 설명, 비어 있던 설명은 채울 수 있음). 선착순으로 바꾸면 승인 기준·연령 조건을 지운다. 옛 `update_socialing`은 MS15 첫 PR에서 지운다 |
+| `reject_application(application_id, reason, note)` (MS14) | P11 → O04 거절 | `decide_application` 거절과 같은 검사(`INVALID_INPUT` 없는 신청, `NOT_HOST`, `INVALID_STATE`, `ALREADY_PROCESSED`, `STARTED`, 같은 잠금 순서) + 사유 필수, `age`는 그 소셜링에 연령 조건이 있을 때만, `other`면 덧붙일 말 필수, 덧붙일 말은 앞뒤 공백을 뺀 100자까지(`INVALID_INPUT`). 성공하면 바뀐 신청 행. 옛 거절 길 `decide_application(…, false)`은 MS15에서 막는다 |
+| `create_report(socialing_id, reason, note)` (MS14) | P03 신고 시트 | 로그인(`NOT_AUTHENTICATED`), 사유 필수·`other`면 설명 필수·설명은 앞뒤 공백을 뺀 300자까지, 없는 소셜링(`INVALID_INPUT`), 호스트 본인(`IS_HOST`), 이미 신고(`ALREADY_REPORTED`, 동시에 두 번 보내도 유니크 제약이 막음). 신청 여부·소셜링 상태와 관계없이 된다. 성공하면 만든 신고 행 |
 | `create_review(socialing_id, body, photo_path, members_match, extra_money, content_match)` | P09 | 없는 소셜링 `INVALID_INPUT`, 그 소셜링의 참여 확정자(`NOT_ELIGIBLE`, 호스트 본인 포함), completed(`INVALID_STATE`), 미작성(`ALREADY_REVIEWED`, 동시에 두 번 올려도 유니크 제약이 막음), 글은 앞뒤 공백·줄바꿈을 뺀 10~500자, 질문 3개 모두, 사진은 null이거나 쓰는 사람 폴더(`사용자id/파일명`)에 실제로 올라간 `review-photos` 파일(아니면 `INVALID_INPUT`). 후기와 `review_checks`를 함께 저장하고, 성공하면 만든 후기 행(비공개 응답 없음) |
 
 ## 6. 폴더 구조
@@ -241,7 +249,7 @@ erDiagram
 
 **마이그레이션**: Docker(로컬 Supabase)는 쓰지 않는다. SQL은 `supabase/migrations/`에 파일로 남긴다. 클라우드 세션은 HTTP/HTTPS로만 나가므로(Claude Code 공식 문서, 2026-10-13 시험에서 80·443 외 포트 막힘) Postgres 직접 접속인 `supabase db push`는 기대하지 않는다. 기본 방법은 Supabase Management API(HTTPS `api.supabase.com`, `SUPABASE_ACCESS_TOKEN`)로 원격 dev에 적용하는 것이다. SP5에서 정한 방법: `npm run db:push`(`scripts/db-push.mts`)가 `POST /database/query`로 파일 하나를 트랜잭션 하나로 적용하고, 같은 트랜잭션에서 `supabase_migrations.schema_migrations`에 파일 이름의 버전·이름을 남긴다. 적용 기록용 엔드포인트(`POST /database/migrations`)는 버전을 적용 시각으로 새로 붙여 파일 버전과 달라지고(Supabase CLI가 같은 파일을 다시 적용하려 함), API로 되돌리기도 막혀 있어(production 브랜치) 쓰지 않는다. 막히면 ② 대시보드 SQL 편집기 ③ PM의 로컬 터미널(`supabase link` + `db push`, `SUPABASE_DB_PASSWORD`) 순서이고, 기록 방식이 CLI와 같아서 ③으로 바꿔도 이미 적용한 파일을 다시 적용하지 않는다. 타입 생성은 `npm run db:types`(`GET /types/typescript`). 자세한 규칙은 AGENTS.md "보안과 환경".
 
-**시드**: `npm run seed` 한 번으로 데모 데이터 삭제(사진 버킷 2개 비우기 포함, Storage API) → 데모 계정 생성(관리자 API: `@supabase/supabase-js`의 `createClient`에 secret 키, auth 옵션 `persistSession`·`autoRefreshToken`·`detectSessionInUrl`은 false, 이메일 인증 완료 상태) → 지역·지점·카테고리 → 대표 사진·후기 사진 업로드(그 사람 폴더 `<사용자 id>/<파일 이름>`, 앱이 올리는 폴더 규칙과 같아 수정 화면이 그대로 동작) → 소셜링·신청·후기(사진 경로 포함)·비공개 응답. 날짜는 실행 시점 기준 상대값. 두 번 실행해도 결과가 같고 1분 안에 끝난다. 요구 조건은 spec 7장. 사진은 `scripts/seed-assets/`(Gemini로 만든 이미지, 출처는 `SOURCES.md`)를 줄이지 않고 그대로 올리고, 어느 소셜링·후기에 붙는지는 `seed-data.mts`의 `cover_photo`·`photo`. 사진 파일은 지우기 전에 먼저 읽어서, 빠진 파일이 있으면 아무것도 지우지 않고 멈춘다. 사진이 없는 소셜링은 카테고리 그림.
+**시드**: `npm run seed` 한 번으로 데모 데이터 삭제(사진 버킷 2개 비우기 포함, Storage API) → 데모 계정 생성(관리자 API: `@supabase/supabase-js`의 `createClient`에 secret 키, auth 옵션 `persistSession`·`autoRefreshToken`·`detectSessionInUrl`은 false, 이메일 인증 완료 상태) → 지역·지점·카테고리 → 대표 사진·후기 사진 업로드(그 사람 폴더 `<사용자 id>/<파일 이름>`, 앱이 올리는 폴더 규칙과 같아 수정 화면이 그대로 동작) → 소셜링(MS14 참가비 설명·연령 조건·자료 링크 포함)·신청(거절 사유 포함)·후기(사진 경로 포함)·비공개 응답. 지울 때는 신고(MS14)도 비운다. 날짜는 실행 시점 기준 상대값. 두 번 실행해도 결과가 같고 1분 안에 끝난다. 요구 조건은 spec 7장. 사진은 `scripts/seed-assets/`(Gemini로 만든 이미지, 출처는 `SOURCES.md`)를 줄이지 않고 그대로 올리고, 어느 소셜링·후기에 붙는지는 `seed-data.mts`의 `cover_photo`·`photo`. 사진 파일은 지우기 전에 먼저 읽어서, 빠진 파일이 있으면 아무것도 지우지 않고 멈춘다. 사진이 없는 소셜링은 카테고리 그림.
 - 데모 계정 이메일은 메일이 가지 않는 `@socialing.test` 주소이고, 시드는 이 도메인의 계정만 지우고 다시 만든다.
 - 데모 계정 비밀번호는 `DEMO_PASSWORD` 환경 변수. 없으면 시드가 새로 만들어 `.env.local`에 저장한다(공개 저장소라 코드에 두지 않음). E2E도 같은 값을 읽는다(`playwright.config.ts`가 `.env.local`을 읽음).
 
