@@ -87,6 +87,10 @@ export type FixtureOptions = {
   maxAge?: number;
   /** 자료 링크 (MS14 SH3). 기본 없음 */
   materialUrl?: string;
+  /** 제목에서 "[E2E]" 뒤. 주면 제목이 "[E2E]<titleTail>"(40자까지)가 된다. 기본은 "[E2E] 테스트 소셜링 <시각>" */
+  titleTail?: string;
+  /** 주면 이 이름의 외부 장소를 만들어 쓴다("[E2E]"로 시작, 40자까지. 끝에 deleteTestVenues). 기본은 첫 장소 */
+  externalPlaceName?: string;
 };
 
 /** 테스트 전용 소셜링을 만들고 id를 돌려준다. 제목은 "[E2E]"로 시작한다. */
@@ -107,15 +111,29 @@ export async function createFixtureSocialing(options: FixtureOptions): Promise<n
     minAge,
     maxAge,
     materialUrl,
+    titleTail,
+    externalPlaceName,
   } = options;
   const sqlOrNull = (value: string | number | undefined) =>
     value === undefined ? "null" : typeof value === "number" ? String(Math.trunc(value)) : sqlText(value);
-  const title = `[E2E] 테스트 소셜링 ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const title =
+    titleTail !== undefined ? `[E2E]${titleTail}` : `[E2E] 테스트 소셜링 ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  if (externalPlaceName !== undefined && !externalPlaceName.startsWith("[E2E]")) {
+    throw new Error('테스트 외부 장소 이름은 "[E2E]"로 시작해야 지울 수 있습니다.');
+  }
   const acceptedEmails = accepted.map((u) => sqlText(DEMO_USERS[u].email)).join(", ");
 
   const rows = await runQuery<{ id: number }>(`
     with host as (
       select id from auth.users where email = ${sqlText(emailOf(host))}
+    ), place as (
+      ${
+        externalPlaceName !== undefined
+          ? `insert into public.venues (type, name, region_id)
+             select 'external', ${sqlText(externalPlaceName)}, (select region_id from public.venues order by id limit 1)
+             returning id`
+          : "select id from public.venues order by id limit 1"
+      }
     ), inserted as (
       insert into public.socialings
         (host_id, title, description, category_id, has_alcohol, venue_id,
@@ -123,7 +141,7 @@ export async function createFixtureSocialing(options: FixtureOptions): Promise<n
          fee_note, min_age, max_age, material_url)
       select host.id, ${sqlText(title)}, ${sqlText(description)},
         (select id from public.categories where slug = 'learning'), false,
-        (select id from public.venues order by id limit 1),
+        (select id from place),
         now() + interval '${startsInHours} hours',
         now() + interval '${deadlineInHours} hours',
         ${Math.trunc(fee)}, ${capacity}, ${staffCount}, '${joinType}', ${approvalCriteria ? sqlText(approvalCriteria) : "null"}, '${status}',

@@ -20,7 +20,7 @@ export function ManageSummary({ socialing }: { socialing: ManagedSocialing }) {
         {socialing.status_tag && <StatusTag tag={socialing.status_tag} />}
       </div>
       <h2 className="text-title-lg break-words break-keep text-text-primary">{socialing.title}</h2>
-      <p className="text-body-md break-keep text-text-secondary">
+      <p className="text-body-md break-words break-keep text-text-secondary">
         {formatDateTime(socialing.starts_at)} · {formatVenue(socialing.venue_type, socialing.venue_name)} · {joinType}
       </p>
       <p className="flex flex-wrap items-center gap-x-[5px] text-body-md text-text-primary">
