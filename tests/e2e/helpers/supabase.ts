@@ -80,6 +80,13 @@ export type FixtureOptions = {
   approvalCriteria?: string;
   /** 총 참가비(원). 기본 0 */
   fee?: number;
+  /** 참가비 설명 (MS14 U3). 기본 없음 */
+  feeNote?: string;
+  /** 연령 조건 (MS14 SH1b). 기본 없음 */
+  minAge?: number;
+  maxAge?: number;
+  /** 자료 링크 (MS14 SH3). 기본 없음 */
+  materialUrl?: string;
 };
 
 /** 테스트 전용 소셜링을 만들고 id를 돌려준다. 제목은 "[E2E]"로 시작한다. */
@@ -96,7 +103,13 @@ export async function createFixtureSocialing(options: FixtureOptions): Promise<n
     staffCount = 0,
     approvalCriteria,
     fee = 0,
+    feeNote,
+    minAge,
+    maxAge,
+    materialUrl,
   } = options;
+  const sqlOrNull = (value: string | number | undefined) =>
+    value === undefined ? "null" : typeof value === "number" ? String(Math.trunc(value)) : sqlText(value);
   const title = `[E2E] 테스트 소셜링 ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const acceptedEmails = accepted.map((u) => sqlText(DEMO_USERS[u].email)).join(", ");
 
@@ -106,13 +119,15 @@ export async function createFixtureSocialing(options: FixtureOptions): Promise<n
     ), inserted as (
       insert into public.socialings
         (host_id, title, description, category_id, has_alcohol, venue_id,
-         starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, status)
+         starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, status,
+         fee_note, min_age, max_age, material_url)
       select host.id, ${sqlText(title)}, ${sqlText(description)},
         (select id from public.categories where slug = 'learning'), false,
         (select id from public.venues order by id limit 1),
         now() + interval '${startsInHours} hours',
         now() + interval '${deadlineInHours} hours',
-        ${Math.trunc(fee)}, ${capacity}, ${staffCount}, '${joinType}', ${approvalCriteria ? sqlText(approvalCriteria) : "null"}, '${status}'
+        ${Math.trunc(fee)}, ${capacity}, ${staffCount}, '${joinType}', ${approvalCriteria ? sqlText(approvalCriteria) : "null"}, '${status}',
+        ${sqlOrNull(feeNote)}, ${sqlOrNull(minAge)}, ${sqlOrNull(maxAge)}, ${sqlOrNull(materialUrl)}
       from host
       returning id
     )
@@ -324,7 +339,7 @@ export async function callInDbHolding(user: DemoUserKey, call: string, holdSecon
     return "OK";
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    const code = /\b(FULL|ALREADY_APPLIED|ALREADY_PROCESSED|DEADLINE_PASSED|HOST_CANCELED|IS_HOST|NOT_OPEN)\b/.exec(message);
+    const code = /\b(FULL|ALREADY_APPLIED|ALREADY_PROCESSED|ALREADY_REPORTED|DEADLINE_PASSED|HOST_CANCELED|IS_HOST|NOT_OPEN)\b/.exec(message);
     return code ? code[1] : message;
   }
 }
