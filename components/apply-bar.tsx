@@ -7,6 +7,7 @@ import { ConfirmApplySheet } from "@/components/confirm-apply-sheet";
 import { ConfirmCancelApplicationSheet } from "@/components/confirm-cancel-application-sheet";
 import { CountPill } from "@/components/count-pill";
 import { formatDateTime, formatFee } from "@/lib/format";
+import { refundPolicyText, showsRefundPolicy } from "@/lib/refund-policy";
 import type { ApplyBarViewer } from "@/lib/queries/my-socialings";
 import type { ClosedReason, SocialingDetail } from "@/lib/queries/socialings";
 import { withNext } from "@/lib/routes";
@@ -149,6 +150,9 @@ export function ApplyBar({ socialing, viewer }: { socialing: SocialingDetail; vi
           socialingId={socialing.id}
           applicationId={application.id}
           firstCome={socialing.join_type === "first_come"}
+          status={application.status}
+          startsAt={socialing.starts_at}
+          fee={socialing.fee}
         />
       </Shell>
     );
@@ -217,8 +221,9 @@ export function ApplyBar({ socialing, viewer }: { socialing: SocialingDetail; vi
   );
 }
 
-/** 신청 확인 O02에 넘길 요약 (일시는 Asia/Seoul로 바꾼 글자) */
+/** 신청 확인 O02에 넘길 요약 (일시는 Asia/Seoul로 바꾼 글자, 취소·환불 규칙은 상세를 그리는 순간 기준) */
 function applySheetProps(socialing: SocialingDetail) {
+  const now = new Date();
   return {
     socialingId: socialing.id,
     title: socialing.title,
@@ -227,6 +232,9 @@ function applySheetProps(socialing: SocialingDetail) {
     fee: formatFee(socialing.fee),
     joinType: socialing.join_type,
     approvalCriteria: socialing.approval_criteria,
+    refundPolicy: showsRefundPolicy(socialing.fee, socialing.starts_at, now)
+      ? refundPolicyText(socialing.starts_at, socialing.join_type, now)
+      : null,
   };
 }
 

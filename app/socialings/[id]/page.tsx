@@ -10,7 +10,9 @@ import { HostProfileRow } from "@/components/host-profile-row";
 import { HostStats, HostStatsFailed, HostStatsSkeleton } from "@/components/host-stats";
 import { InfoList } from "@/components/info-list";
 import { IntroText } from "@/components/intro-text";
+import { CollapsibleRow } from "@/components/collapsible-row";
 import { NoticeBox } from "@/components/notice-box";
+import { RefundPolicyList } from "@/components/refund-policy-list";
 import { SkeletonDetail } from "@/components/skeleton";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusTag } from "@/components/status-tag";
@@ -20,6 +22,7 @@ import { UrlNotice } from "@/components/url-notice";
 import { formatDateTime, formatFee, formatVenue } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { noticeMessage } from "@/lib/notices";
+import { REFUND_TEXT, refundPolicyText, showsRefundPolicy } from "@/lib/refund-policy";
 import { getHostRecord, type HostRecord } from "@/lib/queries/host-record";
 import { getApplyBarViewer, type ApplyBarViewer } from "@/lib/queries/my-socialings";
 import { getSocialing, socialingPhotoUrl, type SocialingDetail } from "@/lib/queries/socialings";
@@ -140,7 +143,7 @@ export default async function SocialingPage({ params, searchParams }: Props) {
             </div>
           </section>
 
-          <BeforeApplySection />
+          <BeforeApplySection socialing={socialing} />
         </div>
       </main>
       <ApplyBar socialing={socialing} viewer={viewer} />
@@ -160,8 +163,13 @@ const SOCIALING_RULES = [
 /**
  * "신청 전에 확인해 주세요" (spec M4·8.9 P03): 신청 버튼 바로 위에서 읽히게 상세 맨 아래에 둔다.
  * 소셜링 규칙(notice-box/caution)은 모든 상세에 늘 펼쳐 보인다(호스트 본인·지난 소셜링 포함). 신청 확인 창(O02)에는 넣지 않는다.
+ * 그 아래 "취소·환불 규칙" 접는 줄은 참가비가 있고 소셜링 일시 전일 때만(spec 6장 환불 기준). 상세를 그리는 순간으로 계산한다.
  */
-function BeforeApplySection() {
+function BeforeApplySection({ socialing }: { socialing: SocialingDetail }) {
+  const now = new Date();
+  const refund = showsRefundPolicy(socialing.fee, socialing.starts_at, now)
+    ? refundPolicyText(socialing.starts_at, socialing.join_type, now)
+    : null;
   return (
     <section className="flex flex-col gap-sm">
       <h3 className="text-title-lg text-text-primary">신청 전에 확인해 주세요</h3>
@@ -177,6 +185,11 @@ function BeforeApplySection() {
             ))}
           </ul>
         </NoticeBox>
+        {refund && (
+          <CollapsibleRow title={REFUND_TEXT.title} className="-mb-xs">
+            <RefundPolicyList policy={refund} />
+          </CollapsibleRow>
+        )}
       </div>
     </section>
   );

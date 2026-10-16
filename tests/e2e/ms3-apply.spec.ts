@@ -15,7 +15,6 @@ import {
 const bar = (page: Page) => page.getByRole("region", { name: "신청" });
 const sheet = (page: Page) => page.getByRole("dialog", { name: "신청할까요?" });
 const people = (page: Page) => page.locator("dl > div").filter({ hasText: "인원" });
-const PAYMENT_NOTICE = "결제 기능이 없는 데모입니다. 실제 서비스에서는 플랫폼 공통 환불 규칙을 따릅니다.";
 
 const created: number[] = [];
 test.afterAll(async () => {
@@ -40,7 +39,7 @@ async function openSheet(page: Page) {
 }
 
 test.describe("MS3 신청 O02", () => {
-  test("시나리오 4단계·P03-B16: 비로그인 신청하기 → 로그인 → 상세 → O02(승인 기준·결과 안내·결제 안내) → 승인 대기", async ({
+  test("시나리오 4단계·P03-B16: 비로그인 신청하기 → 로그인 → 상세 → O02(승인 기준·결과 안내, 0원이라 환불 규칙 없음) → 승인 대기", async ({
     page,
   }) => {
     const id = await fixture({
@@ -62,7 +61,9 @@ test.describe("MS3 신청 O02", () => {
     await expect(sheet(page)).toContainText("호스트 승인 기준");
     await expect(sheet(page)).toContainText("영어로 1분 자기소개를 준비해 주세요.");
     await expect(sheet(page)).toContainText("호스트가 승인하면 참여가 확정돼요");
-    await expect(sheet(page)).toContainText(PAYMENT_NOTICE);
+    // 참가비 0원: 취소·환불 규칙도 결제 안내도 없다 (MS12 U1, spec M7. 참가비가 있는 경우는 ms12-refund)
+    await expect(sheet(page)).not.toContainText("취소·환불 규칙");
+    await expect(sheet(page)).not.toContainText("결제");
     await expectNoHorizontalScroll(page);
 
     // 돌아가기 → 창만 닫힘

@@ -599,6 +599,7 @@ components:
 | section-header/default | 제목 title-lg(800), 오른쪽 text-link "전체 보기 ›"(primary-strong, 600), 아래 기준 문구 body-sm text-secondary | 홈·목록 묶음 머리 ("기준: 가까운 일시 순") |
 | notice-box/feed-criteria | surface-muted 바탕, text-secondary, 모서리 lg, 여백 14·16 | 회색 안내: 신청 확인(O02)의 승인 기준, 관리 화면의 종료·취소 안내 등 |
 | notice-box/info | primary-soft 바탕, 제목 primary-strong 700 + 앞에 정보 아이콘 16, 본문 text-primary, 모서리 lg, 여백 14·16 | 상세(P03) 소개 카드 안 맨 아래 "호스트 승인 기준". 늘 펼쳐 보여야 하는 짧은 안내(C5 ②) |
+| collapsible-row | 흰 카드 안 제목 줄(title-md text-primary, 높이 52, 오른쪽 ⌄ 20 text-secondary). 누르면 아래로 펼쳐지고 ⌃. 버튼에 aria-expanded. 펼친 내용은 body-md | 상세(P03) "신청 전에 확인해 주세요"의 "취소·환불 규칙"(C5 ③) |
 | notice-box/caution | caution-soft 바탕, 제목 caution 700 + 앞에 주의 아이콘 16, 본문 text-primary, 모서리 lg, 여백 14·16. 항목은 "• " 줄 | 상세(P03) "신청 전에 확인해 주세요"의 "소셜링 규칙"(플랫폼 공통 금지 행위, 호스트가 바꿀 수 없음). 호스트가 쓴 승인 기준(info)과 색으로 구분된다(C5 ②) |
 | notice-box/lock-privacy | surface-muted 바탕, 모서리 xl, 여백 20. 자물쇠 아이콘 + "비공개 확인 질문"(title-md), 안내(body-sm, text-secondary) "개별 응답은 호스트를 포함해 누구에게도 보이지 않아요. 합계만 호스트 기록에 쓰여요.", 그 아래 question-block 3개 (시안 P09) | 후기 쓰기(P09)의 비공개 질문 |
 
@@ -609,7 +610,7 @@ components:
 - info-list 카드 → "소개" 묶음 → "호스트" 묶음 → "신청 전에 확인해 주세요" 묶음 순서. 묶음 제목은 title-lg.
 - 소개: 흰 카드(모서리 xl, shadow-card, 여백 16) 안에 글. 5줄을 넘으면 접고 "더보기"(text-link, primary-strong 600 + ⌄, 왼쪽 정렬, 누르는 영역 44). 호스트 승인 기준이 있으면 이 카드 안 맨 아래 notice-box/info.
 - 호스트: host-stats 카드 하나(위 host-stats).
-- 신청 전에 확인해 주세요: 아래 고정 영역 바로 위, 흰 카드(모서리 xl, shadow-card, 여백 16) 안에 notice-box/caution "소셜링 규칙". 모든 상세에 늘 있다(호스트 본인·지난 소셜링 포함). 이 묶음은 상세에만 두고 신청 확인 창에는 넣지 않는다.
+- 신청 전에 확인해 주세요: 아래 고정 영역 바로 위, 흰 카드(모서리 xl, shadow-card, 여백 16) 안에 notice-box/caution "소셜링 규칙". 모든 상세에 늘 있다(호스트 본인·지난 소셜링 포함). 이 상자는 상세에만 두고 신청 확인 창에는 넣지 않는다. 총 참가비가 있고 소셜링 일시 전이면 그 아래 collapsible-row "취소·환불 규칙"(처음엔 접힘).
 
 ### C3 탐색과 피드백
 
@@ -629,9 +630,9 @@ components:
 | dialog/confirm | surface, 모서리 xl, 여백 20, 뒤 dim. 제목 + 본문 + secondary "돌아가기" + primary 행동 | 호스트 동작 확인(O04)의 확정·종료: "확정할까요? 확정하면 되돌릴 수 없어요." |
 | dialog/confirm-danger | confirm과 같고 행동 버튼이 button/danger/default | O04의 호스트 취소·거절: "호스트 취소할까요?" |
 | dialog/result | 버튼 하나 primary "확인" | 결과 안내: "신청하지 못했어요 · 방금 정원이 찼어요" |
-| bottom-sheet/confirm-apply | surface, 위 모서리 2xl, 손잡이 36×4, 뒤 dim. 제목 title-lg "신청할까요?" + 소셜링 요약 두 줄(body-md, text-secondary: "제목 · 일시" / "장소 · 총 참가비") + notice-box 승인 기준(있을 때) + 결과 안내("• …", body-md) + 결제 안내 문구(body-sm, text-muted), 아래 secondary "돌아가기" + primary "신청하기"(폭 1:2). 네트워크 오류면 버튼 위에 오류 문구(body-sm, danger)와 "다시 시도" (문구는 docs/spec.md M7·8.4) | 신청 확인(O02) |
+| bottom-sheet/confirm-apply | surface, 위 모서리 2xl, 손잡이 36×4, 뒤 dim. 제목 title-lg "신청할까요?" + 소셜링 요약 두 줄(body-md, text-secondary: "제목 · 일시" / "장소 · 총 참가비") + notice-box 승인 기준(있을 때) + 결과 안내("• …", body-md) + 총 참가비가 있으면 notice-box/feed-criteria "취소·환불 규칙"(상세 collapsible-row와 같은 글, 접지 않음, 마지막 데모 안내만 body-sm text-muted), 아래 secondary "돌아가기" + primary "신청하기"(폭 1:2). 네트워크 오류면 버튼 위에 오류 문구(body-sm, danger)와 "다시 시도" (문구는 docs/spec.md M7·8.4) | 신청 확인(O02) |
 | bottom-sheet/trust-criteria | bottom-sheet와 같은 틀. 제목 줄 trust-label + "등급 조건"(title-lg), 설명 "최근 6개월 기록으로 아래 3가지를 모두 채운 호스트예요"(body-md, text-secondary), 조건 3행 상자(border-default, 모서리 xl, 행 사이 border-divider, 행마다 채움 ✓ 원(text-primary) · 조건(body-md) · 이 호스트의 값(title-md, 소개 일치는 뒤에 "(응답 N건)" body-sm text-muted)), 아래 "별점이나 점수가 아니라 공개된 기록으로만 정해요"(body-sm, text-muted), primary "확인"(전체 폭) | 등급 조건(O03) |
-| bottom-sheet/confirm-cancel-application | bottom-sheet와 같은 틀. 제목 "신청을 취소할까요?", 선착순일 때만 본문 "취소하면 다른 사람이 자리를 채울 수 있어요.", 버튼 secondary "돌아가기" + danger "신청 취소"(폭 1:1). 네트워크 오류면 버튼 위에 오류 문구와 "다시 시도" | 신청 취소 확인(O05), 상세에서 "신청 취소"를 누를 때 |
+| bottom-sheet/confirm-cancel-application | bottom-sheet와 같은 틀. 제목 "신청을 취소할까요?", 선착순일 때만 본문 "취소하면 다른 사람이 자리를 채울 수 있어요.", 총 참가비가 있으면 그 아래 환불 기준 한 줄("지금 취소하면 전액 환불 기준이에요" 등, body-md text-secondary), 버튼 secondary "돌아가기" + danger "신청 취소"(폭 1:1). 네트워크 오류면 버튼 위에 오류 문구와 "다시 시도" | 신청 취소 확인(O05), 상세에서 "신청 취소"를 누를 때 |
 | bottom-sheet/filter-sheet | surface, 위 모서리 2xl, 손잡이 36×4, 제목 "필터" + 닫기 X(아래 옅은 구분선), 스크롤 내용(카테고리 "여러 개 선택" · 날짜 · 장소, 묶음 사이 24), 아래 고정 secondary "초기화" + primary "소셜링 4개 보기"(폭 1:2, 위 옅은 구분선) | 탐색 필터(O01) |
 | empty-state/filter-no-results | 48px 원(surface-muted) 아이콘, 제목 title-md, 설명 body-sm, secondary "필터 초기화", 여백 48·20 | "조건에 맞는 소셜링이 없어요" |
 | empty-state/no-applications | 아이콘 원 primary-soft, primary "탐색하기" | "아직 신청한 소셜링이 없어요" (다른 빈 화면도 이 모양에 글과 버튼만 바꿈) |
@@ -680,7 +681,7 @@ components:
 | ② 안내 상자 | notice-box/info, notice-box/caution | 늘 펼쳐 보여야 하는 짧은 안내 (예: 승인 기준, 환불 규칙 요약) | info: 위 notice-box/info. caution: caution-soft 바탕, 제목 caution 700, 본문 text-primary. 모서리 lg, 여백 14·16 |
 | ③ 접는 줄 | collapsible-row | 길거나 가끔 보는 정보 (예: 규칙 전문, 비용 내역) | 흰 카드 안 제목 줄(title-md, 높이 52, 오른쪽 ⌄). 누르면 아래로 펼쳐지고 ⌃. 버튼에 aria-expanded. 여러 개면 줄 사이 border-divider |
 
-- notice-box/caution은 MS12 규칙 안내(SH4a)에서 만들었다. collapsible-row는 **정의만** 한다. 처음 쓰는 기능 PR에서 만든다(쓰지 않는 부품을 미리 만들지 않음).
+- notice-box/caution은 MS12 규칙 안내(SH4a), collapsible-row는 MS12 취소·환불 규칙 안내(U1)에서 만들었다. 새 부품은 처음 쓰는 기능 PR에서 만든다(쓰지 않는 부품을 미리 만들지 않음).
 
 ### 시안과 다르게 정한 것
 
@@ -698,7 +699,7 @@ components:
 | 상세 아래 영역 5가지 | apply-bar 14가지 | spec 8.4 13줄 |
 | 상세(P03) 시안의 호스트 묶음에 trust-label이 두 번, 닉네임 없음 | 호스트 묶음은 avatar-initial + 닉네임, trust-label은 조건을 채운 호스트만 하나 | 등급 라벨은 기준을 채운 호스트에게 하나만 (spec M5) |
 | 등급 조건(O03) 시안의 라벨이 흰 바탕 + 테두리 | 다른 곳과 같은 trust-label(point 바탕) | 라벨 모양을 하나로. point 색은 trust-label에 쓴다 |
-| 신청 확인(O02) 요약이 "제목 · 일시" 한 줄 | 그 아래 "장소 · 총 참가비" 한 줄 더 | 결제 안내 바로 위에서 금액과 장소를 한 번 더 확인하게 (bottom-sheet/confirm-apply) |
+| 신청 확인(O02) 요약이 "제목 · 일시" 한 줄 | 그 아래 "장소 · 총 참가비" 한 줄 더 | 신청 버튼과 환불 규칙 위에서 금액과 장소를 한 번 더 확인하게 (bottom-sheet/confirm-apply) |
 | 로그인(P04)·가입(P05) 머리글 오른쪽에 사람 아이콘 원 | header-sub/default(뒤로 + 제목)만 | 로그인 전 화면에 프로필 원이 있으면 이미 로그인된 것처럼 보임 |
 | 지난 소셜링(P02) 시안의 배지가 네모에 가깝고 모집중이 연한 하늘 바탕, 카드 안 호스트 줄 위에 구분선 | 모든 목록이 같은 status-badge(알약, 모집중은 흰 바탕 + 테두리)와 같은 socialing-card | 배지 모양은 10-13 결정, 카드는 화면마다 같게 |
 | 등록(P07) 머리글 오른쪽에 사람 아이콘 원 | header-sub/default(뒤로 + 제목)만 | 하위 화면은 모두 header-sub |
