@@ -39,6 +39,8 @@ colors:
   category-culture-soft: "#F1EBFD"
   category-party: "#B8336A"
   category-party-soft: "#FCEAF2"
+  caution: "#8A4B00"
+  caution-soft: "#FFF4E0"
 typography:
   title-xl:
     fontFamily: Noto Sans KR
@@ -293,6 +295,10 @@ components:
     backgroundColor: "{colors.primary-soft}"
     textColor: "{colors.text-primary}"
     rounded: "{rounded.lg}"
+  notice-box-caution:
+    backgroundColor: "{colors.caution-soft}"
+    textColor: "{colors.text-primary}"
+    rounded: "{rounded.lg}"
 ---
 
 # 문화소셜링 DESIGN.md
@@ -346,7 +352,7 @@ components:
 | category-activity / -soft | #46720C / #EEF6DF | 운동·활동 | 흰 5.7:1, soft 위 5.1:1 |
 | category-culture / -soft | #7A45D1 / #F1EBFD | 문화·예술 | 흰 5.8:1, soft 위 5.0:1 |
 | category-party / -soft | #B8336A / #FCEAF2 | 파티·사교 | 흰 5.7:1, soft 위 4.9:1 |
-| caution / caution-soft | #8A4B00 / #FFF4E0 | notice-box/caution. **정의만 한다.** 쓰는 기능이 생길 때 front matter와 `globals.css`에 넣는다 | caution-soft 위 6.2:1 |
+| caution / caution-soft | #8A4B00 / #FFF4E0 | notice-box/caution(상세 "신청 전에 확인해 주세요"의 소셜링 규칙). 주의를 끄는 안내 상자에만 쓰고 버튼·상태 표시에는 쓰지 않는다 | caution-soft 위 6.2:1 |
 
 - 카테고리 이름(slug)은 코드와 같다: learning, hobby, activity, culture, party. 화면에 보이는 이름은 DB 그대로.
 - 카테고리 색은 **카테고리를 알아보는 곳에만** 쓴다: 카테고리 그림(category-art), 카드의 카테고리 이름과 점, 홈 카테고리 바로가기, 상세 대표 그림. 버튼, 링크, 상태 표시에는 쓰지 않고, 특정 소셜링을 눈에 띄게 하는 데도 쓰지 않는다(유료 노출 없음).
@@ -593,15 +599,17 @@ components:
 | section-header/default | 제목 title-lg(800), 오른쪽 text-link "전체 보기 ›"(primary-strong, 600), 아래 기준 문구 body-sm text-secondary | 홈·목록 묶음 머리 ("기준: 가까운 일시 순") |
 | notice-box/feed-criteria | surface-muted 바탕, text-secondary, 모서리 lg, 여백 14·16 | 회색 안내: 신청 확인(O02)의 승인 기준, 관리 화면의 종료·취소 안내 등 |
 | notice-box/info | primary-soft 바탕, 제목 primary-strong 700 + 앞에 정보 아이콘 16, 본문 text-primary, 모서리 lg, 여백 14·16 | 상세(P03) 소개 카드 안 맨 아래 "호스트 승인 기준". 늘 펼쳐 보여야 하는 짧은 안내(C5 ②) |
+| notice-box/caution | caution-soft 바탕, 제목 caution 700 + 앞에 주의 아이콘 16, 본문 text-primary, 모서리 lg, 여백 14·16. 항목은 "• " 줄 | 상세(P03) "신청 전에 확인해 주세요"의 "소셜링 규칙"(플랫폼 공통 금지 행위, 호스트가 바꿀 수 없음). 호스트가 쓴 승인 기준(info)과 색으로 구분된다(C5 ②) |
 | notice-box/lock-privacy | surface-muted 바탕, 모서리 xl, 여백 20. 자물쇠 아이콘 + "비공개 확인 질문"(title-md), 안내(body-sm, text-secondary) "개별 응답은 호스트를 포함해 누구에게도 보이지 않아요. 합계만 호스트 기록에 쓰여요.", 그 아래 question-block 3개 (시안 P09) | 후기 쓰기(P09)의 비공개 질문 |
 
 **상세(P03) 배치** (견본 A안, 새 컴포넌트 이름 없이 위 부품을 놓는 방법)
 - 화면 바탕은 surface-bg이고, 흰 카드들이 그 위에 뜬다.
 - 대표 그림: 4:3. 사진이 있으면 사진, 없으면 그 카테고리 soft에서 surface-bg 쪽으로 옅어지는 그라데이션 + 가운데 카테고리 선 아이콘 84(카테고리 색, 선 굵기 1.5).
 - 제목 묶음: 흰 바탕 묶음이 대표 그림 위로 16 겹쳐 올라오고 위 모서리 2xl. 안에 status-badge(+status-tag) + 카테고리 줄(카테고리 이름은 카테고리 색 600 + 앞에 점, 술 여부 text-secondary), 제목 title-xl, host-profile-row.
-- info-list 카드 → "소개" 묶음 → "호스트" 묶음 순서. 묶음 제목 "소개" "호스트"는 title-lg.
+- info-list 카드 → "소개" 묶음 → "호스트" 묶음 → "신청 전에 확인해 주세요" 묶음 순서. 묶음 제목은 title-lg.
 - 소개: 흰 카드(모서리 xl, shadow-card, 여백 16) 안에 글. 5줄을 넘으면 접고 "더보기"(text-link, primary-strong 600 + ⌄, 왼쪽 정렬, 누르는 영역 44). 호스트 승인 기준이 있으면 이 카드 안 맨 아래 notice-box/info.
 - 호스트: host-stats 카드 하나(위 host-stats).
+- 신청 전에 확인해 주세요: 아래 고정 영역 바로 위, 흰 카드(모서리 xl, shadow-card, 여백 16) 안에 notice-box/caution "소셜링 규칙". 모든 상세에 늘 있다(호스트 본인·지난 소셜링 포함). 이 묶음은 상세에만 두고 신청 확인 창에는 넣지 않는다.
 
 ### C3 탐색과 피드백
 
@@ -672,7 +680,7 @@ components:
 | ② 안내 상자 | notice-box/info, notice-box/caution | 늘 펼쳐 보여야 하는 짧은 안내 (예: 승인 기준, 환불 규칙 요약) | info: 위 notice-box/info. caution: caution-soft 바탕, 제목 caution 700, 본문 text-primary. 모서리 lg, 여백 14·16 |
 | ③ 접는 줄 | collapsible-row | 길거나 가끔 보는 정보 (예: 규칙 전문, 비용 내역) | 흰 카드 안 제목 줄(title-md, 높이 52, 오른쪽 ⌄). 누르면 아래로 펼쳐지고 ⌃. 버튼에 aria-expanded. 여러 개면 줄 사이 border-divider |
 
-- notice-box/caution과 collapsible-row는 **정의만** 한다. 처음 쓰는 기능 PR에서 만든다(쓰지 않는 부품을 미리 만들지 않음).
+- notice-box/caution은 MS12 규칙 안내(SH4a)에서 만들었다. collapsible-row는 **정의만** 한다. 처음 쓰는 기능 PR에서 만든다(쓰지 않는 부품을 미리 만들지 않음).
 
 ### 시안과 다르게 정한 것
 
