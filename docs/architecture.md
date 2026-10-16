@@ -97,7 +97,7 @@ erDiagram
 | `status_tag` | 꼬리표 `closed`(신청 마감) / `full`(정원 마감) / null |
 | `closed_reason` | 신청할 수 없는 이유. spec 8.4의 2·13줄 순서로 `host_canceled` / `started`(소셜링 일시 지남) / `not_open`(종료) / `deadline` / `full`, 신청 가능하면 null |
 
-탐색 필터(MS6, spec M3)는 DB가 아니라 `lib/explore-filter.ts`가 거른다. P01 서버 컴포넌트가 현재 소셜링(`listExploreSocialings`: 카드 칸 + `venue_id`·`category_is_party`·`region_sido`)과 필터 목록(`getFilterCatalog`: 카테고리·스터디지점·지역)을 읽고, 주소 값(`parseExploreFilter`)으로 거른다(`filterSocialings`). 필터 시트의 "소셜링 N개 보기"도 같은 함수로 센다. 날짜는 Asia/Seoul 기준(`dateFilterRange`). 지역 코드(2자리 시·도, 5자리 시·군·구)는 `regions` 이름으로 바꿔 스터디지점·외부 장소 모두와 맞춘다.
+탐색 필터(MS6, spec M3)는 DB가 아니라 `lib/explore-filter.ts`가 거른다. P01 서버 컴포넌트가 현재 소셜링(`listExploreSocialings`: 카드 칸 + `venue_id`·`category_is_party`·`region_sido`)과 필터 목록(`getFilterCatalog`: 카테고리·스터디지점·지역)을 읽고, 주소 값(`parseExploreFilter`)으로 거른다(`filterSocialings`). 필터 시트의 "소셜링 N개 보기"도 같은 함수로 센다. 날짜는 Asia/Seoul 기준(`dateFilterRange`). 참가비(MS12)는 뷰의 총 참가비 `fee`를 겹치지 않는 네 구간(`feeInRange`)으로 거른다. 지역 코드(2자리 시·도, 5자리 시·군·구)는 `regions` 이름으로 바꿔 스터디지점·외부 장소 모두와 맞춘다.
 
 뷰는 `security_invoker`라 보는 사람 권한으로 읽는다. 비로그인은 applications를 못 읽으므로 참여 확정 인원만 SECURITY DEFINER 함수 `socialing_accepted_count(socialing_id)`가 숫자로 돌려준다. 누가 신청했는지는 이 경로로 나가지 않는다.
 
@@ -201,7 +201,7 @@ erDiagram
                           manage.ts(P11: my_hosted_socialings 관리 칸, hosted_socialing_applicants · P08: 지금 값과 잠금 기준),
                           host-record.ts(get_host_record. 상세가 본문과 따로 읽는다)
 /lib/format               날짜(Asia/Seoul)·금액·시·도 짧은 이름 표시, 날짜·시간 고르기 칸 값 ↔ 일시(한국 시간)
-/lib/explore-filter.ts    탐색 필터: 주소 값 읽기·만들기, 날짜 범위(Asia/Seoul), 거르기 (목록과 필터 시트가 같이 씀)
+/lib/explore-filter.ts    탐색 필터: 주소 값 읽기·만들기, 날짜 범위(Asia/Seoul), 참가비 구간, 거르기 (목록과 필터 시트가 같이 씀)
 /lib/simulated-state.ts   화면 상태 흉내 `?_state=empty|error|loading|partial` (운영 주소에서는 무시, decisions.md).
                           partial = 묶음 하나만 실패: 홈은 최근 인증 후기, 상세는 호스트 기록
 /supabase/migrations      테이블·enum·RLS·함수 SQL (파일 하나 = 변경 하나)

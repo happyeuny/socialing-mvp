@@ -21,7 +21,7 @@ test.describe("MS6 필터 칩과 필터 시트", () => {
     page,
   }) => {
     await page.goto("/explore");
-    await expect(chips(page).getByRole("button")).toHaveText(["", "날짜", "장소", "카테고리"]);
+    await expect(chips(page).getByRole("button")).toHaveText(["", "날짜", "장소", "카테고리", "참가비"]);
     await toggle(page).click();
     await expect(page).toHaveURL("/explore?hide_party=1");
 
@@ -68,7 +68,7 @@ test.describe("MS6 필터 칩과 필터 시트", () => {
 
     // 구 목록: 맨 위 "‹ 서울특별시"(시·도로 돌아감, 목록을 바꾸면 장소 묶음 맨 위로), "서울특별시 전체", 구 25곳
     await expect(sheet(page).getByRole("button", { name: "서울특별시" })).toBeInViewport();
-    await expect(sheet(page).getByRole("radio")).toHaveCount(4 + 2 + 1 + 25); // 날짜 4칸 + 장소 갈래 2칸 + 서울특별시 전체 + 구
+    await expect(sheet(page).getByRole("radio")).toHaveCount(4 + 2 + 1 + 25 + 5); // 날짜 4칸 + 장소 갈래 2칸 + 서울특별시 전체 + 구 + 참가비 5칸
     await sheet(page).getByText("마포구", { exact: true }).click();
     await expect(sheet(page).getByRole("radio", { name: "마포구" })).toBeChecked();
     const count = await sheetCount(page);
@@ -132,7 +132,7 @@ test.describe("MS6 필터 칩과 필터 시트", () => {
   }) => {
     await page.goto("/explore?hide_party=1");
     await chips(page).getByRole("button", { name: "날짜" }).click();
-    await expect(sheet(page).getByRole("radio", { name: "전체", exact: true })).toBeChecked();
+    await expect(sheet(page).getByRole("radiogroup", { name: "날짜" }).getByRole("radio", { name: "전체", exact: true })).toBeChecked();
     await sheet(page).getByText("이번 주", { exact: true }).click();
     await sheet(page).getByText("취미", { exact: true }).click();
     await showButton(page).click();
@@ -145,7 +145,7 @@ test.describe("MS6 필터 칩과 필터 시트", () => {
     await expect(sheet(page).getByRole("radio", { name: "이번 주", exact: true })).toBeChecked();
     await expect(sheet(page).getByRole("checkbox", { name: "취미" })).toBeChecked();
     await sheet(page).getByRole("button", { name: "초기화" }).click();
-    await expect(sheet(page).getByRole("radio", { name: "전체", exact: true })).toBeChecked();
+    await expect(sheet(page).getByRole("radiogroup", { name: "날짜" }).getByRole("radio", { name: "전체", exact: true })).toBeChecked();
     await expect(sheet(page).getByRole("checkbox", { name: "취미" })).not.toBeChecked();
     await sheet(page).getByRole("button", { name: "닫기" }).click();
     await expect(sheet(page)).toHaveCount(0);
@@ -156,7 +156,7 @@ test.describe("MS6 필터 칩과 필터 시트", () => {
     await sheet(page).getByRole("button", { name: "초기화" }).click();
     await showButton(page).click();
     await expect(page).toHaveURL("/explore?hide_party=1");
-    await expect(chips(page).getByRole("button")).toHaveText(["", "날짜", "장소", "카테고리"]);
+    await expect(chips(page).getByRole("button")).toHaveText(["", "날짜", "장소", "카테고리", "참가비"]);
   });
 
   test("390·320px: 칩 줄과 열린 시트에 가로 스크롤이 없다", async ({ page }) => {
