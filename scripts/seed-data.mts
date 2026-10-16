@@ -92,6 +92,8 @@ export type SeedSocialing = {
   join_type: "first_come" | "approval";
   approval_criteria?: string;
   status: "recruiting" | "confirmed" | "completed" | "canceled";
+  /** 대표 사진: scripts/seed-assets/의 파일 이름 (출처 SOURCES.md). 없으면 카테고리 그림 */
+  cover_photo?: string;
   confirmed_at?: string;
   completed_at?: string;
   canceled_at?: string;
@@ -103,6 +105,8 @@ export type SeedSocialing = {
 export type SeedReview = {
   user: DemoUserKey;
   body: string;
+  /** 후기 사진: scripts/seed-assets/의 파일 이름 (출처 SOURCES.md) */
+  photo?: string;
   created_at: string;
   checks: [membersMatch: boolean, extraMoney: boolean, contentMatch: boolean];
 };
@@ -118,6 +122,7 @@ export function demoSocialings(now = new Date()): SeedSocialing[] {
       key: "X",
       host: "B",
       title: "퇴근 후 영어 회화: 여행 영어 롤플레이",
+      cover_photo: "thumb-01-travel-english.jpg",
       description:
         "여행에서 자주 쓰는 표현을 짝을 바꿔 가며 롤플레이로 연습해요.\n공항, 호텔, 식당 상황 카드를 준비해 둘게요.\n실력보다 말해 보는 경험이 목표예요.",
       category: "learning",
@@ -158,6 +163,7 @@ export function demoSocialings(now = new Date()): SeedSocialing[] {
       key: "APPROVAL",
       host: "B",
       title: "영어로 내 일 소개하기: 3분 스피치",
+      cover_photo: "thumb-02-three-minute-speech.jpg",
       description:
         "각자 하는 일을 영어로 3분 동안 소개하고, 서로 질문을 주고받아요.\n스피치 원고는 미리 써 오면 좋아요.\n끝나고 표현 피드백을 정리해서 나눠 드려요.",
       category: "learning",
@@ -219,6 +225,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       key: "B_RECRUITING_SOON",
       host: "B",
       title: "아침 7시 영어 일기 쓰기",
+      cover_photo: "thumb-03-morning-journal.jpg",
       description: "출근 전에 영어로 짧은 일기를 쓰고, 서로 한 문장씩 고쳐 줘요.\n노트북이나 공책을 챙겨 오세요.",
       category: "learning",
       has_alcohol: false,
@@ -237,6 +244,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       key: "D_CONFIRMED",
       host: "D",
       title: "엑셀 함수 기초: 업무 자동화 첫걸음",
+      cover_photo: "thumb-04-spreadsheet.jpg",
       description: "VLOOKUP, IF, 피벗 테이블을 예제 파일로 직접 따라 해요.\n노트북이 꼭 필요해요.",
       category: "learning",
       has_alcohol: false,
@@ -256,6 +264,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       key: "C_DEADLINE_PASSED",
       host: "C",
       title: "작은 전시 함께 보고 이야기 나누기",
+      cover_photo: "thumb-05-small-exhibition.jpg",
       description: "동네 갤러리의 작은 전시를 함께 보고, 근처 카페에서 감상을 나눠요.",
       category: "culture",
       has_alcohol: false,
@@ -274,6 +283,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       key: "D_FULL",
       host: "D",
       title: "한강 5km 가볍게 달리기",
+      cover_photo: "thumb-06-han-river-run.jpg",
       description: "천천히 달리는 페이스(7분/km)로 5km를 함께 뛰어요.\n끝나고 스트레칭까지 같이 해요.",
       category: "activity",
       has_alcohol: false,
@@ -291,6 +301,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       key: "C_ONE_SEAT_LEFT",
       host: "C",
       title: "독서 소셜링: 이번 달 에세이 한 권",
+      cover_photo: "thumb-07-essay-book-club.jpg",
       description: "정해진 에세이 한 권을 읽고 와서 인상 깊은 문장을 나눠요.\n다 못 읽어도 괜찮아요.",
       category: "learning",
       has_alcohol: false,
@@ -308,6 +319,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       key: "D_PARTY",
       host: "D",
       title: "보드게임과 와인 한 잔",
+      cover_photo: "thumb-08-board-game-wine.jpg",
       description: "가벼운 보드게임 3종을 돌아가며 해요. 와인과 간단한 안주가 준비돼 있어요.\n처음 오신 분도 규칙부터 알려 드려요.",
       category: "party",
       has_alcohol: true,
@@ -344,6 +356,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       key: "C_HOBBY",
       host: "C",
       title: "필름 카메라로 골목 산책",
+      cover_photo: "thumb-09-film-camera-walk.jpg",
       description: "필름 카메라나 휴대폰 카메라로 연남동 골목을 걸으며 사진을 찍어요.",
       category: "hobby",
       has_alcohol: false,
@@ -400,6 +413,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       key: "C_EXPIRED_RECRUITING",
       host: "C",
       title: "캘리그라피 한 줄 써 보기",
+      cover_photo: "thumb-10-calligraphy.jpg",
       description: "붓펜으로 좋아하는 문장 한 줄을 써 봐요. 재료는 준비돼 있어요.",
       category: "hobby",
       has_alcohol: false,
@@ -430,7 +444,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       daysAgo: 16,
       participants: ["A", "P1", "P2", "P3"],
       reviews: [
-        { user: "A", body: "처음이라 긴장했는데 짝을 자주 바꿔서 금방 편해졌어요. 소개에 적힌 그대로 진행됐어요.", checks: MATCH },
+        { user: "A", body: "처음이라 긴장했는데 짝을 자주 바꿔서 금방 편해졌어요. 소개에 적힌 그대로 진행됐어요.", photo: "review-01-weekend-plans.jpg", checks: MATCH },
         { user: "P1", body: "표현 카드가 실용적이었어요. 다음에도 참여하고 싶어요.", checks: MATCH },
         { user: "P2", body: "인원도 소개와 같았고 추가 비용도 없었어요. 시간 관리가 좋았어요.", checks: MATCH },
       ],
@@ -470,7 +484,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       daysAgo: 45,
       participants: ["P1", "P2", "P5"],
       reviews: [
-        { user: "P1", body: "미리 읽어 오라는 안내가 있어서 대화가 깊어졌어요.", checks: MATCH },
+        { user: "P1", body: "미리 읽어 오라는 안내가 있어서 대화가 깊어졌어요.", photo: "review-02-book-chapter.jpg", checks: MATCH },
         { user: "P5", body: "참가자 구성이 소개와 조금 달랐지만 진행은 좋았어요.", checks: [false, false, true] },
       ],
     }),
@@ -529,7 +543,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       join_type: "first_come",
       daysAgo: 25,
       participants: ["P1", "P3"],
-      reviews: [{ user: "P1", body: "처음 여는 소셜링이라고 하셨는데 준비가 꼼꼼했어요.", checks: MATCH }],
+      reviews: [{ user: "P1", body: "처음 여는 소셜링이라고 하셨는데 준비가 꼼꼼했어요.", photo: "review-03-bookshop-walk.jpg", checks: MATCH }],
     }),
 
     // D: 열린 소셜링 3회 + 호스트 취소 1회, 응답 3건(5건 미만) → 숫자만, 등급 없음
@@ -563,7 +577,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       join_type: "first_come",
       daysAgo: 40,
       participants: ["P1", "P3", "P5"],
-      reviews: [{ user: "P3", body: "코스 안내가 정확했고 걷는 속도도 적당했어요.", checks: MATCH }],
+      reviews: [{ user: "P3", body: "코스 안내가 정확했고 걷는 속도도 적당했어요.", photo: "review-04-han-river-night.jpg", checks: MATCH }],
     }),
     completedSocialing(now, {
       key: "D_PAST_3",
@@ -580,7 +594,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       daysAgo: 60,
       participants: ["P4", "P5"],
       reviews: [
-        { user: "P4", body: "와인 설명은 좋았는데 안주 값을 따로 냈어요.", checks: [true, true, true] },
+        { user: "P4", body: "와인 설명은 좋았는데 안주 값을 따로 냈어요.", photo: "review-05-wine-tasting.jpg", checks: [true, true, true] },
       ],
     }),
   ];
