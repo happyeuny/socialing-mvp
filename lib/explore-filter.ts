@@ -1,13 +1,14 @@
-// 탐색(P01) 필터와 "파티·사교 숨기기" (spec M2, M3, 6장 날짜 필터, 8.7). 참가비는 MS12(SH1a).
+// 탐색(P01) 필터와 "파티·사교 숨기기" (spec M2, M3, 6장 날짜 필터, 8.7). 참가비(SH1a)·술 없음(U2)은 MS12.
 // 값은 주소(`/explore?…`)에 담고, 서버 목록과 필터 시트의 "소셜링 N개 보기"가 같은 함수로 거른다(목록과 숫자가 늘 같게).
 // 화면 표시와 같이 날짜는 한국 시간으로 계산한다. 서버·브라우저 어디서 불러도 같은 결과다.
 //
-// 주소: /explore?category=learning,hobby&date=week&branch=1&region=11440&fee=upto10k&hide_party=1
+// 주소: /explore?category=learning,hobby&date=week&branch=1&region=11440&fee=upto10k&no_alcohol=1&hide_party=1
 //   category   카테고리 slug 여러 개(쉼표)
 //   date       today · week · weekend
 //   branch     스터디지점 venue id 또는 all(전체 지점)
 //   region     지역 법정동코드: 2자리 = 시·도 전체, 5자리 = 시·군·구. 그 지역의 스터디지점과 외부 장소를 모두 거른다
 //   fee        총 참가비 구간 하나: free(0원) · upto10k(1~10,000원) · 10k-20k(10,001~20,000원) · over20k(20,001원 이상)
+//   no_alcohol 1 = 술 없는 소셜링만. 파티·사교 숨기기와 따로 움직이고, 파티·사교를 골라도 꺼지지 않는다
 //   hide_party 1 = 파티·사교 숨기기. 카테고리에 파티·사교를 고르면 꺼진다
 // 알 수 없는 값은 무시한다. branch와 region이 함께 오면 branch를 쓴다.
 
@@ -53,10 +54,19 @@ export type ExploreFilter = {
   date: DateFilter | null;
   place: PlaceFilter | null;
   fee: FeeFilter | null;
+  /** 술 없는 소셜링만 */
+  noAlcohol: boolean;
   hideParty: boolean;
 };
 
-export const EMPTY_FILTER: ExploreFilter = { categories: [], date: null, place: null, fee: null, hideParty: false };
+export const EMPTY_FILTER: ExploreFilter = {
+  categories: [],
+  date: null,
+  place: null,
+  fee: null,
+  noAlcohol: false,
+  hideParty: false,
+};
 
 /** 필터에 쓰는 목록: 카테고리(파티·사교 여부), 스터디지점, 지역 */
 export type FilterCatalog = {
@@ -90,7 +100,12 @@ export function parseExploreFilter(params: Params, catalog: FilterCatalog): Expl
   const feeValue = first(params.fee);
   const fee = FEE_FILTERS.find((f) => f === feeValue) ?? null;
 
-  return normalizeFilter({ categories, date, place, fee, hideParty: first(params.hide_party) === "1" }, catalog);
+  const noAlcohol = first(params.no_alcohol) === "1";
+
+  return normalizeFilter(
+    { categories, date, place, fee, noAlcohol, hideParty: first(params.hide_party) === "1" },
+    catalog,
+  );
 }
 
 /** 카테고리에 파티·사교가 있으면 "파티·사교 숨기기"를 끈다 (spec 8.9 P01). 필터 시트를 적용할 때도 쓴다 */
@@ -107,6 +122,7 @@ export function exploreSearch(filter: ExploreFilter): string {
   if (filter.place?.kind === "branch") parts.push(`branch=${filter.place.branchId}`);
   if (filter.place?.kind === "region") parts.push(`region=${filter.place.code}`);
   if (filter.fee) parts.push(`fee=${filter.fee}`);
+  if (filter.noAlcohol) parts.push("no_alcohol=1");
   if (filter.hideParty) parts.push("hide_party=1");
   return parts.length > 0 ? `?${parts.join("&")}` : "";
 }
@@ -114,7 +130,12 @@ export function exploreSearch(filter: ExploreFilter): string {
 /** 필터나 토글이 하나라도 걸려 있는지 (결과 0일 때 "조건에 맞는 소셜링이 없어요" + 필터 초기화) */
 export function hasAnyFilter(filter: ExploreFilter): boolean {
   return (
-    filter.categories.length > 0 || filter.date !== null || filter.place !== null || filter.fee !== null || filter.hideParty
+    filter.categories.length > 0 ||
+    filter.date !== null ||
+    filter.place !== null ||
+    filter.fee !== null ||
+    filter.noAlcohol ||
+    filter.hideParty
   );
 }
 
@@ -174,6 +195,7 @@ export type FilterableSocialing = {
   region_sigungu: string;
   starts_at: string;
   fee: number;
+  has_alcohol: boolean;
 };
 
 export function filterSocialings<T extends FilterableSocialing>(
@@ -189,6 +211,7 @@ export function filterSocialings<T extends FilterableSocialing>(
     if (filter.hideParty && s.category_is_party) return false;
     if (filter.categories.length > 0 && !filter.categories.includes(s.category_slug)) return false;
     if (filter.fee && !feeInRange(s.fee, filter.fee)) return false;
+    if (filter.noAlcohol && s.has_alcohol) return false;
     if (range) {
       const startsAt = new Date(s.starts_at).getTime();
       if (startsAt < range.start.getTime() || startsAt >= range.end.getTime()) return false;
@@ -245,12 +268,13 @@ export function placeLabel(place: PlaceFilter, catalog: FilterCatalog): string |
 export function filterChipValues(
   filter: ExploreFilter,
   catalog: FilterCatalog,
-): { date: string | null; place: string | null; category: string | null; fee: string | null } {
+): { date: string | null; place: string | null; category: string | null; fee: string | null; alcohol: string | null } {
   const names = filter.categories.map((slug) => catalog.categories.find((c) => c.slug === slug)?.name ?? slug);
   return {
     date: filter.date ? DATE_FILTER_LABELS[filter.date] : null,
     place: filter.place ? placeLabel(filter.place, catalog) : null,
     category: names.length === 0 ? null : names.length === 1 ? names[0] : `${names[0]} 외 ${names.length - 1}`,
     fee: filter.fee ? FEE_FILTER_LABELS[filter.fee] : null,
+    alcohol: filter.noAlcohol ? "술 없음" : null,
   };
 }

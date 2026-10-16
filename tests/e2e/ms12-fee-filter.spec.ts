@@ -62,6 +62,7 @@ test.describe("MS12 참가비 구간 계산", () => {
       region_sido: "서울특별시",
       region_sigungu: "강남구",
       starts_at: "2026-10-15T10:00:00Z",
+      has_alcohol: false,
     };
     const items: (FilterableSocialing & { key: string })[] = [
       { key: "free", ...base, fee: 0 },
@@ -113,7 +114,7 @@ test.describe("MS12 참가비 필터 화면 (P01·O01)", () => {
     page,
   }) => {
     await page.goto("/explore");
-    await expect(chips(page).getByRole("button")).toHaveText(["", "날짜", "장소", "카테고리", "참가비"]);
+    await expect(chips(page).getByRole("button")).toHaveText(["", "날짜", "장소", "카테고리", "참가비", "술 여부"]);
 
     // 칩에서 열면 참가비 묶음이 시트 맨 위에, 다섯 칸 중 "전체"가 골라져 있다 (하나만 고르기)
     await chips(page).getByRole("button", { name: "참가비" }).click();
@@ -147,7 +148,7 @@ test.describe("MS12 참가비 필터 화면 (P01·O01)", () => {
     await expect(feeGroup(page).getByRole("radio", { name: "전체" })).toBeChecked();
     await showButton(page).click();
     await expect(page).toHaveURL("/explore");
-    await expect(chips(page).getByRole("button")).toHaveText(["", "날짜", "장소", "카테고리", "참가비"]);
+    await expect(chips(page).getByRole("button")).toHaveText(["", "날짜", "장소", "카테고리", "참가비", "술 여부"]);
   });
 
   test("주소로 들어온 무료·2만 원 넘음: 카드가 그 구간뿐이고, 모르는 값은 무시한다", async ({ page }) => {
