@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Calendar, Clock, MapPin, UserCheck, Users, Wallet } from "lucide-react";
+import { Calendar, Clock, ExternalLink, FileText, IdCard, MapPin, UserCheck, Users, Wallet } from "lucide-react";
 import { Suspense } from "react";
 import { ApplyBar } from "@/components/apply-bar";
 import { CategoryIcon, CategoryName, categoryTone } from "@/components/category-art";
@@ -8,7 +8,7 @@ import { ErrorStateFull } from "@/components/error-state";
 import { HeaderSub } from "@/components/header-sub";
 import { HostProfileRow } from "@/components/host-profile-row";
 import { HostStats, HostStatsFailed, HostStatsSkeleton } from "@/components/host-stats";
-import { InfoList } from "@/components/info-list";
+import { InfoList, type InfoRow } from "@/components/info-list";
 import { IntroText } from "@/components/intro-text";
 import { CollapsibleRow } from "@/components/collapsible-row";
 import { NoticeBox } from "@/components/notice-box";
@@ -19,7 +19,7 @@ import { StatusTag } from "@/components/status-tag";
 import { AvatarInitial } from "@/components/avatar-initial";
 import { TrustLabelButton, type TrustCriteriaValues } from "@/components/trust-criteria-sheet";
 import { UrlNotice } from "@/components/url-notice";
-import { formatDateTime, formatFee, formatVenue } from "@/lib/format";
+import { formatAgeRange, formatDateTime, formatFee, formatVenue, linkHost } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { noticeMessage } from "@/lib/notices";
 import { REFUND_TEXT, refundPolicyText, showsRefundPolicy } from "@/lib/refund-policy";
@@ -283,9 +283,16 @@ function CoverPhoto({ socialing }: { socialing: SocialingDetail }) {
   );
 }
 
-function infoRows(socialing: SocialingDetail) {
+/**
+ * 정보 카드 줄 (spec M4, DESIGN.md info-list). MS14: 총 참가비 아래 참가비 설명(U3), 모집 방식 다음 연령 조건(SH1b,
+ * 호스트 승인이고 조건이 있을 때), 맨 아래 자료(SH3, 새 창 · 이 앱 정보를 넘기지 않음 · 사이트 이름). 없으면 줄이 없다.
+ */
+function infoRows(socialing: SocialingDetail): InfoRow[] {
   const people = `참가자 ${socialing.accepted_count}/${socialing.capacity}명`;
-  return [
+  const feeNote = socialing.fee_note?.trim();
+  const ageRange = socialing.join_type === "approval" ? formatAgeRange(socialing.min_age, socialing.max_age) : null;
+  const materialHost = socialing.material_url ? linkHost(socialing.material_url) : null;
+  const rows: (InfoRow | null)[] = [
     { label: "소셜링 일시", icon: Calendar, value: formatDateTime(socialing.starts_at), strong: true },
     { label: "신청 마감", icon: Clock, value: formatDateTime(socialing.apply_deadline_at) },
     {
@@ -294,8 +301,9 @@ function infoRows(socialing: SocialingDetail) {
       value: formatVenue(socialing.venue_type, socialing.venue_name),
       sub: `${socialing.region_sido} ${socialing.region_sigungu}`,
     },
-    { label: "총 참가비", icon: Wallet, value: formatFee(socialing.fee), strong: true },
+    { label: "총 참가비", icon: Wallet, value: formatFee(socialing.fee), strong: true, note: feeNote || undefined },
     { label: "모집 방식", icon: UserCheck, value: socialing.join_type === "approval" ? "호스트 승인" : "선착순" },
+    ageRange ? { label: "연령 조건", icon: IdCard, value: ageRange } : null,
     socialing.staff_count > 0
       ? {
           label: "인원",
@@ -304,5 +312,25 @@ function infoRows(socialing: SocialingDetail) {
           sub: "스태프는 정원에 세지 않아요",
         }
       : { label: "인원", icon: Users, value: people },
+    materialHost && socialing.material_url
+      ? {
+          label: "자료",
+          icon: FileText,
+          value: (
+            <a
+              href={socialing.material_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-touch-min items-center gap-xxs text-primary-strong underline-offset-2 hover:underline"
+            >
+              자료 보기
+              <ExternalLink className="size-3.5" aria-hidden />
+              <span className="sr-only"> (새 창에서 열려요)</span>
+            </a>
+          ),
+          sub: materialHost,
+        }
+      : null,
   ];
+  return rows.filter((row) => row !== null);
 }

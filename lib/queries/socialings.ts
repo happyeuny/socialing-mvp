@@ -122,12 +122,17 @@ export type SocialingDetail = SocialingCardData & {
   staff_count: number;
   join_type: Enums["join_type"];
   approval_criteria: string | null;
+  /** MS14 2묶음: 참가비 설명(U3), 연령 조건(SH1b, 호스트 승인만), 자료 링크(SH3) */
+  fee_note: string | null;
+  min_age: number | null;
+  max_age: number | null;
+  material_url: string | null;
   is_past: boolean;
   can_apply: boolean;
   closed_reason: ClosedReason | null;
 };
 
-const DETAIL_COLUMNS = `${CARD_COLUMNS}, description, host_id, region_sido, apply_deadline_at, staff_count, join_type, approval_criteria, is_past, can_apply, closed_reason`;
+const DETAIL_COLUMNS = `${CARD_COLUMNS}, description, host_id, region_sido, apply_deadline_at, staff_count, join_type, approval_criteria, fee_note, min_age, max_age, material_url, is_past, can_apply, closed_reason`;
 
 /** 상세 하나. 없는 번호면 null. 화면과 제목(metadata)이 같이 부르므로 요청 안에서 한 번만 읽는다 */
 export const getSocialing = cache(async (id: number): Promise<SocialingDetail | null> => {
