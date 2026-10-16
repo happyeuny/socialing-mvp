@@ -17,7 +17,7 @@ import {
 } from "@/lib/validation/socialing";
 
 // 소셜링 등록(P07)의 "소셜링 열기"와 수정(P08)의 "저장하기" (spec M8, 8.6, 8.7).
-// 버튼 하나 = 서버 액션 하나 = DB 함수 하나(create_socialing · update_socialing).
+// 버튼 하나 = 서버 액션 하나 = DB 함수 하나(create_socialing_v2 · update_socialing_v2, MS14에서 새 칸을 더한 이름).
 // 입력은 폼과 같은 규칙으로 한 번 더 보고, 함수가 다시 확인한다(잠금·정원 하한·권한·상태). 여기서는 결과를 화면 동작으로 바꾸기만 한다.
 
 export type SaveSocialingResult =
@@ -29,8 +29,8 @@ export type SaveSocialingResult =
 
 const NEW_PATH = "/socialings/new";
 
-type CreateArgs = Database["public"]["Functions"]["create_socialing"]["Args"];
-type UpdateArgs = Database["public"]["Functions"]["update_socialing"]["Args"];
+type CreateArgs = Database["public"]["Functions"]["create_socialing_v2"]["Args"];
+type UpdateArgs = Database["public"]["Functions"]["update_socialing_v2"]["Args"];
 
 export async function createSocialing(
   values: SocialingFormValues,
@@ -48,12 +48,12 @@ export async function createSocialing(
   const { data: auth } = await supabase.auth.getClaims();
   if (!auth?.claims?.sub) redirect(withNext("/login", NEW_PATH));
 
-  // 생성된 타입은 null을 받지 않는다고 나오지만, 함수는 장소 갈래·승인 기준·사진이 없으면 null로 받는다
+  // 생성된 타입은 null을 받지 않는다고 나오지만, 함수는 장소 갈래·승인 기준·사진·새 칸이 없으면 null로 받는다
   const args = socialingArgs(parsed.data, coverPhotoPath) as unknown as CreateArgs;
-  const { data, error } = await supabase.rpc("create_socialing", args);
+  const { data, error } = await supabase.rpc("create_socialing_v2", args);
   if (error || !data) {
     if (error?.message === "NOT_AUTHENTICATED") redirect(withNext("/login", NEW_PATH));
-    console.error("create_socialing", error);
+    console.error("create_socialing_v2", error);
     return { ok: false, retry: true };
   }
 
@@ -99,7 +99,7 @@ export async function updateSocialing(
   if (photoChanged && coverPhotoPath !== null && !COVER_PHOTO_PATH.test(coverPhotoPath)) return { ok: false, retry: true };
 
   const args = { p_socialing_id: socialingId, ...socialingArgs(parsed.data, coverPhotoPath) } as unknown as UpdateArgs;
-  const { error } = await supabase.rpc("update_socialing", args);
+  const { error } = await supabase.rpc("update_socialing_v2", args);
   if (error) {
     switch (error.message) {
       case "NOT_AUTHENTICATED":
@@ -116,7 +116,7 @@ export async function updateSocialing(
       case "BELOW_ACCEPTED":
         return { ok: false, conflict: true };
       default:
-        console.error("update_socialing", error);
+        console.error("update_socialing_v2", error);
         return { ok: false, retry: true };
     }
   }

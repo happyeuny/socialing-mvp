@@ -16,7 +16,7 @@ import { SocialingForm } from "../../socialing-form";
 
 // P08 소셜링 수정 (spec M8, 8.6, 8.7). 그 소셜링의 호스트만, 종료·호스트 취소 전에만 들어온다.
 // 등록(P07)과 같은 양식에 지금 값을 채우고, 잠금 기준(참여 확정·승인 대기 수)은 my_hosted_socialings가 센 값을 쓴다.
-// "저장하기"를 누르면 update_socialing이 잠금·정원 하한·권한·상태를 다시 확인한다.
+// "저장하기"를 누르면 update_socialing_v2가 잠금·정원 하한·권한·상태를 다시 확인한다.
 
 export const metadata: Metadata = { title: "소셜링 수정 · 문화소셜링" };
 
@@ -38,6 +38,7 @@ function toFormValues(socialing: EditableSocialing, catalog: SocialingFormCatalo
   return {
     title: socialing.title,
     description: socialing.description,
+    materialUrl: socialing.material_url ?? "",
     categoryId: String(socialing.category_id),
     hasAlcohol: socialing.has_alcohol ? "yes" : "no",
     placeKind: branch ? "branch" : "region",
@@ -48,10 +49,14 @@ function toFormValues(socialing: EditableSocialing, catalog: SocialingFormCatalo
     startsAt: toSeoulInput(socialing.starts_at),
     applyDeadlineAt: toSeoulInput(socialing.apply_deadline_at),
     fee: String(socialing.fee),
+    feeNote: socialing.fee_note ?? "",
     capacity: String(socialing.capacity),
     staffCount: String(socialing.staff_count),
     joinType: socialing.join_type,
     approvalCriteria: socialing.approval_criteria ?? "",
+    ageLimit: socialing.min_age !== null || socialing.max_age !== null ? "range" : "none",
+    minAge: socialing.min_age === null ? "" : String(socialing.min_age),
+    maxAge: socialing.max_age === null ? "" : String(socialing.max_age),
   };
 }
 

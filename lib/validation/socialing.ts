@@ -2,7 +2,7 @@ import { z } from "zod";
 import { seoulInputToIso } from "@/lib/format";
 
 // 소셜링 등록(P07)·수정(P08) 입력 (spec M8, 6장, 8.6 P07·P08). 폼과 서버 액션이 같은 규칙을 쓴다.
-// DB 함수 create_socialing·update_socialing도 같은 범위를 다시 확인한다.
+// DB 함수 create_socialing_v2·update_socialing_v2도 같은 범위를 다시 확인한다.
 // 글자 수는 앞뒤 공백·줄바꿈을 뺀 글자 수다. 일시는 `datetime-local` 값(한국 시간, 분까지)으로 주고받는다.
 
 export const SOCIALING_LIMITS = {
@@ -10,6 +10,10 @@ export const SOCIALING_LIMITS = {
   descriptionMin: 20,
   descriptionMax: 1000,
   criteriaMax: 200,
+  feeNoteMax: 100,
+  ageMin: 1,
+  ageMax: 99,
+  materialUrlMax: 500,
   placeNameMax: 40,
   feeMax: 1_000_000,
   capacityMin: 2,
@@ -21,6 +25,8 @@ export const SOCIALING_LIMITS = {
 export type SocialingFormValues = {
   title: string;
   description: string;
+  /** 자료 링크 (선택, SH3) */
+  materialUrl: string;
   /** 카테고리 id, 안 골랐으면 "" */
   categoryId: string;
   hasAlcohol: "no" | "yes";
@@ -36,19 +42,27 @@ export type SocialingFormValues = {
   startsAt: string;
   applyDeadlineAt: string;
   fee: string;
+  /** 참가비 설명 (유료면 필수, U3) */
+  feeNote: string;
   capacity: string;
   staffCount: string;
   joinType: "first_come" | "approval";
   approvalCriteria: string;
+  /** 연령 조건 (호스트 승인일 때만, SH1b): 제한 없음 · 나이 정하기 */
+  ageLimit: "none" | "range";
+  /** 만 나이, 숫자 글자만. 하나만 써도 된다 */
+  minAge: string;
+  maxAge: string;
 };
 
 export type SocialingField = keyof SocialingFormValues;
 export type SocialingFieldErrors = Partial<Record<SocialingField, string>>;
 
-/** 빈 양식 (screen-cases P07-01): 술 없음, 선착순, 스태프 0명 */
+/** 빈 양식 (screen-cases P07-01): 술 없음, 선착순, 스태프 0명, 연령 제한 없음 */
 export const EMPTY_SOCIALING_FORM: SocialingFormValues = {
   title: "",
   description: "",
+  materialUrl: "",
   categoryId: "",
   hasAlcohol: "no",
   placeKind: "branch",
@@ -59,10 +73,14 @@ export const EMPTY_SOCIALING_FORM: SocialingFormValues = {
   startsAt: "",
   applyDeadlineAt: "",
   fee: "",
+  feeNote: "",
   capacity: "",
   staffCount: "0",
   joinType: "first_come",
   approvalCriteria: "",
+  ageLimit: "none",
+  minAge: "",
+  maxAge: "",
 };
 
 /** 화면 순서. 제출하면 이 순서로 첫 오류 칸에 간다 */
@@ -70,6 +88,7 @@ export const SOCIALING_FIELD_ORDER: readonly SocialingField[] = [
   "title",
   "categoryId",
   "description",
+  "materialUrl",
   "branchId",
   "sido",
   "regionCode",
@@ -77,10 +96,13 @@ export const SOCIALING_FIELD_ORDER: readonly SocialingField[] = [
   "startsAt",
   "applyDeadlineAt",
   "fee",
+  "feeNote",
   "capacity",
   "staffCount",
   "joinType",
   "approvalCriteria",
+  "minAge",
+  "maxAge",
 ];
 
 /** 앞뒤 공백·줄바꿈을 뺀 글자 수 (이모지도 한 글자) */
@@ -99,6 +121,12 @@ export type SocialingFormContext = {
 };
 
 const DIGITS = /^\d{1,7}$/;
+
+/**
+ * 자료 링크: `https://`로 시작하는 주소 (SH3, 03 8.3). 사이트 이름에 점이 있고 공백이 없다.
+ * DB 함수(private.check_socialing_extra)의 정규식과 같다.
+ */
+export const MATERIAL_URL = /^https:\/\/[^\s/?#@]+\.[^\s/?#@]+([/?#]\S*)?$/;
 
 function numberOf(value: string): number | null {
   return DIGITS.test(value) ? Number(value) : null;
@@ -154,8 +182,38 @@ export function socialingFieldErrors(values: SocialingFormValues, context: Socia
   const staff = numberOf(values.staffCount);
   if (staff === null || staff > L.staffMax) errors.staffCount = `스태프 인원은 0~${L.staffMax}명이에요`;
 
-  if (values.joinType === "approval" && textLength(values.approvalCriteria) > L.criteriaMax) {
-    errors.approvalCriteria = `승인 기준은 ${L.criteriaMax}자까지 쓸 수 있어요`;
+  const materialUrl = values.materialUrl.trim();
+  if (materialUrl && (textLength(materialUrl) > L.materialUrlMax || !MATERIAL_URL.test(materialUrl))) {
+    errors.materialUrl = "https://로 시작하는 주소를 넣어 주세요";
+  }
+
+  // 참가비 설명: 유료면 필수, 무료면 선택 (U3)
+  const feeNoteLength = textLength(values.feeNote);
+  if (feeNoteLength > L.feeNoteMax) errors.feeNote = `참가비 설명은 ${L.feeNoteMax}자까지 쓸 수 있어요`;
+  else if (feeNoteLength === 0 && fee !== null && fee > 0) errors.feeNote = "참가비 설명을 입력해 주세요";
+
+  if (values.joinType === "approval") {
+    // 승인 기준: 호스트 승인이면 필수 (U5)
+    const criteriaLength = textLength(values.approvalCriteria);
+    if (criteriaLength === 0) errors.approvalCriteria = "승인 기준을 입력해 주세요";
+    else if (criteriaLength > L.criteriaMax) errors.approvalCriteria = `승인 기준은 ${L.criteriaMax}자까지 쓸 수 있어요`;
+
+    // 연령 조건: 나이 정하기면 하나 이상, 1~99세, 최소 ≤ 최대 (SH1b)
+    if (values.ageLimit === "range") {
+      const minAge = values.minAge === "" ? null : numberOf(values.minAge);
+      const maxAge = values.maxAge === "" ? null : numberOf(values.maxAge);
+      const outOfRange = (age: number | null, raw: string) =>
+        raw !== "" && (age === null || age < L.ageMin || age > L.ageMax);
+      const ageRangeError = `나이는 ${L.ageMin}~${L.ageMax}세예요`;
+      if (values.minAge === "" && values.maxAge === "") {
+        errors.minAge = "최소 나이나 최대 나이를 하나 이상 입력해 주세요";
+      } else if (outOfRange(minAge, values.minAge) || outOfRange(maxAge, values.maxAge)) {
+        if (outOfRange(minAge, values.minAge)) errors.minAge = ageRangeError;
+        if (outOfRange(maxAge, values.maxAge)) errors.maxAge = ageRangeError;
+      } else if (minAge !== null && maxAge !== null && minAge > maxAge) {
+        errors.minAge = "최소 나이가 최대 나이보다 클 수 없어요";
+      }
+    }
   }
 
   return errors;
@@ -164,6 +222,7 @@ export function socialingFieldErrors(values: SocialingFormValues, context: Socia
 const formShape = z.object({
   title: z.string(),
   description: z.string(),
+  materialUrl: z.string(),
   categoryId: z.string(),
   hasAlcohol: z.enum(["no", "yes"]),
   placeKind: z.enum(["branch", "region"]),
@@ -174,10 +233,14 @@ const formShape = z.object({
   startsAt: z.string(),
   applyDeadlineAt: z.string(),
   fee: z.string(),
+  feeNote: z.string(),
   capacity: z.string(),
   staffCount: z.string(),
   joinType: z.enum(["first_come", "approval"]),
   approvalCriteria: z.string(),
+  ageLimit: z.enum(["none", "range"]),
+  minAge: z.string(),
+  maxAge: z.string(),
 });
 
 /** 폼과 서버 액션이 같이 쓰는 검사. 모양이 틀리면(조작된 요청) 칸 오류 없이 실패 */
@@ -199,9 +262,11 @@ export function fieldErrorsOf(error: z.ZodError): SocialingFieldErrors {
   return errors;
 }
 
-/** 검사를 통과한 양식 → DB 함수 인자 (create_socialing · update_socialing 공통) */
+/** 검사를 통과한 양식 → DB 함수 인자 (create_socialing_v2 · update_socialing_v2 공통) */
 export function socialingArgs(values: SocialingFormValues, coverPhotoPath: string | null) {
   const branch = values.placeKind === "branch";
+  // 연령 조건은 호스트 승인 + 나이 정하기일 때만 보낸다. 선착순으로 바꾸면 지워진다 (03 6.2)
+  const ages = values.joinType === "approval" && values.ageLimit === "range";
   return {
     p_title: values.title.trim(),
     p_description: values.description.trim(),
@@ -218,6 +283,10 @@ export function socialingArgs(values: SocialingFormValues, coverPhotoPath: strin
     p_join_type: values.joinType,
     p_approval_criteria: values.joinType === "approval" ? values.approvalCriteria.trim() || null : null,
     p_cover_photo_path: coverPhotoPath,
+    p_fee_note: values.feeNote.trim() || null,
+    p_min_age: ages && values.minAge !== "" ? Number(values.minAge) : null,
+    p_max_age: ages && values.maxAge !== "" ? Number(values.maxAge) : null,
+    p_material_url: values.materialUrl.trim() || null,
   };
 }
 

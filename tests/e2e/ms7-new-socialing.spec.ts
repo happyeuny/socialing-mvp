@@ -21,6 +21,8 @@ const tag = () => Math.random().toString(36).slice(2, 8);
 /** 날짜·시간 칸 값 (한국 시간, 분까지). 다른 테스트의 "이번 주" 목록에 섞이지 않게 한 달 뒤로 잡는다 */
 const inDays = (days: number) => toSeoulInput(new Date(Date.now() + days * 24 * 60 * 60 * 1000));
 const DESCRIPTION = "영어 원서 한 챕터를 미리 읽고 와서 인상 깊은 문장을 나눠요.\n처음 오셔도 괜찮아요.";
+/** 유료면 참가비 설명이 필수다 (MS14 U3) */
+const FEE_NOTE = "원서 복사비 5,000원 + 음료 10,000원. 현장에서 따로 내는 돈은 없어요";
 
 async function loginAs(page: Page, user: "B" | "C", next: string) {
   await page.goto(`/login?next=${encodeURIComponent(next)}`);
@@ -41,9 +43,10 @@ const placeNameField = (page: Page) => page.getByLabel("장소 이름");
 const startsAtField = (page: Page) => page.getByLabel("소셜링 일시", { exact: true });
 const deadlineField = (page: Page) => page.getByLabel("신청 마감 일시", { exact: true });
 const feeField = (page: Page) => page.getByLabel("총 참가비");
+const feeNoteField = (page: Page) => page.getByRole("textbox", { name: "참가비 설명" });
 const capacityField = (page: Page) => page.getByLabel("정원", { exact: true });
 const staffField = (page: Page) => page.getByLabel("스태프 인원");
-const criteriaField = (page: Page) => page.getByRole("textbox", { name: "승인 기준 (선택)" });
+const criteriaField = (page: Page) => page.getByRole("textbox", { name: "승인 기준", exact: true });
 const openButton = (page: Page) => page.getByRole("button", { name: "소셜링 열기" });
 /** 칸 아래 오류 문구 (FieldMessage) */
 const errorOf = (page: Page, field: string) => page.locator(`#field-${field}-error`);
@@ -57,6 +60,7 @@ async function fillBasics(page: Page, title: string, times = { startsAt: inDays(
   await startsAtField(page).fill(times.startsAt);
   await deadlineField(page).fill(times.deadline);
   await feeField(page).fill("15000");
+  await feeNoteField(page).fill(FEE_NOTE);
   await capacityField(page).fill("6");
   await staffField(page).fill("1");
 }
@@ -406,14 +410,16 @@ test.describe("MS7 소셜링 등록 P07", () => {
     await expect(page.getByRole("button", { name: "다시 시도" })).toBeVisible();
     await expect(page.getByRole("link", { name: "홈으로" })).toBeVisible();
 
-    // 칸이 가장 많은 모양: 지역 갈래 + 승인 기준, 오류 문구까지
+    // 칸이 가장 많은 모양: 지역 갈래 + 승인 기준 + 연령 조건(나이 정하기), 오류 문구까지
     await page.goto(NEW_PATH);
     await pick(page, "장소", "지역 (시·도 → 구)");
     await sidoSelect(page).selectOption("경상남도");
     await pick(page, "모집 방식", "호스트 승인");
+    await pick(page, "연령 조건 (선택)", "나이 정하기");
     await titleField(page).fill("가나다라마바사아자차카타파하".repeat(4));
     await openButton(page).click();
     await expect(errorOf(page, "title")).toHaveText("제목은 40자까지 쓸 수 있어요");
+    await expect(errorOf(page, "minAge")).toHaveText("최소 나이나 최대 나이를 하나 이상 입력해 주세요");
     await expectNoHorizontalScroll(page);
     await page.setViewportSize({ width: 320, height: 640 });
     await expectNoHorizontalScroll(page);

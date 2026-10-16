@@ -101,11 +101,20 @@ export type EditableSocialing = Pick<
   | "join_type"
   | "approval_criteria"
   | "cover_photo_path"
-> & { category_id: number; venue_id: number };
+> & {
+  category_id: number;
+  venue_id: number;
+  /** MS14 2묶음 칸 (참가비 설명, 연령 조건, 자료 링크) */
+  fee_note: string | null;
+  min_age: number | null;
+  max_age: number | null;
+  material_url: string | null;
+};
 
 const EDITABLE_COLUMNS =
   "id, title, description, category_id, has_alcohol, venue_id, venue_type, venue_name, region_sido, region_sigungu, " +
-  "starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, cover_photo_path";
+  "starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, cover_photo_path, " +
+  "fee_note, min_age, max_age, material_url";
 
 export type EditPageData =
   | {
@@ -113,7 +122,7 @@ export type EditPageData =
       socialing: EditableSocialing;
       /** 수정할 수 없으면 이유: 종료 / 호스트 취소 */
       closed: "completed" | "canceled" | null;
-      /** 잠금 기준 (spec M8 수정): 참여 확정이 있으면 일시·장소·참가비, 승인 대기가 있으면 모집 방식 */
+      /** 잠금 기준 (spec M8 수정): 참여 확정이 있으면 일시·장소·참가비(설명은 이미 썼을 때), 승인 대기가 있으면 모집 방식 */
       acceptedCount: number;
       pendingCount: number;
     }

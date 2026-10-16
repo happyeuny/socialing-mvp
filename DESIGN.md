@@ -471,10 +471,11 @@ components:
 
 | 이름 | 모양 | 쓰는 곳 |
 |---|---|---|
-| textarea/normal | text-field/default와 같은 테두리, 글자 수 text-muted "120 / 500 · 10자 이상". 아직 안 썼을 때("0 / 500 · 10자 이상")도 normal | 후기 글, 소셜링 소개("0 / 1000 · 20자 이상"), 승인 기준("0 / 200") |
+| textarea/normal | text-field/default와 같은 테두리, 글자 수 text-muted "120 / 500 · 10자 이상". 아직 안 썼을 때("0 / 500 · 10자 이상")도 normal | 후기 글, 소셜링 소개("0 / 1000 · 20자 이상"), 승인 기준("0 / 200"), 참가비 설명("0 / 100") |
 | textarea/error | danger 테두리 1.5px, 글자 수 danger "5 / 500 · 10자 이상" 또는 "520 / 500" | 1~9자이거나 500자 초과. 등록·수정은 올리기를 눌렀을 때 칸 아래 이유도 보인다 |
+| textarea/locked | text-field/locked와 같음 (surface-muted 바탕, text-secondary 글자, 칸 아래 자물쇠 + 이유) | 수정 화면의 참가비 설명(참여 확정자가 있고 설명을 써 둠) |
 
-등록·수정(P07·P08)의 textarea 라벨은 text-field 양식 라벨과 같다(body-lg, text-primary).
+등록·수정(P07·P08)의 textarea 라벨은 text-field 양식 라벨과 같다(body-lg, text-primary). 도움말은 글자 수 아래에 text-field 도움말과 같은 줄로 둔다(승인 기준 "신청하기 전에 누구나 볼 수 있어요", 참가비 설명). 참가비 설명은 100자라 390px에서 5줄쯤 되어 같은 최소 높이 120을 쓴다.
 
 **photo-picker** — 96px 정사각, 모서리 lg. 사진은 1장. 위에 라벨 "사진"(title-md) + "선택 · 1장"(body-sm, text-secondary), 아래 도움말(body-sm, text-secondary) "사진을 올리지 못해도 쓴 글은 그대로 남아요" (시안 P09·P07).
 
