@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Calendar, Clock, ExternalLink, FileText, IdCard, MapPin, UserCheck, Users, Wallet } from "lucide-react";
+import Link from "next/link";
 import { Suspense } from "react";
 import { ApplyBar } from "@/components/apply-bar";
+import { buttonVariants } from "@/components/button";
 import { CategoryIcon, CategoryName, categoryTone } from "@/components/category-art";
 import { ErrorStateFull } from "@/components/error-state";
 import { HeaderSub } from "@/components/header-sub";
@@ -12,6 +14,7 @@ import { InfoList, type InfoRow } from "@/components/info-list";
 import { IntroText } from "@/components/intro-text";
 import { CollapsibleRow } from "@/components/collapsible-row";
 import { NoticeBox } from "@/components/notice-box";
+import { REPORT_QUESTION, ReportDone, ReportLine, ReportSheet } from "@/components/report-sheet";
 import { RefundPolicyList } from "@/components/refund-policy-list";
 import { SkeletonDetail } from "@/components/skeleton";
 import { StatusBadge } from "@/components/status-badge";
@@ -25,7 +28,9 @@ import { noticeMessage } from "@/lib/notices";
 import { REFUND_TEXT, refundPolicyText, showsRefundPolicy } from "@/lib/refund-policy";
 import { getHostRecord, type HostRecord } from "@/lib/queries/host-record";
 import { getApplyBarViewer, type ApplyBarViewer } from "@/lib/queries/my-socialings";
+import { hasReported } from "@/lib/queries/reports";
 import { getSocialing, socialingPhotoUrl, type SocialingDetail } from "@/lib/queries/socialings";
+import { withNext } from "@/lib/routes";
 import { readSimulatedState, type SimulatedState } from "@/lib/simulated-state";
 
 // P03 소셜링 상세 본문 (spec M4, 8.6, 8.7, 8.9). 로그인 없이 본다.
@@ -69,10 +74,19 @@ export default async function SocialingPage({ params, searchParams }: Props) {
 
   let socialing: SocialingDetail | null;
   let viewer: ApplyBarViewer;
+  let reported: boolean;
   try {
     if (simulated === "error") throw new Error("화면 상태 흉내: 오류");
-    // 아래 영역이 보는 사람의 신청에 따라 바뀌므로, 그 값도 못 읽으면 화면 전체를 다시 시도한다(틀린 버튼을 보이지 않게)
-    [socialing, viewer] = await Promise.all([getSocialing(id), getApplyBarViewer(id)]);
+    // 아래 영역이 보는 사람의 신청에 따라 바뀌므로, 그 값도 못 읽으면 화면 전체를 다시 시도한다(틀린 버튼을 보이지 않게).
+    // 신고 여부는 못 읽어도 상세는 그대로 보이고 신고 버튼을 둔다(그사이 이미 신고했으면 누른 결과가 "신고를 접수했어요")
+    [socialing, viewer, reported] = await Promise.all([
+      getSocialing(id),
+      getApplyBarViewer(id),
+      hasReported(id).catch((error: unknown) => {
+        console.error(error);
+        return false;
+      }),
+    ]);
   } catch (error) {
     if (simulated !== "error") console.error(error);
     return (
@@ -143,7 +157,7 @@ export default async function SocialingPage({ params, searchParams }: Props) {
             </div>
           </section>
 
-          <BeforeApplySection socialing={socialing} />
+          <BeforeApplySection socialing={socialing} viewer={viewer} reported={reported} />
         </div>
       </main>
       <ApplyBar socialing={socialing} viewer={viewer} />
@@ -164,8 +178,18 @@ const SOCIALING_RULES = [
  * "신청 전에 확인해 주세요" (spec M4·8.9 P03): 신청 버튼 바로 위에서 읽히게 상세 맨 아래에 둔다.
  * 소셜링 규칙(notice-box/caution)은 모든 상세에 늘 펼쳐 보인다(호스트 본인·지난 소셜링 포함). 신청 확인 창(O02)에는 넣지 않는다.
  * 그 아래 "취소·환불 규칙" 접는 줄은 참가비가 있고 소셜링 일시 전일 때만(spec 6장 환불 기준). 상세를 그리는 순간으로 계산한다.
+ * 맨 아래 신고 줄(SH4b): 호스트 본인에게는 없다. 비로그인은 로그인 → 상세로 돌아와 한 번 더 누른다(자동으로 열지 않음).
+ * 상태와 관계없이(종료·호스트 취소·지난 소셜링도) 신고할 수 있고, 접수했으면 "신고를 접수했어요".
  */
-function BeforeApplySection({ socialing }: { socialing: SocialingDetail }) {
+function BeforeApplySection({
+  socialing,
+  viewer,
+  reported,
+}: {
+  socialing: SocialingDetail;
+  viewer: ApplyBarViewer;
+  reported: boolean;
+}) {
   const now = new Date();
   const refund = showsRefundPolicy(socialing.fee, socialing.starts_at, now)
     ? refundPolicyText(socialing.starts_at, socialing.join_type, now)
@@ -189,6 +213,25 @@ function BeforeApplySection({ socialing }: { socialing: SocialingDetail }) {
           <CollapsibleRow title={REFUND_TEXT.title} className="-mb-xs">
             <RefundPolicyList policy={refund} />
           </CollapsibleRow>
+        )}
+        {viewer.kind === "host" ? null : (
+          <ReportLine>
+            {viewer.kind === "anonymous" ? (
+              <>
+                <p className="text-body-md text-text-secondary">{REPORT_QUESTION}</p>
+                <Link
+                  href={withNext("/login", `/socialings/${socialing.id}`)}
+                  className={cn(buttonVariants({ variant: "text-link", size: "inline" }), "px-xxs")}
+                >
+                  신고하기
+                </Link>
+              </>
+            ) : reported ? (
+              <ReportDone />
+            ) : (
+              <ReportSheet socialingId={socialing.id} />
+            )}
+          </ReportLine>
         )}
       </div>
     </section>
