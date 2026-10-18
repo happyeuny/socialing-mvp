@@ -156,7 +156,18 @@ test.describe("MS14 거절 사유 신청자 화면 P06·P03", () => {
     const NOTE = "이번에는 미리 읽어 올 분들로 모셨어요. 다음에 함께해요!";
     const [open, closed, old] = await Promise.all([
       fixture({ host: "B", joinType: "approval", approvalCriteria: CRITERIA, capacity: 4 }),
-      fixture({ host: "B", joinType: "approval", approvalCriteria: CRITERIA, deadlineInHours: -1 }),
+      // 신청 마감이 지난 소셜링. MS15부터 참여 확정이 최소 인원(2명)보다 적으면 "취소"로 보여 거절 칩·사유가 숨으므로
+      // 2명을 미리 참여 확정해 확정 대기로 둔다(확정 기한·일시는 앞)
+      fixture({
+        host: "B",
+        joinType: "approval",
+        approvalCriteria: CRITERIA,
+        capacity: 4,
+        deadlineInHours: -1,
+        confirmInHours: 20,
+        startsInHours: 40,
+        accepted: ["P1", "P3"],
+      }),
       fixture({ host: "B", joinType: "approval", approvalCriteria: CRITERIA }),
     ]);
     await Promise.all([
