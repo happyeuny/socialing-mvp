@@ -125,6 +125,8 @@ test.describe("MS14 소셜링 등록 P07 새 칸", () => {
     await page.getByRole("combobox", { name: "스터디지점" }).selectOption({ label: "홍대점" });
     await page.getByLabel("소셜링 일시", { exact: true }).fill(inDays(30));
     await page.getByLabel("신청 마감 일시", { exact: true }).fill(inDays(29));
+    // 확정 기한은 MS15부터 필수 (U4)
+    await page.getByLabel("확정 기한", { exact: true }).fill(inDays(29));
     await feeField(page).fill("15000");
     await page.getByLabel("정원", { exact: true }).fill("6");
     await materialField(page).fill("http://ko.wikipedia.org/wiki/수필");
@@ -193,6 +195,7 @@ test.describe("MS14 소셜링 등록 P07 새 칸", () => {
     await page.getByRole("combobox", { name: "스터디지점" }).selectOption({ label: "강남점" });
     await page.getByLabel("소셜링 일시", { exact: true }).fill(inDays(32));
     await page.getByLabel("신청 마감 일시", { exact: true }).fill(inDays(31));
+    await page.getByLabel("확정 기한", { exact: true }).fill(inDays(31));
     await feeField(page).fill("0");
     await page.getByLabel("정원", { exact: true }).fill("4");
     await pick(page, "모집 방식", "호스트 승인");

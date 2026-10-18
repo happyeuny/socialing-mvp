@@ -121,19 +121,22 @@ export type EditableSocialing = Pick<
   min_age: number | null;
   max_age: number | null;
   material_url: string | null;
+  /** MS15 3묶음 칸 (최소 인원, 확정 기한) */
+  min_participants: number;
+  confirm_deadline_at: string;
 };
 
 const EDITABLE_COLUMNS =
   "id, title, description, category_id, has_alcohol, venue_id, venue_type, venue_name, region_sido, region_sigungu, " +
   "starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, cover_photo_path, " +
-  "fee_note, min_age, max_age, material_url";
+  "fee_note, min_age, max_age, material_url, min_participants, confirm_deadline_at";
 
 export type EditPageData =
   | {
       kind: "host";
       socialing: EditableSocialing;
-      /** 수정할 수 없으면 이유: 종료 / 호스트 취소 */
-      closed: "completed" | "canceled" | null;
+      /** 수정할 수 없으면 이유: 종료 / 호스트 취소 / 신청 마감·확정 기한이 지나 계산으로 취소·호스트 취소(MS15) */
+      closed: "completed" | "canceled" | "auto-canceled" | null;
       /** 잠금 기준 (spec M8 수정): 참여 확정이 있으면 일시·장소·참가비(설명은 이미 썼을 때), 승인 대기가 있으면 모집 방식 */
       acceptedCount: number;
       pendingCount: number;
@@ -161,7 +164,13 @@ export async function getEditPageData(id: number): Promise<EditPageData> {
     kind: "host",
     // 뷰의 칸은 생성된 타입에서 null 가능으로 나오지만, 위 칸은 테이블의 not null 칸이다
     socialing: socialing.data as unknown as EditableSocialing,
-    closed: can_edit ? null : status === "completed" ? "completed" : "canceled",
+    closed: can_edit
+      ? null
+      : status === "completed"
+        ? "completed"
+        : status === "canceled"
+          ? "canceled"
+          : "auto-canceled",
     acceptedCount: accepted_count ?? 0,
     pendingCount: pending_count ?? 0,
   };

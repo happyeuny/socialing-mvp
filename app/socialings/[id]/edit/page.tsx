@@ -16,7 +16,7 @@ import { SocialingForm } from "../../socialing-form";
 
 // P08 소셜링 수정 (spec M8, 8.6, 8.7). 그 소셜링의 호스트만, 종료·호스트 취소 전에만 들어온다.
 // 등록(P07)과 같은 양식에 지금 값을 채우고, 잠금 기준(참여 확정·승인 대기 수)은 my_hosted_socialings가 센 값을 쓴다.
-// "저장하기"를 누르면 update_socialing_v2가 잠금·정원 하한·권한·상태를 다시 확인한다.
+// "저장하기"를 누르면 update_socialing_v3가 잠금·정원 하한·권한·상태를 다시 확인한다.
 
 export const metadata: Metadata = { title: "소셜링 수정 · 문화소셜링" };
 
@@ -48,9 +48,11 @@ function toFormValues(socialing: EditableSocialing, catalog: SocialingFormCatalo
     placeName: branch ? "" : socialing.venue_name,
     startsAt: toSeoulInput(socialing.starts_at),
     applyDeadlineAt: toSeoulInput(socialing.apply_deadline_at),
+    confirmDeadlineAt: toSeoulInput(socialing.confirm_deadline_at),
     fee: String(socialing.fee),
     feeNote: socialing.fee_note ?? "",
     capacity: String(socialing.capacity),
+    minParticipants: String(socialing.min_participants),
     staffCount: String(socialing.staff_count),
     joinType: socialing.join_type,
     approvalCriteria: socialing.approval_criteria ?? "",
@@ -98,9 +100,11 @@ export default async function EditSocialingPage({ params, searchParams }: Props)
   if (data.kind === "not-found") notFound();
   // 호스트가 아닌 사람 → 상세 + "호스트만 볼 수 있어요" (spec 8.7, screen-cases E05)
   if (data.kind === "not-host") redirect(withNotice(`/socialings/${id}`, "host-only"));
-  // 종료·호스트 취소 → 관리 + 이유 (spec 8.7, screen-cases E06)
+  // 종료·호스트 취소(계산 포함) → 관리 + 이유 (spec 8.7, screen-cases E06)
   if (data.closed) {
-    redirect(withNotice(`/socialings/${id}/manage`, data.closed === "completed" ? "edit-completed" : "edit-canceled"));
+    const notice =
+      data.closed === "completed" ? "edit-completed" : data.closed === "canceled" ? "edit-canceled" : "edit-auto-canceled";
+    redirect(withNotice(`/socialings/${id}/manage`, notice));
   }
 
   const { socialing } = data;

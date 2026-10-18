@@ -33,11 +33,12 @@ import {
 } from "@/lib/validation/socialing";
 
 // 소셜링 등록(P07)·수정(P08) 양식 (spec M8, 8.6, 8.7, 시안 P07): 대표 사진 → 제목 → 카테고리 → 술 여부 → 소개 →
-// 자료 링크 → 장소 → 소셜링 일시 → 신청 마감 일시 → 총 참가비 → 참가비 설명 → 정원 → 스태프 인원 → 모집 방식 →
-// 승인 기준 + 연령 조건(호스트 승인일 때만), 아래 고정 "소셜링 열기"(등록) · "저장하기"(수정).
+// 자료 링크 → 장소 → 소셜링 일시 → 신청 마감 일시 → 확정 기한 → 총 참가비 → 참가비 설명 → 정원 → 최소 인원 →
+// 스태프 인원 → 모집 방식 → 승인 기준 + 연령 조건(호스트 승인일 때만), 아래 고정 "소셜링 열기"(등록) · "저장하기"(수정).
 // 제출하면 칸마다 이유를 보이고 첫 오류 칸으로 간다.
 // 등록: 글 입력은 열기 전까지 이 브라우저에 계정별로 임시 저장한다(사진 제외). 다시 오면 채우고, 열면 지운다.
-// 수정: 지금 값을 채운다. 참여 확정자가 있으면 일시·장소·참가비·참가비 설명, 승인 대기 신청이 있으면 모집 방식이 잠긴다.
+// 수정: 지금 값을 채운다. 참여 확정자가 있으면 일시·장소·참가비·참가비 설명·확정 기한·최소 인원(MS15),
+// 승인 대기 신청이 있으면 모집 방식이 잠긴다.
 // 참가비 설명은 비어 있으면(MS14 전에 연 유료 소셜링) 참여 확정자가 있어도 채울 수 있다 (decisions 2026-10-16).
 // 잠긴 칸은 언제나 지금 값을 보이고 그 값을 보낸다. 정원은 참여 확정 인원보다 적게 할 수 없다.
 
@@ -179,16 +180,22 @@ function withLockedValues(values: SocialingFormValues, edit: SocialingEditTarget
     next.placeName = original.placeName;
     next.fee = original.fee;
     if (original.feeNote.trim() !== "") next.feeNote = original.feeNote;
+    // 참여자가 믿은 "언제 정해지나"·"몇 명이면 확정"을 바꾸지 않는다 (04 2.2·2.3)
+    next.confirmDeadlineAt = original.confirmDeadlineAt;
+    next.minParticipants = original.minParticipants;
   }
   if (edit.pendingCount > 0) next.joinType = original.joinType;
   return next;
 }
 
-/** 제출할 때 칸 검사. 수정은 소셜링 일시를 바꿀 때만 지금 이후, 정원은 참여 확정 인원 이상 */
+/**
+ * 제출할 때 칸 검사. 수정은 소셜링 일시를 바꿀 때만 지금 이후, 세 일시 중 하나를 바꿀 때만 확정 기한 순서·12시간,
+ * 정원은 참여 확정 인원·최소 인원 이상
+ */
 function validate(values: SocialingFormValues, edit: SocialingEditTarget | null) {
   return socialingFieldErrors(values, {
     now: Date.now(),
-    originalStartsAt: edit?.original.startsAt,
+    original: edit?.original,
     acceptedCount: edit?.acceptedCount,
   });
 }
@@ -495,7 +502,7 @@ function SocialingFormFields({
           type="datetime-local"
           min={minDateTime}
           value={values.startsAt}
-          onChange={(event) => change({ startsAt: event.target.value }, ["applyDeadlineAt"])}
+          onChange={(event) => change({ startsAt: event.target.value }, ["applyDeadlineAt", "confirmDeadlineAt"])}
           error={errors.startsAt}
           locked={lockedByAccepted}
         />
@@ -508,9 +515,22 @@ function SocialingFormFields({
           // 수정에서는 이미 지난 마감 일시를 그대로 둘 수 있다
           min={edit ? undefined : minDateTime}
           value={values.applyDeadlineAt}
-          onChange={(event) => change({ applyDeadlineAt: event.target.value })}
+          onChange={(event) => change({ applyDeadlineAt: event.target.value }, ["confirmDeadlineAt"])}
           error={errors.applyDeadlineAt}
           helper="소셜링 일시와 같거나 앞이어야 해요"
+        />
+
+        <TextField
+          name="confirmDeadlineAt"
+          label="확정 기한"
+          labelTone="form"
+          type="datetime-local"
+          min={edit ? undefined : minDateTime}
+          value={values.confirmDeadlineAt}
+          onChange={(event) => change({ confirmDeadlineAt: event.target.value }, ["applyDeadlineAt"])}
+          error={errors.confirmDeadlineAt}
+          helper={`이때까지 호스트가 확정하지 않으면 취소돼요 · 신청 마감과 같거나 뒤, 소셜링 일시 ${L.confirmBeforeStartHours}시간 전까지`}
+          locked={lockedByAccepted}
         />
 
         <TextField
@@ -556,13 +576,26 @@ function SocialingFormFields({
           inputMode="numeric"
           placeholder="예: 6"
           value={values.capacity}
-          onChange={(event) => change({ capacity: digitsOnly(event.target.value, 2) })}
+          onChange={(event) => change({ capacity: digitsOnly(event.target.value, 2) }, ["minParticipants"])}
           error={errors.capacity}
           helper={
             edit && edit.acceptedCount > 0
               ? `${L.capacityMin}~${L.capacityMax}명 · 참여 확정 ${edit.acceptedCount}명보다 적게 할 수 없어요`
               : `${L.capacityMin}~${L.capacityMax}명`
           }
+          autoComplete="off"
+        />
+
+        <TextField
+          name="minParticipants"
+          label="최소 인원"
+          labelTone="form"
+          inputMode="numeric"
+          value={values.minParticipants}
+          onChange={(event) => change({ minParticipants: digitsOnly(event.target.value, 2) }, ["capacity"])}
+          error={errors.minParticipants}
+          helper={`이 인원 이상 참여 확정되면 확정할 수 있어요 · ${L.minParticipantsMin}명~정원`}
+          locked={lockedByAccepted}
           autoComplete="off"
         />
 
