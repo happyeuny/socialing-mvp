@@ -26,6 +26,8 @@ import { rejectReasonLabel } from "@/lib/validation/reject";
 // 호스트 승인 방식은 탭 "승인 대기 · 참여 확정 · 거절·취소"(`?tab=accepted|closed`), 선착순은 참여 확정 목록만.
 // 버튼을 보일지·막을지는 뷰(my_hosted_socialings)가 계산한 값을 쓴다.
 // 상태 버튼(확정하기 · 종료하기 · 수정 · 호스트 취소)과 승인 대기 건의 승인·거절. 종료·호스트 취소 뒤에는 안내와 목록 보기만.
+// MS15 U4(04 3.6): 확정 대기면 진행 단계 아래 "확정 대기 · …까지". 신청 마감·확정 기한이 지나 계산으로 취소·호스트 취소되면
+// 진행 단계와 상태 버튼 대신 안내만 보이고 목록은 보기만.
 // 거절·취소 탭의 거절한 신청에는 호스트가 고른 거절 사유 한 줄(MS14 U10).
 
 export const metadata: Metadata = { title: "소셜링 관리 · 문화소셜링" };
@@ -81,6 +83,7 @@ export default async function ManagePage({ params, searchParams }: Props) {
   if (data.kind === "not-host") redirect(withNotice(`/socialings/${id}`, "host-only"));
 
   const { socialing, applicants, hasAgeLimit } = data;
+  const cancelNotice = computedCancelNotice(socialing);
 
   return (
     <>
@@ -105,8 +108,16 @@ export default async function ManagePage({ params, searchParams }: Props) {
           <h2 id="manage-status" className="text-title-lg text-text-primary">
             소셜링 상태
           </h2>
-          <ProgressSteps status={socialing.status} />
-          {socialing.status === "recruiting" || socialing.status === "confirmed" ? (
+          {cancelNotice ? (
+            // 계산으로 취소·호스트 취소: 진행 단계와 상태 버튼 대신 안내 (MS15 U4)
+            <NoticeBox>{cancelNotice}</NoticeBox>
+          ) : (
+            <ProgressSteps
+              status={socialing.status}
+              awaitingUntil={socialing.display_status === "awaiting_confirm" ? socialing.confirm_deadline_at : null}
+            />
+          )}
+          {cancelNotice ? null : socialing.status === "recruiting" || socialing.status === "confirmed" ? (
             <ManageStatusActions
               socialingId={socialing.id}
               status={socialing.status}
@@ -116,6 +127,10 @@ export default async function ManagePage({ params, searchParams }: Props) {
               completeBlockedReason={socialing.complete_blocked_reason}
               canCancel={socialing.can_cancel}
               canEdit={socialing.can_edit}
+              minParticipants={socialing.min_participants}
+              confirmDeadlineAt={socialing.confirm_deadline_at}
+              acceptedCount={socialing.accepted_count}
+              pendingCount={socialing.pending_count}
             />
           ) : (
             // 종료·호스트 취소 뒤: 상태 버튼 대신 안내 (spec 8.8, screen-cases P11-05·06)
@@ -146,6 +161,20 @@ export default async function ManagePage({ params, searchParams }: Props) {
       </main>
     </>
   );
+}
+
+/**
+ * 신청 마감·확정 기한이 지나 계산으로 취소·호스트 취소된 모집중 소셜링의 안내 (04 3.6, spec 8.8, screen-cases P11-04·24).
+ * 호스트가 직접 취소한 소셜링은 지금처럼 진행 단계 + "호스트 취소한 소셜링이에요"라 null.
+ */
+function computedCancelNotice(socialing: ManagedSocialing): string | null {
+  if (socialing.display_status === "auto_canceled") {
+    return `취소된 소셜링이에요 · 최소 인원(${socialing.min_participants}명)이 모이지 않았어요`;
+  }
+  if (socialing.display_status === "host_canceled" && socialing.cancel_reason === "not_confirmed") {
+    return "호스트 취소 · 확정 기한까지 확정하지 않았어요";
+  }
+  return null;
 }
 
 const EMPTY: Record<ApplicantTab, string> = {

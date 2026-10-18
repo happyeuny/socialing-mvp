@@ -5,8 +5,8 @@ import { formatDateTime, formatVenue } from "@/lib/format";
 import type { ManagedSocialing } from "@/lib/queries/manage";
 
 // DESIGN.md manage-summary/default. 소셜링 관리(P11) 맨 위 요약 카드 (spec 8.8). 테두리 없이 shadow-card:
-// status-badge(+ status-tag), 제목, "일시 · 장소 · 모집 방식", "참가자 4/8명 · 스태프 1명 · 승인 대기 2".
-// 스태프는 있을 때만, 승인 대기는 호스트 승인 방식이고 1건 이상일 때만 보인다.
+// status-badge(+ status-tag), 제목, "일시 · 장소 · 모집 방식", "참가자 2/8명 · 최소 4명 · 스태프 1명 · 승인 대기 2".
+// 최소 인원은 모집중·확정 대기일 때만(MS15 U4, 04 3.6), 스태프는 있을 때만, 승인 대기는 호스트 승인 방식이고 1건 이상일 때만 보인다.
 
 export function ManageSummary({ socialing }: { socialing: ManagedSocialing }) {
   const joinType = socialing.join_type === "approval" ? "호스트 승인" : "선착순";
@@ -30,6 +30,9 @@ export function ManageSummary({ socialing }: { socialing: ManagedSocialing }) {
             {socialing.accepted_count}/{socialing.capacity}명
           </strong>
         </span>
+        {(socialing.display_status === "recruiting" || socialing.display_status === "awaiting_confirm") && (
+          <span>· 최소 {socialing.min_participants}명</span>
+        )}
         {socialing.staff_count > 0 && <span>· 스태프 {socialing.staff_count}명</span>}
         {socialing.join_type === "approval" && socialing.pending_count > 0 && (
           <span className="inline-flex items-center gap-[5px]">

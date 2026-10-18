@@ -56,7 +56,8 @@ test.describe("MS4 확정", () => {
     // P11-01 모집중 · 일시 전
     await expect(currentStep(page)).toContainText("모집중");
     await expect(button(page, "확정하기")).toBeEnabled();
-    await expect(status(page)).toContainText('확정하면 소셜링 상태가 "확정"으로 바뀌어 모두에게 보여요.');
+    // MS15: 설명이 최소 인원·확정 기한 안내로 바뀜(04 3.6). 확정 기한 값은 ms15-manage에서 본다
+    await expect(status(page)).toContainText(/최소 2명이 모이면 확정 기한\(.+\)까지 확정할 수 있어요\./);
     await expect(button(page, "종료하기")).toBeDisabled();
     await expect(status(page)).toContainText("확정한 뒤 소셜링 일시가 지나야 종료할 수 있어요");
     await expect(button(page, "호스트 취소")).toBeEnabled();
@@ -80,20 +81,19 @@ test.describe("MS4 확정", () => {
     await expect(button(page, "호스트 취소")).toBeEnabled();
   });
 
-  // MS15에서 규칙이 바뀜(04 3.6): 확정하지 않은 채 일시가 지난 모집중은 계산으로 취소(신청 없음)라 호스트 취소·수정도 막힌다.
-  // 버튼 대신 안내로 바꾸는 것은 관리 PR(MS15 PR 4)에서
-  test("P11-04: 확정하지 않은 채 일시가 지난 모집중 소셜링은 확정·종료·호스트 취소·수정이 막힌다 (MS15 계산 취소)", async ({
+  // MS15에서 규칙이 바뀜(04 3.6): 확정하지 않은 채 일시가 지난 모집중은 계산으로 취소(신청 없음 → 최소 인원 미달)라
+  // 진행 단계와 상태 버튼(확정·종료·수정·호스트 취소) 대신 안내만 보인다
+  test("P11-04: 확정하지 않은 채 일시가 지난 모집중 소셜링은 진행 단계·상태 버튼 대신 '취소된 소셜링이에요' (MS15 계산 취소)", async ({
     page,
   }) => {
     const id = await fixture({ host: "C", deadlineInHours: -3, startsInHours: -1 });
     await loginAs(page, "C", manage(id));
 
-    await expect(button(page, "확정하기")).toBeDisabled();
-    await expect(status(page)).toContainText("이미 취소된 소셜링이에요");
-    await expect(button(page, "종료하기")).toBeDisabled();
-    await expect(status(page)).toContainText("확정하지 않은 소셜링은 종료할 수 없어요");
-    await expect(button(page, "호스트 취소")).toHaveCount(0);
-    await expect(status(page).getByRole("link", { name: "수정" })).toHaveCount(0);
+    await expect(status(page)).toContainText("취소된 소셜링이에요 · 최소 인원(2명)이 모이지 않았어요");
+    await expect(page.getByRole("list", { name: "소셜링 진행 단계" })).toHaveCount(0);
+    await expect(status(page).getByRole("button")).toHaveCount(0);
+    await expect(status(page).getByRole("link")).toHaveCount(0);
+    await expect(summary(page).getByText("취소", { exact: true })).toBeVisible();
   });
 
   test("O04 돌아가기는 아무것도 바꾸지 않는다", async ({ page }) => {

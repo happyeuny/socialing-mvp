@@ -592,12 +592,14 @@ components:
 | host-stats/new-host | 같은 호스트 카드 안. 위 문구는 normal과 같고, 칸 대신 surface-muted 상자(모서리 lg, 여백 16) "새 호스트 · 기록이 쌓이면 숫자로 보여 줘요" | 열린 소셜링 3회 미만 |
 | host-stats/ratio-hidden | normal과 같고 소개 일치 칸만 "응답 5건 이상부터 보여요" | 응답 5건 미만 |
 | host-stats/load-failed | 같은 호스트 카드 안. error-state/inline 틀(surface-muted, 점선 테두리, 모서리 lg) 안에 "기록을 불러오지 못했어요" + text-link "다시 시도" | 기록만 실패 (상세와 신청은 그대로 동작) |
-| manage-summary/default | surface, 테두리 없음 + shadow-card, 모서리 xl, 여백 20. status-badge(+status-tag), 제목(title-lg), "10/14(화) 오후 7:30 · 스터디지점 강남점 · 호스트 승인"(body-md, text-secondary), "참가자 **4/8명** · 스태프 1명 · 승인 대기" + count-pill(body-md, text-primary. 스태프는 있을 때, 승인 대기는 1건 이상일 때) | 소셜링 관리(P11) 맨 위 요약 (시안) |
+| manage-summary/default | surface, 테두리 없음 + shadow-card, 모서리 xl, 여백 20. status-badge(+status-tag), 제목(title-lg), "10/14(화) 오후 7:30 · 스터디지점 강남점 · 호스트 승인"(body-md, text-secondary), "참가자 **2/8명** · 최소 4명 · 스태프 1명 · 승인 대기" + count-pill(body-md, text-primary. 최소 인원은 모집중·확정 대기일 때, 스태프는 있을 때, 승인 대기는 1건 이상일 때) | 소셜링 관리(P11) 맨 위 요약 (시안) |
 | review-summary/default | manage-summary/default와 같은 카드. status-badge "종료" + application-chip "참여 확정", 제목(title-lg), "10/11(토) 오전 10:00 · 스터디지점 홍대점 · 호스트 도현"(body-md, text-secondary) | 후기 쓰기(P09) 맨 위 요약 (시안) |
-| manage-status-actions/recruiting | button/primary/lg "확정하기"(전체 폭) + 설명 body-sm text-secondary, 그 아래 button/secondary/md "수정" · button/danger/md "호스트 취소"(반씩), 그 아래 막힌 button/primary/lg "종료하기" + 이유. 막히면 버튼 disabled + 이유 한 줄 | 소셜링 관리(P11) 진행 단계 아래, 모집중 (시안) |
+| manage-status-actions/recruiting | button/primary/lg "확정하기"(전체 폭) + 설명 body-sm text-secondary("최소 4명이 모이면 확정 기한(…)까지 확정할 수 있어요. …", spec 8.8), 그 아래 button/secondary/md "수정" · button/danger/md "호스트 취소"(반씩), 그 아래 막힌 button/primary/lg "종료하기" + 이유. 막히면 버튼 disabled + 설명 대신 이유 한 줄(최소 인원 전 "최소 인원(4명)이 모여야 확정할 수 있어요 · 지금 2명 · 승인 대기 2명") | 소셜링 관리(P11) 진행 단계 아래, 모집중·확정 대기 (시안) |
 | manage-status-actions/confirmed | "종료하기"(일시 전이면 disabled + "소셜링 일시가 지나야 종료할 수 있어요") + "수정" · "호스트 취소" | 확정한 뒤 |
 | manage-status-actions/closed | 버튼 대신 notice-box "종료한 소셜링이에요 · 참여자가 후기를 쓸 수 있어요" 또는 "호스트 취소한 소셜링이에요" | 종료·호스트 취소 뒤 |
+| manage-status-actions/computed-cancel | 진행 단계와 버튼 대신 notice-box 하나: "취소된 소셜링이에요 · 최소 인원(4명)이 모이지 않았어요" 또는 "호스트 취소 · 확정 기한까지 확정하지 않았어요" | 신청 마감·확정 기한이 지나 계산으로 취소·호스트 취소된 모집중 (MS15 U4) |
 | progress-steps/current-recruiting | 모집중 → 확정 → 종료 세 점, 지금 단계만 text-primary 굵게 | 소셜링 관리(P11), 모집중. 상세에는 쓰지 않고 status-badge만 (시안) |
+| progress-steps/awaiting-confirm | current-recruiting과 같은 세 점 + 아래 왼쪽 "확정 대기 · 10/21(수) 오전 7:30까지"(body-md, primary-strong 500) | 신청 마감 뒤 확정 기한 전, 확정 대기 (MS15 U4) |
 | progress-steps/current-confirmed | 확정이 지금 단계 | 호스트가 확정한 뒤 |
 | progress-steps/done-ended | 종료까지 모두 지남 | 호스트가 종료한 뒤 |
 | progress-steps/host-cancelled | 세 점 흐리게 + danger "호스트 취소" | 호스트 취소 |
