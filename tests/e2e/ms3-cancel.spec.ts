@@ -138,10 +138,11 @@ test.describe("MS3 신청 취소 O05", () => {
     });
   }
 
+  // MS15: 모집중은 일시가 지나면 확정 기한도 지나 계산으로 취소(AUTO_CANCELED)라, 일시 지남(STARTED)은 확정 소셜링에서 본다
   test("O05 실패 일시 지남: 창을 연 사이 소셜링 일시가 지나면 '소셜링 일시가 지나 취소할 수 없어요' → 확인 → 새로 고침", async ({
     page,
   }) => {
-    const id = await fixture({ host: "C", joinType: "approval" });
+    const id = await fixture({ host: "C", joinType: "approval", status: "confirmed" });
     await addApplication(id, "P1", "pending");
     await openDetailAs(page, id);
     await openCancelSheet(page);
@@ -154,6 +155,24 @@ test.describe("MS3 신청 취소 O05", () => {
 
     // 8줄: 승인 대기인 채로 일시 지남
     await expect(bar(page)).toContainText("호스트가 응답하지 않았어요");
+    expect((await applicationsOf(id)).map((a) => a.status)).toEqual(["pending"]);
+  });
+
+  test("O05 실패 계산 취소(MS15): 창을 연 사이 신청 마감이 지나 최소 인원이 될 수 없으면 '이미 취소된 소셜링이에요'", async ({
+    page,
+  }) => {
+    // 최소 2명인데 승인 대기 1명뿐 → 신청 마감이 지나는 순간 취소(최소 인원 미달)
+    const id = await fixture({ host: "C", joinType: "approval" });
+    await addApplication(id, "P1", "pending");
+    await openDetailAs(page, id);
+    await openCancelSheet(page);
+    await updateFixtureSocialing(id, { deadlineInHours: -1 });
+
+    await cancelSheet(page).getByRole("button", { name: "신청 취소" }).click();
+    const result = page.getByRole("alertdialog", { name: "신청을 취소하지 못했어요" });
+    await expect(result).toContainText("이미 취소된 소셜링이에요");
+    await result.getByRole("button", { name: "확인" }).click();
+    await expect(result).toHaveCount(0);
     expect((await applicationsOf(id)).map((a) => a.status)).toEqual(["pending"]);
   });
 

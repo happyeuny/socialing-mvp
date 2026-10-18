@@ -5,8 +5,8 @@ import type { RejectReason } from "@/lib/validation/reject";
 // 소셜링 관리(P11, spec 8.8) 읽기. 뷰 my_hosted_socialings의 관리 칸과 hosted_socialing_applicants(architecture 3.2)를
 // 그대로 쓴다. 버튼을 보일지·막을지와 이유는 DB가 계산한 값이고 화면에서 다시 계산하지 않는다.
 
-/** 확정이 막힌 이유 */
-export type ConfirmBlockedReason = "started";
+/** 확정이 막힌 이유: 일시 지남 / 참여 확정 < 최소 인원 / 계산으로 취소·호스트 취소 (MS15 U4) */
+export type ConfirmBlockedReason = "started" | "min_not_met" | "canceled";
 /** 종료가 막힌 이유: 모집중·일시 전 / 모집중·일시 지남 / 확정·일시 전 */
 export type CompleteBlockedReason = "confirm_first" | "not_confirmed" | "not_started";
 /** 승인이 막힌 이유: 일시 지남 / 정원 참 */

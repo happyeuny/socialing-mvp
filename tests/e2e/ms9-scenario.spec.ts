@@ -50,8 +50,9 @@ test.describe("MS9 시연 시나리오", () => {
   }) => {
     test.setTimeout(180_000);
     // 4~6단계용: 호스트 승인, 모집중, 일시 미래, 승인 기준 / X: 확정, 일시 지남, A 참여 확정
+    // MS15: 최소 2명 중 참여자 1명(민지)을 미리 참여 확정 → 5단계 B가 A를 승인하면 확정할 수 있다 (시드 APPROVAL과 같음, 04 7장)
     const [meetup, x] = await Promise.all([
-      fixture({ host: "B", joinType: "approval", capacity: 4, staffCount: 1, approvalCriteria: APPROVAL_CRITERIA }),
+      fixture({ host: "B", joinType: "approval", capacity: 4, staffCount: 1, approvalCriteria: APPROVAL_CRITERIA, accepted: ["P1"] }),
       fixture({ host: "B", status: "confirmed", deadlineInHours: -30, startsInHours: -24, accepted: ["A"] }),
     ]);
     const [meetupTitle, xTitle] = await Promise.all([titleOf(meetup), titleOf(x)]);
@@ -89,7 +90,7 @@ test.describe("MS9 시연 시나리오", () => {
       await expect(page).toHaveURL(detail(meetup));
       await expect(page.getByRole("heading", { level: 2, name: meetupTitle })).toBeVisible();
       await expect(page.getByRole("main").getByText("모집중").first()).toBeVisible();
-      await expect(infoRow(page, "인원")).toContainText("참가자 0/4명 · 스태프 1명");
+      await expect(infoRow(page, "인원")).toContainText("참가자 1/4명 · 스태프 1명");
       await expect(infoRow(page, "총 참가비")).toContainText("무료");
       await expect(page.getByRole("main")).toContainText(APPROVAL_CRITERIA);
       reviewsBefore = await hostReviewCount(page);
