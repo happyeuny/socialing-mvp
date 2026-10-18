@@ -20,6 +20,10 @@ export type ViewerApplication = {
   hasReview: boolean;
   rejectReason: RejectReason | null;
   rejectNote: string | null;
+  /** 신청 취소 창(O05) 위 줄: 확정 대기에서 내가 취소하면 최소 인원보다 적어져 소셜링이 취소됨 (MS15 U4, DB 계산) */
+  cancelWouldAutoCancel: boolean;
+  /** 신청 취소 창(O05) 아래 줄: 신청 마감 뒤 참여 확정 취소 = 내 참여 기록의 늦은 취소 (MS15 SH2, DB 계산) */
+  cancelWouldBeLate: boolean;
 };
 
 export async function getApplyBarViewer(socialingId: number): Promise<ApplyBarViewer> {
@@ -31,7 +35,9 @@ export async function getApplyBarViewer(socialingId: number): Promise<ApplyBarVi
     supabase.from("my_hosted_socialings").select("pending_count").eq("id", socialingId).maybeSingle(),
     supabase
       .from("my_applied_socialings")
-      .select("application_id, application_status, has_review, reject_reason, reject_note")
+      .select(
+        "application_id, application_status, has_review, reject_reason, reject_note, cancel_would_auto_cancel, cancel_would_be_late",
+      )
       .eq("id", socialingId)
       .maybeSingle(),
   ]);
@@ -50,7 +56,41 @@ export async function getApplyBarViewer(socialingId: number): Promise<ApplyBarVi
       hasReview: row.has_review ?? false,
       rejectReason: row.reject_reason,
       rejectNote: row.reject_note,
+      cancelWouldAutoCancel: row.cancel_would_auto_cancel ?? false,
+      cancelWouldBeLate: row.cancel_would_be_late ?? false,
     },
+  };
+}
+
+/** 늦은 취소 한 건 (get_my_participation_record의 late_cancels) */
+export type LateCancel = {
+  socialing_id: number;
+  title: string;
+  canceled_at: string;
+  /** 기록에서 빠지는 때 = 소셜링 일시 + 6개월 */
+  expires_at: string;
+};
+
+/** 나만 보는 참여 기록 (MS15 SH2, spec M11 · architecture 3.2). 최근 6개월, 늦은 취소는 최근 취소 순 */
+export type ParticipationRecord = {
+  participatedCount: number;
+  lateCancelCount: number;
+  isNewMember: boolean;
+  lateCancels: LateCancel[];
+};
+
+/** 로그인한 본인의 참여 기록. 함수가 본인 것만 돌려주고 호스트·다른 사람은 읽을 수 없다 */
+export async function getMyParticipationRecord(): Promise<ParticipationRecord> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_my_participation_record");
+  if (error) throw new Error(`참여 기록을 불러오지 못했습니다: ${error.message}`);
+  const [row] = data ?? [];
+  if (!row) throw new Error("참여 기록이 비어 있습니다");
+  return {
+    participatedCount: row.participated_count,
+    lateCancelCount: row.late_cancel_count,
+    isNewMember: row.is_new_member,
+    lateCancels: (row.late_cancels ?? []) as unknown as LateCancel[],
   };
 }
 

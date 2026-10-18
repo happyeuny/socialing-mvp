@@ -2,7 +2,7 @@ import { z } from "zod";
 import { seoulInputToIso } from "@/lib/format";
 
 // 소셜링 등록(P07)·수정(P08) 입력 (spec M8, 6장, 8.6 P07·P08). 폼과 서버 액션이 같은 규칙을 쓴다.
-// DB 함수 create_socialing_v2·update_socialing_v2도 같은 범위를 다시 확인한다.
+// DB 함수 create_socialing_v3·update_socialing_v3도 같은 범위를 다시 확인한다.
 // 글자 수는 앞뒤 공백·줄바꿈을 뺀 글자 수다. 일시는 `datetime-local` 값(한국 시간, 분까지)으로 주고받는다.
 
 export const SOCIALING_LIMITS = {
@@ -19,6 +19,10 @@ export const SOCIALING_LIMITS = {
   capacityMin: 2,
   capacityMax: 20,
   staffMax: 20,
+  /** 최소 인원은 2명부터 정원까지 (MS15 U4, 04 2.2) */
+  minParticipantsMin: 2,
+  /** 확정 기한은 소셜링 일시보다 이만큼 앞 (MS15 U4, 04 2.3) */
+  confirmBeforeStartHours: 12,
 } as const;
 
 /** 양식 값. 숫자 칸도 입력 그대로(숫자 글자만) 문자열로 둔다 */
@@ -41,10 +45,14 @@ export type SocialingFormValues = {
   /** `2026-10-24T19:30` (한국 시간) */
   startsAt: string;
   applyDeadlineAt: string;
+  /** 확정 기한 (MS15 U4): 이때까지 호스트가 확정하지 않으면 취소 */
+  confirmDeadlineAt: string;
   fee: string;
   /** 참가비 설명 (유료면 필수, U3) */
   feeNote: string;
   capacity: string;
+  /** 최소 인원 (MS15 U4): 이 인원 이상 참여 확정되면 확정할 수 있다 */
+  minParticipants: string;
   staffCount: string;
   joinType: "first_come" | "approval";
   approvalCriteria: string;
@@ -58,7 +66,7 @@ export type SocialingFormValues = {
 export type SocialingField = keyof SocialingFormValues;
 export type SocialingFieldErrors = Partial<Record<SocialingField, string>>;
 
-/** 빈 양식 (screen-cases P07-01): 술 없음, 선착순, 스태프 0명, 연령 제한 없음 */
+/** 빈 양식 (screen-cases P07-01): 술 없음, 선착순, 최소 인원 2명, 스태프 0명, 연령 제한 없음. 확정 기한은 빈칸 */
 export const EMPTY_SOCIALING_FORM: SocialingFormValues = {
   title: "",
   description: "",
@@ -72,9 +80,11 @@ export const EMPTY_SOCIALING_FORM: SocialingFormValues = {
   placeName: "",
   startsAt: "",
   applyDeadlineAt: "",
+  confirmDeadlineAt: "",
   fee: "",
   feeNote: "",
   capacity: "",
+  minParticipants: "2",
   staffCount: "0",
   joinType: "first_come",
   approvalCriteria: "",
@@ -95,9 +105,11 @@ export const SOCIALING_FIELD_ORDER: readonly SocialingField[] = [
   "placeName",
   "startsAt",
   "applyDeadlineAt",
+  "confirmDeadlineAt",
   "fee",
   "feeNote",
   "capacity",
+  "minParticipants",
   "staffCount",
   "joinType",
   "approvalCriteria",
@@ -110,13 +122,22 @@ export function textLength(value: string): number {
   return Array.from(value.trim()).length;
 }
 
+/** 수정 전 값 중 검사에 쓰는 것 (`datetime-local` 값, 숫자 글자) */
+export type SocialingOriginalSchedule = Pick<
+  SocialingFormValues,
+  "startsAt" | "applyDeadlineAt" | "confirmDeadlineAt" | "minParticipants"
+>;
+
 /** 수정(P08)에서만 쓰는 조건 */
 export type SocialingFormContext = {
   /** 지금 시각(ms). 소셜링 일시는 지금 이후 */
   now: number;
-  /** 수정 전 소셜링 일시(`datetime-local` 값). 같으면 지금 이후인지 보지 않는다 */
-  originalStartsAt?: string;
-  /** 참여 확정 인원. 정원은 이보다 적을 수 없다 */
+  /**
+   * 수정 전 값. 소셜링 일시가 같으면 지금 이후인지 보지 않고, 세 일시(소셜링 일시·신청 마감·확정 기한)가 모두 같으면
+   * 확정 기한의 순서·12시간을 보지 않는다(MS15 전에 연 소셜링은 확정 기한 = 신청 마감이라 12시간을 못 채울 수 있다)
+   */
+  original?: SocialingOriginalSchedule;
+  /** 참여 확정 인원. 정원은 이보다 적을 수 없고, 1명 이상이면 확정 기한·최소 인원이 잠긴다 */
   acceptedCount?: number;
 };
 
@@ -157,8 +178,9 @@ export function socialingFieldErrors(values: SocialingFormValues, context: Socia
     else if (placeNameLength > L.placeNameMax) errors.placeName = `장소 이름은 ${L.placeNameMax}자까지 쓸 수 있어요`;
   }
 
+  const { original } = context;
   const startsAt = seoulInputToIso(values.startsAt);
-  const startsAtChanged = context.originalStartsAt === undefined || values.startsAt !== context.originalStartsAt;
+  const startsAtChanged = original === undefined || values.startsAt !== original.startsAt;
   if (!startsAt) errors.startsAt = "소셜링 일시를 골라 주세요";
   else if (startsAtChanged && Date.parse(startsAt) <= context.now) errors.startsAt = "소셜링 일시는 지금 이후여야 해요";
 
@@ -168,15 +190,48 @@ export function socialingFieldErrors(values: SocialingFormValues, context: Socia
     errors.applyDeadlineAt = "신청 마감 일시는 소셜링 일시와 같거나 앞이어야 해요";
   }
 
+  // 확정 기한: 신청 마감 ≤ 확정 기한 ≤ 소셜링 일시 − 12시간 (04 2.3). 참여 확정자가 있으면 소셜링 일시·확정 기한이
+  // 잠겨 있어 바꿀 수 있는 신청 마감 칸에 보인다
+  const confirmLocked = original !== undefined && (context.acceptedCount ?? 0) > 0;
+  const confirmDeadline = seoulInputToIso(values.confirmDeadlineAt);
+  const scheduleChanged =
+    original === undefined ||
+    values.startsAt !== original.startsAt ||
+    values.applyDeadlineAt !== original.applyDeadlineAt ||
+    values.confirmDeadlineAt !== original.confirmDeadlineAt;
+  const confirmField = confirmLocked ? "applyDeadlineAt" : "confirmDeadlineAt";
+  if (!confirmDeadline) errors.confirmDeadlineAt = "확정 기한을 골라 주세요";
+  else if (scheduleChanged && deadline && !errors.applyDeadlineAt && Date.parse(confirmDeadline) < Date.parse(deadline)) {
+    errors[confirmField] = "확정 기한은 신청 마감 일시와 같거나 뒤여야 해요";
+  } else if (
+    scheduleChanged &&
+    startsAt &&
+    Date.parse(confirmDeadline) > Date.parse(startsAt) - L.confirmBeforeStartHours * 60 * 60 * 1000
+  ) {
+    errors[confirmField] ??=
+      `확정 기한은 소셜링 일시보다 ${L.confirmBeforeStartHours}시간 이상 앞이어야 해요`;
+  }
+
   const fee = numberOf(values.fee);
   if (values.fee === "") errors.fee = "총 참가비를 입력해 주세요 (무료면 0)";
   else if (fee === null || fee > L.feeMax) errors.fee = `총 참가비는 0~${L.feeMax.toLocaleString("ko-KR")}원이에요`;
 
   const capacity = numberOf(values.capacity);
-  if (capacity === null || capacity < L.capacityMin || capacity > L.capacityMax) {
+  const capacityValid = capacity !== null && capacity >= L.capacityMin && capacity <= L.capacityMax;
+  if (!capacityValid) {
     errors.capacity = `정원은 ${L.capacityMin}~${L.capacityMax}명이에요`;
   } else if (context.acceptedCount !== undefined && capacity < context.acceptedCount) {
     errors.capacity = `참여 확정 인원(${context.acceptedCount}명)보다 적게 할 수 없어요`;
+  }
+
+  // 최소 인원: 2명부터 정원까지 (04 2.2). 최소 인원을 그대로 두고 정원을 줄였으면 정원 칸에 보인다
+  const minParticipants = numberOf(values.minParticipants);
+  const minUnchanged = original !== undefined && values.minParticipants === original.minParticipants;
+  if (minParticipants === null || minParticipants < L.minParticipantsMin || minParticipants > L.capacityMax) {
+    errors.minParticipants = `최소 인원은 ${L.minParticipantsMin}명부터 정원까지예요`;
+  } else if (capacityValid && capacity < minParticipants) {
+    if (minUnchanged) errors.capacity ??= `정원은 최소 인원(${minParticipants}명)보다 적게 할 수 없어요`;
+    else errors.minParticipants = `최소 인원은 ${L.minParticipantsMin}명부터 정원까지예요`;
   }
 
   const staff = numberOf(values.staffCount);
@@ -232,9 +287,11 @@ const formShape = z.object({
   placeName: z.string(),
   startsAt: z.string(),
   applyDeadlineAt: z.string(),
+  confirmDeadlineAt: z.string(),
   fee: z.string(),
   feeNote: z.string(),
   capacity: z.string(),
+  minParticipants: z.string(),
   staffCount: z.string(),
   joinType: z.enum(["first_come", "approval"]),
   approvalCriteria: z.string(),
@@ -262,7 +319,7 @@ export function fieldErrorsOf(error: z.ZodError): SocialingFieldErrors {
   return errors;
 }
 
-/** 검사를 통과한 양식 → DB 함수 인자 (create_socialing_v2 · update_socialing_v2 공통) */
+/** 검사를 통과한 양식 → DB 함수 인자 (create_socialing_v3 · update_socialing_v3 공통) */
 export function socialingArgs(values: SocialingFormValues, coverPhotoPath: string | null) {
   const branch = values.placeKind === "branch";
   // 연령 조건은 호스트 승인 + 나이 정하기일 때만 보낸다. 선착순으로 바꾸면 지워진다 (03 6.2)
@@ -287,6 +344,8 @@ export function socialingArgs(values: SocialingFormValues, coverPhotoPath: strin
     p_min_age: ages && values.minAge !== "" ? Number(values.minAge) : null,
     p_max_age: ages && values.maxAge !== "" ? Number(values.maxAge) : null,
     p_material_url: values.materialUrl.trim() || null,
+    p_min_participants: Number(values.minParticipants),
+    p_confirm_deadline_at: seoulInputToIso(values.confirmDeadlineAt)!,
   };
 }
 

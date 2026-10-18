@@ -8,7 +8,7 @@ import { RadioRow } from "@/components/radio-row";
 import { FieldMessage } from "@/components/text-field";
 import { Textarea } from "@/components/textarea";
 import { showToast } from "@/components/toast";
-import { decideApplication, rejectApplication } from "@/lib/actions/manage";
+import { approveApplication, rejectApplication } from "@/lib/actions/manage";
 import {
   REJECT_NOTE_MAX,
   REJECT_REASONS,
@@ -84,11 +84,11 @@ export function ApplicantActions({
     if (approve) openerRef.current = approveRef.current;
     setRunning(approve ? "approve" : "reject");
     startTransition(async () => {
-      let result: Awaited<ReturnType<typeof decideApplication>> | undefined;
+      let result: Awaited<ReturnType<typeof approveApplication>> | undefined;
       try {
         result = rejectReason
           ? await rejectApplication(socialingId, applicationId, rejectReason, note)
-          : await decideApplication(socialingId, applicationId, true);
+          : await approveApplication(socialingId, applicationId);
       } catch {
         result = { ok: false, retry: true };
       }

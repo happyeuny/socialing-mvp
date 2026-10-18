@@ -1,9 +1,11 @@
+import { formatDateTime } from "@/lib/format";
 import type { SocialingStatus } from "@/lib/queries/socialings";
 import { cn } from "@/lib/utils";
 
 // DESIGN.md progress-steps. 소셜링 관리(P11)의 "소셜링 상태": 모집중 → 확정 → 종료 세 점, 지금 단계만 text-primary 굵게.
-// current-recruiting · current-confirmed · done-ended(종료까지 모두 지남) · host-cancelled(세 점 흐리게 + danger "호스트 취소").
-// 상세에는 쓰지 않고 status-badge만 쓴다.
+// current-recruiting · awaiting-confirm(모집중이 지금 단계 + 아래 "확정 대기 · …까지", MS15 U4) · current-confirmed
+// · done-ended(종료까지 모두 지남) · host-cancelled(세 점 흐리게 + danger "호스트 취소").
+// 계산으로 취소·호스트 취소된 소셜링에는 쓰지 않고 안내만 보인다(관리 화면). 상세에는 쓰지 않고 status-badge만 쓴다.
 
 const STEPS = [
   { status: "recruiting", label: "모집중" },
@@ -11,7 +13,14 @@ const STEPS = [
   { status: "completed", label: "종료" },
 ] as const;
 
-export function ProgressSteps({ status }: { status: SocialingStatus }) {
+export function ProgressSteps({
+  status,
+  awaitingUntil = null,
+}: {
+  status: SocialingStatus;
+  /** 확정 대기면 확정 기한 (보이는 상태가 awaiting_confirm일 때만 넘긴다) */
+  awaitingUntil?: string | null;
+}) {
   const cancelled = status === "canceled";
   const currentIndex = STEPS.findIndex((step) => step.status === status);
 
@@ -70,6 +79,11 @@ export function ProgressSteps({ status }: { status: SocialingStatus }) {
         })}
       </ol>
       {cancelled && <p className="text-center text-body-md font-medium text-danger">호스트 취소</p>}
+      {awaitingUntil && (
+        <p className="text-body-md font-medium break-keep text-primary-strong">
+          확정 대기 · {formatDateTime(awaitingUntil)}까지
+        </p>
+      )}
     </div>
   );
 }

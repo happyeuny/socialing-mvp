@@ -44,7 +44,7 @@ test.describe("운영 주소 점검 (읽기만)", () => {
     expect(isDev, message).toBe(expectedDb === "dev");
   });
 
-  test("1·3단계: 홈 → 탐색 → B 상세에 모집중과 등급 라벨·대표 사진·참가비 설명, 인증 후기", async ({ page }) => {
+  test("1·3단계: 홈 → 탐색 → B 상세에 모집중과 등급 라벨·대표 사진·참가비 설명·최소 인원, 인증 후기", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("article").first()).toBeVisible();
     await expectNoScreenError(page);
@@ -68,6 +68,12 @@ test.describe("운영 주소 점검 (읽기만)", () => {
     await expect(page.getByRole("main"), "참가비 설명이 없으면 발표 DB 준비(마이그레이션·시드)를 돌려 주세요").toContainText(
       "스터디룸 이용 5,000원 + 음료 한 잔 10,000원. 현장에서 따로 내는 돈은 없어요",
     );
+    // 3묶음(MS15): 최소 2명 중 1명이 미리 참여 확정, 확정 기한 줄
+    const main = page.getByRole("main");
+    await expect(main, "최소 인원이 없으면 발표 DB 준비(마이그레이션·시드)를 돌려 주세요").toContainText(
+      "최소 2명 · 1명 더 모이면 확정할 수 있어요",
+    );
+    await expect(main).toContainText("이때까지 호스트가 확정하지 않으면 취소돼요");
     await expectNoScreenError(page);
 
     await page.goto("/reviews");
@@ -75,12 +81,14 @@ test.describe("운영 주소 점검 (읽기만)", () => {
     await expectNoScreenError(page);
   });
 
-  test("A 서윤: X는 확정·참여 확정, 4단계 소셜링에는 아직 신청 전", async ({ page }) => {
+  test("A 서윤: X는 확정·참여 확정, 4단계 소셜링에는 아직 신청 전, 참여 기록", async ({ page }) => {
     await loginAs(page, "A", "/me");
     await expect(card(page, SEED.x)).toContainText("확정");
     await expect(card(page, SEED.x)).toContainText("참여 확정");
     await expect(card(page, SEED.y)).toBeVisible();
     await expect(card(page, SEED.approval), "리허설 뒤라면 발표 DB 준비(시드 다시)를 돌려 주세요").toHaveCount(0);
+    // 나만 보는 참여 기록(MS15 SH2): Y·B_PAST_1 참여 2회, B_PAST_2 늦은 취소 1회
+    await expect(page.getByRole("region", { name: "내 참여 기록" })).toContainText("새 멤버 · 참여 2회 · 늦은 취소 1회");
     await expectNoScreenError(page);
   });
 

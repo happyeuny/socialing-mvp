@@ -11,6 +11,7 @@ import {
 // MS14 상세 정보 카드와 신청 확인의 새 줄 (03 3.3·6.3·8.2·8.3, spec M4·M7 · screen-cases P03-13~17, O02)
 // 총 참가비 아래 참가비 설명(U3), 모집 방식 다음 연령 조건(SH1b, 호스트 승인만), 맨 아래 자료(SH3, 새 창).
 // 시드 "필름 카메라로 골목 산책"은 그대로 읽기만 하고, 나머지는 테스트 전용 [E2E] 소셜링을 만들고 끝에 지운다.
+// MS15: 모집중 소셜링은 신청 마감 아래 "확정 기한" 줄이 생겨 줄 순서 목록에 넣었다(U4, spec M4).
 
 const created: number[] = [];
 test.afterAll(async () => {
@@ -50,7 +51,7 @@ test.describe("MS14 상세 정보 카드 P03", () => {
     expect(rows, "시드 소셜링 (npm run seed)").toHaveLength(1);
     await page.goto(`/socialings/${rows[0].id}`);
 
-    await expect(rowLabels(page)).toHaveText(["소셜링 일시", "신청 마감", "장소", "총 참가비", "모집 방식", "연령 조건", "인원"]);
+    await expect(rowLabels(page)).toHaveText(["소셜링 일시", "신청 마감", "확정 기한", "장소", "총 참가비", "모집 방식", "연령 조건", "인원"]);
     await expect(infoRow(page, "총 참가비")).toContainText(
       "출발 장소 카페 음료 5,000원. 필름은 각자 준비하고, 현장에서 따로 내는 돈은 없어요",
     );
@@ -71,7 +72,7 @@ test.describe("MS14 상세 정보 카드 P03", () => {
     });
     await page.goto(`/socialings/${id}`);
 
-    await expect(rowLabels(page)).toHaveText(["소셜링 일시", "신청 마감", "장소", "총 참가비", "모집 방식", "연령 조건", "인원", "자료"]);
+    await expect(rowLabels(page)).toHaveText(["소셜링 일시", "신청 마감", "확정 기한", "장소", "총 참가비", "모집 방식", "연령 조건", "인원", "자료"]);
     const fee = infoRow(page, "총 참가비");
     await expect(fee.locator("dd").first()).toHaveText("15,000원");
     // 설명은 값 아래 줄 전체에 줄바꿈 그대로
@@ -103,7 +104,7 @@ test.describe("MS14 상세 정보 카드 P03", () => {
     ]);
 
     await page.goto(`/socialings/${freeWithNote}`);
-    await expect(rowLabels(page)).toHaveText(["소셜링 일시", "신청 마감", "장소", "총 참가비", "모집 방식", "인원"]);
+    await expect(rowLabels(page)).toHaveText(["소셜링 일시", "신청 마감", "확정 기한", "장소", "총 참가비", "모집 방식", "인원"]);
     await expect(infoRow(page, "총 참가비").locator("dd")).toHaveText(["무료", "현장에서 각자 음료를 주문해요"]);
 
     // MS14 전에 설명 없이 연 유료 소셜링: 보조 글 없이 보인다. 최대 나이만 '39세 이하'

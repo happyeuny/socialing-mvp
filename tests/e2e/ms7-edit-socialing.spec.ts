@@ -45,6 +45,8 @@ type Row = {
   title: string;
   starts_at: string;
   apply_deadline_at: string;
+  confirm_deadline_at: string;
+  min_participants: number;
   fee: number;
   capacity: number;
   join_type: string;
@@ -54,7 +56,8 @@ type Row = {
 
 async function rowOf(id: number): Promise<Row> {
   const [row] = await runQuery<Row>(`
-    select title, starts_at, apply_deadline_at, fee, capacity, join_type, approval_criteria, cover_photo_path
+    select title, starts_at, apply_deadline_at, confirm_deadline_at, min_participants, fee, capacity, join_type,
+      approval_criteria, cover_photo_path
     from public.socialings where id = ${id};
   `);
   return row;
@@ -71,6 +74,8 @@ const sigunguSelect = (page: Page) => page.getByRole("combobox", { name: "시·�
 const placeNameField = (page: Page) => page.getByLabel("장소 이름");
 const startsAtField = (page: Page) => page.getByLabel("소셜링 일시", { exact: true });
 const deadlineField = (page: Page) => page.getByLabel("신청 마감 일시", { exact: true });
+const confirmField = (page: Page) => page.getByLabel("확정 기한", { exact: true });
+const minField = (page: Page) => page.getByLabel("최소 인원", { exact: true });
 const feeField = (page: Page) => page.getByLabel("총 참가비");
 const capacityField = (page: Page) => page.getByLabel("정원", { exact: true });
 const criteriaField = (page: Page) => page.getByRole("textbox", { name: "승인 기준", exact: true });
@@ -113,6 +118,8 @@ test.describe("MS7 소셜링 수정 P08", () => {
     await expect(page.getByText("서울 강남구 스터디지점")).toBeVisible();
     await expect(startsAtField(page)).toHaveValue(toSeoulInput(before.starts_at));
     await expect(deadlineField(page)).toHaveValue(toSeoulInput(before.apply_deadline_at));
+    await expect(confirmField(page)).toHaveValue(toSeoulInput(before.confirm_deadline_at));
+    await expect(minField(page)).toHaveValue("2");
     await expect(feeField(page)).toHaveValue("0");
     await expect(capacityField(page)).toHaveValue("4");
     await expect(page.getByLabel("스태프 인원")).toHaveValue("1");
@@ -123,7 +130,7 @@ test.describe("MS7 소셜링 수정 P08", () => {
     await expect(lockReason(page, PENDING_LOCK)).toHaveCount(0);
     await expect(startsAtField(page)).toBeEnabled();
 
-    // 바꾸기: 제목, 지역 장소, 참가비, 일시·마감, 정원, 선착순
+    // 바꾸기: 제목, 지역 장소, 참가비, 일시·마감·확정 기한, 정원·최소 인원, 선착순
     const title = `[E2E] 바꾼 제목 ${tag()}`;
     const placeName = `[E2E] 망원 작은 서재 ${tag()}`;
     const startsAt = inDays(5);
@@ -135,10 +142,13 @@ test.describe("MS7 소셜링 수정 P08", () => {
     await placeNameField(page).fill(placeName);
     await startsAtField(page).fill(startsAt);
     await deadlineField(page).fill(deadline);
+    // 확정 기한은 신청 마감과 같거나 뒤여야 해서 같이 옮긴다 (MS15)
+    await confirmField(page).fill(deadline);
     await feeField(page).fill("20000");
     // 유료면 참가비 설명이 필수다 (MS14 U3)
     await feeNoteField(page).fill("교재 복사비와 음료 값이에요");
     await capacityField(page).fill("6");
+    await minField(page).fill("3");
     await pick(page, "모집 방식", "선착순");
     await saveButton(page).click();
 
@@ -147,9 +157,17 @@ test.describe("MS7 소셜링 수정 P08", () => {
     await expect(page.getByText("저장했어요")).toBeVisible();
     await expect(page.getByRole("main")).toContainText(title);
     const after = await rowOf(id);
-    expect(after).toMatchObject({ title, fee: 20000, capacity: 6, join_type: "first_come", approval_criteria: null });
+    expect(after).toMatchObject({
+      title,
+      fee: 20000,
+      capacity: 6,
+      min_participants: 3,
+      join_type: "first_come",
+      approval_criteria: null,
+    });
     expect(toSeoulInput(after.starts_at)).toBe(startsAt);
     expect(toSeoulInput(after.apply_deadline_at)).toBe(deadline);
+    expect(toSeoulInput(after.confirm_deadline_at)).toBe(deadline);
     expect(await venueOf(id)).toMatchObject({ type: "external", name: placeName, region_code: "11440" });
 
     // 상세에 바뀐 값
@@ -168,8 +186,12 @@ test.describe("MS7 소셜링 수정 P08", () => {
     const before = await rowOf(id);
     await loginAs(page, "C", editPath(id));
 
-    // P08-02: 잠긴 칸은 지금 값 + 자물쇠와 이유 (장소 · 일시 · 참가비 세 곳)
-    await expect(lockReason(page, ACCEPTED_LOCK)).toHaveCount(3);
+    // P08-02·13: 잠긴 칸은 지금 값 + 자물쇠와 이유 (장소 · 일시 · 확정 기한 · 참가비 · 최소 인원 다섯 곳, MS15에서 둘 더함)
+    await expect(lockReason(page, ACCEPTED_LOCK)).toHaveCount(5);
+    await expect(confirmField(page)).toBeDisabled();
+    await expect(confirmField(page)).toHaveValue(toSeoulInput(before.confirm_deadline_at));
+    await expect(minField(page)).toBeDisabled();
+    await expect(minField(page)).toHaveValue("2");
     await expect(startsAtField(page)).toBeDisabled();
     await expect(startsAtField(page)).toHaveValue(toSeoulInput(before.starts_at));
     await expect(feeField(page)).toBeDisabled();

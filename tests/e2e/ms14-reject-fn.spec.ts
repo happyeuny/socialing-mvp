@@ -87,7 +87,8 @@ test.describe("MS14 reject_application", () => {
     const [host, p1, otherHost] = await Promise.all([signIn(request, "C"), signIn(request, "P1"), signIn(request, "D")]);
     const [open, started, completed] = await Promise.all([
       fixture({ host: "C", joinType: "approval" }),
-      fixture({ host: "C", joinType: "approval", deadlineInHours: -3, startsInHours: -1 }),
+      // 일시 지남은 확정 소셜링에서만 남는다 (MS15: 모집중은 확정 기한이 지나면 계산으로 취소 → AUTO_CANCELED, ms15-host-actions-fn)
+      fixture({ host: "C", joinType: "approval", status: "confirmed", deadlineInHours: -3, startsInHours: -1 }),
       fixture({ host: "C", joinType: "approval", status: "completed", deadlineInHours: -3, startsInHours: -1 }),
     ]);
     const [pending, accepted, startedPending, completedPending] = await Promise.all([
@@ -106,7 +107,9 @@ test.describe("MS14 reject_application", () => {
     expect(await code(completedPending, host)).toBe("INVALID_STATE");
     expect(await code(999999999, host)).toBe("INVALID_INPUT");
     expect((await rpc(request, "reject_application", reject(pending, "host", null).args)).status).not.toBe(200);
-    expect((await applicationsOf(open)).map((a) => a.status)).toEqual(["pending", "accepted"]);
+    // 두 신청을 한꺼번에 넣어 id 순서가 매번 달라서 사람별로 본다
+    const statuses = Object.fromEntries((await applicationsOf(open)).map((a) => [a.email, a.status]));
+    expect(statuses).toEqual({ "minji@socialing.test": "pending", "taeyun@socialing.test": "accepted" });
   });
 
   test("U10 읽기: 거절 사유는 신청자 본인과 호스트만 보고, 다시 신청하면 가장 최근 신청(사유 없음)이 보인다", async ({
@@ -142,11 +145,13 @@ test.describe("MS14 reject_application", () => {
     ]);
   });
 
-  test("옛 거절 길 decide_application(…, false)은 main 코드가 쓰므로 그대로 동작한다 (사유 없음)", async ({ request }) => {
+  // MS15 첫 PR에서 옛 거절 길을 지웠다(04 8.1, MS14가 main에 들어가 main 코드가 더는 부르지 않음). 거절은 사유를 받는 reject_application만
+  test("옛 거절 길 decide_application(…, false)은 MS15부터 INVALID_INPUT이고 신청은 승인 대기 그대로", async ({ request }) => {
     const host = await signIn(request, "C");
     const id = await fixture({ host: "C", joinType: "approval" });
     const application = await addApplication(id, "P1", "pending");
     const result = await rpc(request, "decide_application", { p_application_id: application, p_approve: false }, host);
-    expect(result.body).toMatchObject({ status: "rejected", reject_reason: null, reject_note: null });
+    expect(result.body.message).toBe("INVALID_INPUT");
+    expect(await applicationsOf(id)).toEqual([{ email: "minji@socialing.test", status: "pending" }]);
   });
 });

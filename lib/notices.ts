@@ -10,6 +10,8 @@ export const NOTICES = {
   // 종료·호스트 취소된 소셜링의 수정(P08) 주소 → 관리 (spec 8.7, screen-cases E06)
   "edit-completed": "종료한 소셜링은 수정할 수 없어요",
   "edit-canceled": "호스트 취소한 소셜링은 수정할 수 없어요",
+  // 신청 마감·확정 기한이 지나 계산으로 취소·호스트 취소된 소셜링 (MS15 U4, 04 2.5)
+  "edit-auto-canceled": "이미 취소된 소셜링이에요",
 } as const;
 
 export type NoticeKey = keyof typeof NOTICES;

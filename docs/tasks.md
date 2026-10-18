@@ -205,8 +205,21 @@ MVP(MS1~MS9)는 main에 있고 운영 주소(발표 DB)에서 1~10단계가 된�
   - [x] 화면이 바뀐 PR마다 PM이 미리보기에서 확인하고 dev에 병합한다. 여러 화면을 바꾼 PR은 `ms9-screen-sweep`이 통과한다. #77~#80 PM이 미리보기 확인 뒤 병합(2026-10-16 15:30~16:07 KST). #77 미리보기에서 PM이 띄어쓰기 없는 긴 승인 기준이 상자 밖으로 넘치는 것을 발견(MS11부터) → 같은 PR에서 승인 기준 상자·신청 확인·관리·후기 쓰기 요약 줄과 참가비 설명 줄을 고치고 `ms14-long-text` 추가, `ms9-screen-sweep` 포함 고른 E2E 59개 통과
   - [x] dev → main 전 점검(demo-checklist 7장): dev 시드 다시 → 전체 E2E 통과. 새 마이그레이션 5개와 시드 변경이 있어 발표 DB 준비를 dev 기준으로 실제 실행한다. dev → main PR은 이 결과를 보여 드리고 PM 승인 뒤. 전체 E2E 341개(16.9분, 2026-10-16 16:07 KST dev 시드 기준, #80까지 병합한 dev). 목록만 보기 dev @ 488956e "적용 예정" 5개(batch2_columns, socialing_v2, reject_application, reports, batch2_views). PM 승인(2026-10-16 16:28 KST, 두 창 로그아웃 뒤) → 실제 실행 dev @ a94fd6b: "적용함" 5개, "완료: 5개 적용", "시드 완료 (23.0초): … 소셜링 23개, 신청 47개, 후기 16개, 대표 사진 10장, 후기 사진 5장". 운영 점검은 dev → main 병합 뒤 (2026-10-16)
 
-### MS15~. 기능 추가
-- **범위**: 3묶음(U4 → SH2, 상세 기획 전)과 검색(U11, MS16). 기능 기획 스레드가 묶음별 범위를 정하고, 단계마다 첫 PR에서 여기에 쓴다. 그 전까지 기능 기획은 저장소 문서를 고치지 않는다. MS15 첫 PR에서 MS14의 옛 등록·수정 함수와 `decide_application(…, false)` 거절 길을 지운다
+### MS15. 기능 3: 최소 인원·확정 기한·참여 기록
+- **범위**: 사용자 리뷰 분석으로 고른 기능의 셋째 묶음(기능 기획 스레드 문서 04 v1.0, PM 확정 2026-10-18, 결정 H1~H6). 순서대로 U4 최소 인원과 확정 기한(호스트가 정해 공개, 신청 마감 ≤ 확정 기한 ≤ 소셜링 일시 − 12시간, 참여 확정이 최소 인원 이상이어야 확정. 신청 마감·확정 기한이 지나면 보이는 상태만 계산으로 확정 대기·취소·호스트 취소가 된다) → SH2 참여자 기록(본인만 봄: 참여 수·늦은 취소 수·새 멤버). 저장된 상태는 그대로 4개이고 예약 작업(cron)은 없다. 마이그레이션과 시드를 첫 PR에 모으고(MS14와 같은 예외), 화면 PR은 등록·수정 → 상태 표시 → 관리 → 참여 기록·신청 취소 창 순서. 등록·수정은 새 이름 `create_socialing_v3`·`update_socialing_v3`, 보이는 상태는 `socialing_display_status`, 참여 기록은 `get_my_participation_record`. 첫 PR에서 MS7의 옛 `create_socialing`·`update_socialing`과 `decide_application(…, false)` 거절 길을 지우고, MS14의 `_v2`는 MS16 첫 PR에서 지운다
+- **스펙**: 2장 용어, 3.1·3.3, M4, M7, M8, M11, 6장(입력 범위·호스트 취소 수·환불 기준), 7장 시드 조건, 8.3·8.4·8.6·8.8 · architecture 3·5장 · 계획 `dev/ms15_plan.md`(프로젝트 공유 폴더)
+- **완료 기준**
+  - [x] 마이그레이션 7개(칸, 보이는 상태, 등록·수정 v3와 옛 함수 지우기, 버튼 함수 검사, 호스트 기록, 참여 기록, 뷰 끝 칸)가 추가만 하고(main 코드가 쓰는 이름·인자·돌려주는 칸 그대로), 새 규칙·오류 코드·권한·뷰 칸이 테스트로 확인된다. 바뀐 규칙에 맞춰 고친 옛 테스트는 PR 설명에 적는다. `ms15-display-status-fn`, `ms15-socialing-v3-fn`, `ms15-host-actions-fn`, `ms15-participation-fn` (PR 1)
+  - [x] 시드: 모든 소셜링에 최소 인원·확정 기한, "아침 7시 영어 일기 쓰기" 최소 4명(꼬리표 최소 인원까지 2명), "영어로 내 일 소개하기" 민지 미리 참여 확정, "작은 전시 함께 보고" 확정 대기, "캘리그라피 한 줄" 취소(최소 인원 미달), "엑셀 함수 기초" 확정 + 신청 마감, 서윤의 늦은 취소 1회. `seed.spec`, dev 시드 뒤 전체 E2E 통과. PR 1: dev 시드 다시(2026-10-18 13:10 KST, "소셜링 23개, 신청 50개, 후기 16개, 대표 사진 10장, 후기 사진 5장") → 전체 E2E 372개 모두 통과(18.3분, 다시 시도 없음)
+  - [x] 등록·수정(P07·P08)에 확정 기한·최소 인원(도움말·오류·참여 확정자가 있으면 잠금)이 있고 `_v3`를 부른다. 시연 10단계 등록이 그대로 된다. #85, `ms15-socialing-form`, `ms7-new-socialing`·`ms7-edit-socialing`·`ms14-socialing-form`, `ms9-scenario` (2026-10-18)
+  - [x] 배지 "확정 대기"·"취소"와 꼬리표 "최소 인원까지 N명"(조합 10가지)이 카드·상세에 보이고, 상세(P03)에 확정 기한 줄·보조 글, 아래 영역 2줄 이유·새 줄(최소 인원 미달)·7줄 둘, 신청 확인(O02)에 한 줄. 390·320px. #86, `ms15-status-display`, 바뀐 규칙에 맞춘 `ms2-apply-bar`·`ms2-past`·`ms2-home`·`ms2-detail`·`ms3-apply-bar`·`ms3-apply`·`ms3-cancel`·`ms3-my-socialings`·`ms12-refund`·`ms14-detail-info`·`ms14-reject-reason`, `ms9-scenario` (2026-10-18)
+  - [x] 소셜링 관리(P11): 요약 줄 최소 인원, 확정 대기 단계, 확정 조건 설명·막힌 이유, 계산으로 취소·호스트 취소면 버튼 대신 안내. #87, `ms15-manage`, 바뀐 규칙에 맞춘 `ms4-status`, `ms4-manage`·`ms4-decide`·`ms9-focus-return`·`ms9-screen-sweep`, `ms9-scenario` (2026-10-18)
+  - [x] 내 소셜링(P06) "신청한 소셜링" 맨 위에 나만 보는 참여 기록(새 멤버·참여·늦은 취소, 늦은 취소 목록 접는 줄)과 불러오지 못했을 때의 자리, 신청 취소 창(O05) 두 줄(확정 대기 취소 경고, 늦은 취소 안내). #88, `ms15-participation-record`, `ms3-cancel`·`ms3-my-socialings`·`ms12-refund`·`ms15-participation-fn`·`ms9-focus-return`·`ms9-screen-sweep`, `ms9-scenario` (2026-10-18)
+  - [ ] 화면이 바뀐 PR마다 PM이 미리보기에서 확인하고 dev에 병합한다. 여러 화면을 바꾼 PR은 `ms9-screen-sweep`이 통과한다
+  - [ ] dev → main 전 점검(demo-checklist 7장): dev 시드 다시 → 전체 E2E 통과. 새 마이그레이션 7개와 시드 변경이 있어 발표 DB 준비를 dev 기준으로 실제 실행한다. dev → main PR은 이 결과를 보여 드리고 PM 승인 뒤
+
+### MS16. 기능 4: 검색
+- **범위**: 검색(U11). 기능 기획 스레드가 범위를 정하고 첫 PR에서 여기에 쓴다. 그 전까지 기능 기획은 저장소 문서를 고치지 않는다. 첫 PR에서 MS14의 `create_socialing_v2`·`update_socialing_v2`를 지운다
 
 ## 4. 마일스톤 끝 점검
 

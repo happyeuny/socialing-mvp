@@ -1,6 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Calendar, Clock, ExternalLink, FileText, IdCard, MapPin, UserCheck, Users, Wallet } from "lucide-react";
+import {
+  Calendar,
+  CalendarCheck,
+  Clock,
+  ExternalLink,
+  FileText,
+  IdCard,
+  MapPin,
+  UserCheck,
+  Users,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ApplyBar } from "@/components/apply-bar";
@@ -108,8 +119,8 @@ export default async function SocialingPage({ params, searchParams }: Props) {
         <CoverPhoto socialing={socialing} />
         <section className="relative -mt-md flex flex-col gap-xs rounded-t-2xl bg-surface px-page-x pt-lg pb-lg">
           <div className="flex flex-wrap items-center gap-[6px]">
-            <StatusBadge status={socialing.status} />
-            {socialing.status_tag && <StatusTag tag={socialing.status_tag} />}
+            <StatusBadge status={socialing.display_status} />
+            <StatusTag socialing={socialing} />
             <span className="ml-xxs text-body-md text-text-secondary">
               <CategoryName slug={socialing.category_slug} name={socialing.category_name} /> ·{" "}
               {socialing.has_alcohol ? "술 있음" : "술 없음"}
@@ -329,15 +340,25 @@ function CoverPhoto({ socialing }: { socialing: SocialingDetail }) {
 /**
  * 정보 카드 줄 (spec M4, DESIGN.md info-list). MS14: 총 참가비 아래 참가비 설명(U3), 모집 방식 다음 연령 조건(SH1b,
  * 호스트 승인이고 조건이 있을 때), 맨 아래 자료(SH3, 새 창 · 이 앱 정보를 넘기지 않음 · 사이트 이름). 없으면 줄이 없다.
+ * MS15(U4): 모집중·확정 대기일 때만 신청 마감 아래 "확정 기한" 줄과 인원 아래 최소 인원 글(openState).
  */
 function infoRows(socialing: SocialingDetail): InfoRow[] {
   const people = `참가자 ${socialing.accepted_count}/${socialing.capacity}명`;
+  const opening = socialing.display_status === "recruiting" || socialing.display_status === "awaiting_confirm";
   const feeNote = socialing.fee_note?.trim();
   const ageRange = socialing.join_type === "approval" ? formatAgeRange(socialing.min_age, socialing.max_age) : null;
   const materialHost = socialing.material_url ? linkHost(socialing.material_url) : null;
   const rows: (InfoRow | null)[] = [
     { label: "소셜링 일시", icon: Calendar, value: formatDateTime(socialing.starts_at), strong: true },
     { label: "신청 마감", icon: Clock, value: formatDateTime(socialing.apply_deadline_at) },
+    opening
+      ? {
+          label: "확정 기한",
+          icon: CalendarCheck,
+          value: formatDateTime(socialing.confirm_deadline_at),
+          note: "이때까지 호스트가 확정하지 않으면 취소돼요",
+        }
+      : null,
     {
       label: "장소",
       icon: MapPin,
@@ -353,8 +374,9 @@ function infoRows(socialing: SocialingDetail): InfoRow[] {
           icon: Users,
           value: `${people} · 스태프 ${socialing.staff_count}명`,
           sub: "스태프는 정원에 세지 않아요",
+          note: opening ? minParticipantsText(socialing) : undefined,
         }
-      : { label: "인원", icon: Users, value: people },
+      : { label: "인원", icon: Users, value: people, note: opening ? minParticipantsText(socialing) : undefined },
     materialHost && socialing.material_url
       ? {
           label: "자료",
@@ -376,4 +398,19 @@ function infoRows(socialing: SocialingDetail): InfoRow[] {
       : null,
   ];
   return rows.filter((row) => row !== null);
+}
+
+/**
+ * 인원 줄 아래 최소 인원 글 (MS15 U4, 모집중·확정 대기만). 남은 수는 DB가 준 needed_count(최소 인원 − 참여 확정).
+ * 확정 대기는 신청 마감이 지나 새 신청이 없으므로, 남은 수는 승인 대기 중 신청을 승인해야 채워진다
+ * (승인 대기까지 합쳐 최소 인원이 안 되면 이미 "취소"라 여기 오지 않는다)
+ */
+function minParticipantsText(socialing: SocialingDetail): string {
+  const min = socialing.min_participants;
+  const needed = socialing.needed_count ?? 0;
+  if (needed <= 0) return `최소 ${min}명이 모였어요 · 호스트가 확정하면 열려요`;
+  if (socialing.display_status === "awaiting_confirm") {
+    return `최소 ${min}명 · 승인 대기 중 ${needed}명이 더 승인되면 확정할 수 있어요`;
+  }
+  return `최소 ${min}명 · ${needed}명 더 모이면 확정할 수 있어요`;
 }

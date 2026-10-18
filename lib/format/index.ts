@@ -28,6 +28,21 @@ export function formatMonthDay(value: string | Date): string {
   return `${parts.month}/${parts.day}`;
 }
 
+const monthDayWeekdayFormat = new Intl.DateTimeFormat("ko-KR", {
+  timeZone: "Asia/Seoul",
+  month: "numeric",
+  day: "numeric",
+  weekday: "short",
+});
+
+/** 예: `10/12(월)` (내 참여 기록의 늦은 취소 날짜, MS15 SH2) */
+export function formatMonthDayWeekday(value: string | Date): string {
+  const parts = Object.fromEntries(
+    monthDayWeekdayFormat.formatToParts(new Date(value)).map((part) => [part.type, part.value]),
+  );
+  return `${parts.month}/${parts.day}(${parts.weekday})`;
+}
+
 const SEOUL_OFFSET_MS = 9 * 60 * 60 * 1000; // 한국은 일광 절약 시간이 없어 언제나 UTC+9
 const SEOUL_INPUT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 

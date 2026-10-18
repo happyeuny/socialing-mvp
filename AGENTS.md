@@ -105,7 +105,7 @@ Next.js 16.3.x (App Router) · React 19 · TypeScript 6.0 · Supabase (Postgres,
 - **정한 방법 (SP5)**: `npm run db:push`가 `POST /v1/projects/{ref}/database/query`로 파일 하나를 트랜잭션 하나로 적용하고, 같은 트랜잭션에서 `supabase_migrations.schema_migrations`에 **파일 이름의 버전**을 기록한다. 실패하면 SQL과 기록이 함께 취소된다. 파일 이름은 `<14자리 버전>_<이름>.sql`(Supabase CLI 규칙), 파일 안에 `begin`/`commit`을 쓰지 않는다. 타입은 `npm run db:types`(`GET /types/typescript`). Supabase CLI와 Docker는 필요 없다. 클라우드 밖에서는 같은 이름의 변수를 `.env.local`에 넣고 같은 명령을 쓴다(Node 22.18 이상).
 
 ## 하지 않는 것 (전체는 spec 10장)
-채팅·메시지, 알림(푸시·메일·문자), 실제 결제·환불·정산, 비용 항목 내역, 최소 인원·자동 확정·자동 취소·예약 작업(cron), 별점·좋아요·댓글·찜, 점수·온도·랭킹·뱃지·포인트, 추천·인기순·유료 노출·넘기는 배너, 지도·검색창·공유 버튼, 이메일 인증·소셜 로그인·비밀번호 찾기·프로필 사진, 어드민 화면·신고 처리·출석 체크, 다크 모드, "이성 교류" 같은 표현, 다른 앱(문토 등)의 이름·디자인·문구·사진.
+채팅·메시지, 알림(푸시·메일·문자), 실제 결제·환불·정산, 비용 항목 내역, 자동 확정·예약 작업(cron), 별점·좋아요·댓글·찜, 점수·온도·랭킹·뱃지·포인트, 추천·인기순·유료 노출·넘기는 배너, 지도·검색창·공유 버튼, 이메일 인증·소셜 로그인·비밀번호 찾기·프로필 사진, 어드민 화면·신고 처리·출석 체크, 다크 모드, "이성 교류" 같은 표현, 다른 앱(문토 등)의 이름·디자인·문구·사진.
 
 ## 용어 (화면 → 코드)
 
@@ -115,6 +115,8 @@ Next.js 16.3.x (App Router) · React 19 · TypeScript 6.0 · Supabase (Postgres,
 | 모집중 / 확정 / 종료 / 호스트 취소 | `recruiting` / `confirmed` / `completed` / `canceled` |
 | 신청: 승인 대기 / 참여 확정 / 거절 / 신청 취소 | `application`: `pending` / `accepted` / `rejected` / `canceled` |
 | 소셜링 일시 / 신청 마감 일시 | `starts_at` / `apply_deadline_at` |
+| 최소 인원 / 확정 기한 | `min_participants` / `confirm_deadline_at` |
+| 보이는 상태(계산): 확정 대기 / 취소(최소 인원 미달) | `display_status`: `awaiting_confirm` / `auto_canceled` |
 | 정원(스태프 제외) / 스태프 | `capacity` / `staff_count` |
 | 총 참가비 / 술 여부 / 대표 사진 | `fee` / `has_alcohol` / `cover_photo_path` |
 | 모집 방식: 선착순 / 호스트 승인, 승인 기준 | `join_type`: `first_come` / `approval`, `approval_criteria` |

@@ -96,7 +96,8 @@ test.describe("MS9 창을 닫으면 포커스 복귀", () => {
 
   test("O04 호스트 확인: 돌아가기·Esc면 연 버튼으로, 확정하면 '소셜링 상태'의 다음 버튼으로", async ({ page }) => {
     // 호스트 취소는 하지 않아 C의 호스트 기록 숫자는 바뀌지 않는다. 확정·종료한 테스트 소셜링은 끝에 지운다
-    const id = await fixture({ host: "C", joinType: "approval", capacity: 4 });
+    // 확정할 수 있게 최소 인원(2명)을 미리 참여 확정 (MS15)
+    const id = await fixture({ host: "C", joinType: "approval", capacity: 4, accepted: ["P1", "P2"] });
     await addApplication(id, "P3", "pending");
     await page.goto(loginPath(`/socialings/${id}/manage`));
     await submitLogin(page, "C");
