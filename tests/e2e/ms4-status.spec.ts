@@ -14,6 +14,10 @@ import {
 
 // MS4 소셜링 관리 P11 상태 버튼: 확정 · 종료 · 호스트 취소 · 수정
 // (spec 7장 5·7단계, M8, 8.8, screen-cases P11-01~06·14·15·18~20). 시드 데이터는 건드리지 않고 테스트 전용 소셜링을 쓴다.
+// MS15: 확정은 참여 확정이 최소 인원(테스트 소셜링 기본 2명) 이상일 때라 확정하는 소셜링에는 참여 확정 2명을 미리 둔다(04 8.3).
+
+/** 확정할 수 있는 모집중 소셜링의 참여 확정자 (최소 인원 2명) */
+const MIN_MET: DemoUserKey[] = ["P1", "P2"];
 
 const created: number[] = [];
 test.afterAll(async () => {
@@ -46,7 +50,7 @@ test.describe("MS4 확정", () => {
   test("시연 5단계(끝)·P11-01·02·18: B가 확정하기 → O04 → 확정, 진행 단계가 바뀌고 종료하기는 일시 전이라 막힘", async ({
     page,
   }) => {
-    const id = await fixture({ host: "B", joinType: "approval", accepted: ["A"] });
+    const id = await fixture({ host: "B", joinType: "approval", accepted: ["A", "P1"] });
     await loginAs(page, "B", manage(id));
 
     // P11-01 모집중 · 일시 전
@@ -76,19 +80,24 @@ test.describe("MS4 확정", () => {
     await expect(button(page, "호스트 취소")).toBeEnabled();
   });
 
-  test("P11-04: 확정하지 않은 채 일시가 지난 모집중 소셜링은 확정·종료가 막히고 호스트 취소만 된다", async ({ page }) => {
+  // MS15에서 규칙이 바뀜(04 3.6): 확정하지 않은 채 일시가 지난 모집중은 계산으로 취소(신청 없음)라 호스트 취소·수정도 막힌다.
+  // 버튼 대신 안내로 바꾸는 것은 관리 PR(MS15 PR 4)에서
+  test("P11-04: 확정하지 않은 채 일시가 지난 모집중 소셜링은 확정·종료·호스트 취소·수정이 막힌다 (MS15 계산 취소)", async ({
+    page,
+  }) => {
     const id = await fixture({ host: "C", deadlineInHours: -3, startsInHours: -1 });
     await loginAs(page, "C", manage(id));
 
     await expect(button(page, "확정하기")).toBeDisabled();
-    await expect(status(page)).toContainText("소셜링 일시가 지나 확정할 수 없어요");
+    await expect(status(page)).toContainText("이미 취소된 소셜링이에요");
     await expect(button(page, "종료하기")).toBeDisabled();
     await expect(status(page)).toContainText("확정하지 않은 소셜링은 종료할 수 없어요");
-    await expect(button(page, "호스트 취소")).toBeEnabled();
+    await expect(button(page, "호스트 취소")).toHaveCount(0);
+    await expect(status(page).getByRole("link", { name: "수정" })).toHaveCount(0);
   });
 
   test("O04 돌아가기는 아무것도 바꾸지 않는다", async ({ page }) => {
-    const id = await fixture({ host: "C" });
+    const id = await fixture({ host: "C", accepted: MIN_MET });
     await loginAs(page, "C", manage(id));
 
     await button(page, "확정하기").click();
@@ -102,7 +111,7 @@ test.describe("MS4 확정", () => {
     page,
     request,
   }) => {
-    const id = await fixture({ host: "C" });
+    const id = await fixture({ host: "C", accepted: MIN_MET });
     await loginAs(page, "C", manage(id));
     await expect(button(page, "확정하기")).toBeEnabled();
 
@@ -117,7 +126,7 @@ test.describe("MS4 확정", () => {
   });
 
   test("P11-15: 네트워크 오류면 O04를 연 채 안내 + 다시 시도, 다시 누르면 확정된다", async ({ page }) => {
-    const id = await fixture({ host: "C" });
+    const id = await fixture({ host: "C", accepted: MIN_MET });
     await loginAs(page, "C", manage(id));
 
     await page.route(`**${manage(id)}*`, (route) =>

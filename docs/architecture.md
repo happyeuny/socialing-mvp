@@ -36,7 +36,7 @@ flowchart LR
   - SP3에서 정한 것: `components/photo-picker.tsx`가 사진을 고르는 즉시 줄여서 올리고, 올린 경로를 onChange로 넘긴다(실패하거나 지우면 null. `name`을 주면 폼의 숨은 칸으로도). 후기 쓰기(P09)는 올리는 동안 "후기 올리기"를 잠근다(onUploadingChange). 줄이기는 `lib/photos/compress.ts`: 긴 변 1600px, 목표 0.9MB, JPEG로 저장(버킷 한도 1MB에 여유). 라이브러리의 웹 워커는 외부 CDN(jsdelivr)에서 코드를 받아 와서 쓰지 않는다(`useWebWorker: false`).
   - 파일 고르기는 `accept="image/*"`. iPhone은 이때 HEIC 사진을 JPEG로 바꿔 넘긴다. 브라우저가 열지 못하는 형식(예: Android Chrome의 HEIC)은 "사진을 올리지 못했어요" + "JPEG로 골라 주세요".
   - 경로는 `<사용자 id>/<무작위 uuid>.jpg`. 고른 뒤 제출하지 않고 나간 사진은 버킷에 남는다(MVP에서는 정리하지 않음). `npm run seed`가 두 버킷을 비운다.
-- **시간**: 현재/지난, 신청 가능, 버튼 가능 여부는 조회할 때 `now()`로 계산한다. 예약 작업(cron)은 없다. DB는 `timestamptz`, 화면 표시와 날짜 필터 계산은 Asia/Seoul로 고정한다(서버가 UTC여도 같은 결과).
+- **시간**: 현재/지난, 신청 가능, 버튼 가능 여부, 보이는 상태(확정 대기·취소·확정하지 않은 호스트 취소, MS15)는 조회할 때 `now()`로 계산한다. 예약 작업(cron)은 없다. DB는 `timestamptz`, 화면 표시와 날짜 필터 계산은 Asia/Seoul로 고정한다(서버가 UTC여도 같은 결과).
 - **세션**: `@supabase/ssr`로 쿠키 세션. Next.js 16은 루트 `proxy.ts`(예전 이름 middleware)에서 `supabase.auth.getClaims()`로 세션을 갱신하고, 로그인이 필요한 경로는 `/login?next=원래주소`로 보낸다. 서버 코드에서 `getSession()` 결과는 믿지 않고 `getClaims()`로 확인한다(Supabase 공식 Next.js 가이드, 2026-10-12 판).
   - SP1에서 정한 것: 세션 갱신과 주소 처리는 `lib/supabase/proxy.ts`(`updateSession`), 서버 컴포넌트·서버 액션용 클라이언트는 `lib/supabase/server.ts`. 로그인이 필요한 주소 목록(P06 `/me`, P07, P08, P09, P11)과 `next` 검사는 `lib/routes.ts` 한 곳에 둔다. 로그인한 사람이 `/login`·`/signup`에 오면 proxy가 `next`(없으면 `/`)로 보낸다.
   - proxy는 첫 관문일 뿐이라 로그인이 필요한 화면과 서버 액션도 `getClaims()`로 다시 확인한다(Next.js 16 proxy 안내). 호스트인지 같은 권한은 화면과 DB 함수가 확인한다.
@@ -54,7 +54,7 @@ flowchart LR
 | `regions` | id, sido, sigungu, code | 시드. 전국 시·도 > 시·군·구 |
 | `venues` | id, type(`branch`/`external`), name, region_id, address_text | 지점도 region_id를 가진다 |
 | `categories` | id, slug, name, sort_order, is_party | 5개 고정 시드. slug: `learning`, `hobby`, `activity`, `culture`, `party` |
-| `socialings` | id, host_id, title, description, category_id, has_alcohol, venue_id, starts_at, apply_deadline_at, fee, capacity, staff_count, join_type(`first_come`/`approval`), approval_criteria(null 가능), cover_photo_path(null 가능), status(`recruiting`/`confirmed`/`completed`/`canceled`, 기본 `recruiting`), confirmed_at, completed_at, canceled_at, created_at, updated_at. MS14: fee_note(참가비 설명), min_age·max_age(연령 조건), material_url(자료 링크), 모두 null 가능 | apply_deadline_at ≤ starts_at, capacity 2~20, fee ≥ 0, staff_count ≥ 0. MS14: fee_note 100자·material_url 500자 이하, 나이 1~99·min_age ≤ max_age. "유료면 참가비 설명"·"호스트 승인이면 승인 기준"은 테이블이 아니라 등록·수정 함수가 막는다(이미 있는 행 때문) |
+| `socialings` | id, host_id, title, description, category_id, has_alcohol, venue_id, starts_at, apply_deadline_at, fee, capacity, staff_count, join_type(`first_come`/`approval`), approval_criteria(null 가능), cover_photo_path(null 가능), status(`recruiting`/`confirmed`/`completed`/`canceled`, 기본 `recruiting`), confirmed_at, completed_at, canceled_at, created_at, updated_at. MS14: fee_note(참가비 설명), min_age·max_age(연령 조건), material_url(자료 링크), 모두 null 가능. MS15: min_participants(최소 인원, 기본 2), confirm_deadline_at(확정 기한, not null) | apply_deadline_at ≤ starts_at, capacity 2~20, fee ≥ 0, staff_count ≥ 0. MS14: fee_note 100자·material_url 500자 이하, 나이 1~99·min_age ≤ max_age. "유료면 참가비 설명"·"호스트 승인이면 승인 기준"은 테이블이 아니라 등록·수정 함수가 막는다(이미 있는 행 때문). MS15: 2 ≤ min_participants ≤ capacity, apply_deadline_at ≤ confirm_deadline_at ≤ starts_at. "확정 기한은 소셜링 일시 12시간 전까지"는 등록·수정 함수만 본다(이미 있는 행 때문. 넣을 때 있던 행의 확정 기한은 신청 마감 값) |
 | `applications` | id, socialing_id, user_id, status(`pending`/`accepted`/`rejected`/`canceled`), created_at, decided_at, canceled_at. MS14: reject_reason(`criteria`/`age`/`full`/`host`/`other`, null 가능), reject_note(null 가능) | (socialing_id, user_id)는 status가 pending·accepted인 행이 하나만 (부분 유니크 인덱스). reject_note 100자 이하 |
 | `reviews` | id, socialing_id, user_id, body, photo_path(null 가능), created_at | (socialing_id, user_id) 유니크, body 10~500자 |
 | `review_checks` | review_id(PK, FK), members_match, extra_money, content_match (boolean) | **직접 SELECT 정책 없음**. 집계 함수만 읽는다 |
@@ -83,22 +83,32 @@ erDiagram
 |---|---|
 | 참여 확정 인원 | 그 소셜링의 `accepted` 신청 수 |
 | 신청 가능 | status ∈ (recruiting, confirmed) AND now() < apply_deadline_at AND 참여 확정 인원 < capacity |
-| 꼬리표 | 신청 마감 일시 지남 → "신청 마감", 아니고 정원 참 → "정원 마감" (종료·호스트 취소에는 없음) |
+| 보이는 상태 (MS15) | 참여 확정 = a, 승인 대기 = p, 최소 인원 = m. 위에서부터: 종료 → `completed`, 호스트 취소 → `host_canceled`, 확정 → `confirmed`, 모집중 · 신청 마감 전 → `recruiting`, 모집중 · 신청 마감 지남 · a + p < m → `auto_canceled`(취소, 최소 인원 미달), 확정 기한 전 → `awaiting_confirm`(확정 대기), 확정 기한 지남 → `host_canceled`(확정하지 않음). 저장된 상태는 그대로이고 되돌아가지 않는다(신청 마감 뒤 a + p는 줄기만 하고, 확정 기한 뒤에는 모든 동작이 막힘) |
+| 꼬리표 | 보이는 상태가 모집중·확정일 때만. 신청 마감 일시 지남 → "신청 마감"(MS15부터 확정에서만), 아니고 정원 참 → "정원 마감". 모집중 · 최소 인원 전이면 "최소 인원까지 N명"(MS15, N = m − a) |
 | 현재 / 지난 | starts_at > now() / 그 외 |
-| 호스트 기록 | 최근 6개월(starts_at 기준): 열린 소셜링 수(completed + accepted 1명 이상), 호스트 취소 수(canceled 중 pending·accepted 신청이 있던 것), 소개 일치 비율(review_checks 중 members_match = true, extra_money = false, content_match = true 비율, 응답 5건 이상일 때만), 후기 수 |
+| 호스트 기록 | 최근 6개월(starts_at 기준): 열린 소셜링 수(completed + accepted 1명 이상), 호스트 취소 수(canceled 중 pending·accepted 신청이 있던 것 + MS15 확정 대기인 채로 확정 기한이 지난 모집중. 최소 인원 미달 취소는 세지 않음), 소개 일치 비율(review_checks 중 members_match = true, extra_money = false, content_match = true 비율, 응답 5건 이상일 때만), 후기 수 |
+| 참여 기록 (MS15 SH2) | 본인만, 최근 6개월(starts_at 기준): 참여 수(completed + 내 신청 accepted), 늦은 취소 수(내 신청 canceled + decided_at 있음(참여 확정이었음) + canceled_at ≥ apply_deadline_at), 새 멤버(참여 3회 미만) |
 | 새 호스트 / 등급 | 열린 소셜링 3회 미만 → 새 호스트. 5회 이상 + 호스트 취소 0 + 일치 90% 이상 → "믿고 가는 호스트" |
 
 호스트 기록은 SECURITY DEFINER 함수 `get_host_record(p_host_id)`가 집계값만 돌려준다(MS6). 칸: `opened_count`, `canceled_count`, `review_count`, `response_count`(비공개 응답 수), `match_rate`(0~1, 반올림 안 함, 응답 5건 미만이면 null), `is_new_host`, `is_trusted_host`(MS8 기준 공개 등급. 반올림 전 비율로 판단하고, 비율이 없으면 false). "최근 6개월"은 소셜링 일시가 6개월 전 이후인 소셜링(앞으로 열릴 소셜링 포함)이고, 시드 쪽 `hostRecordFromSeed`와 같은 규칙이다. 비로그인도 부를 수 있다. 개별 응답은 어떤 경로로도 나가지 않는다.
 
-목록·상세는 뷰 `socialing_summaries` 하나를 읽는다(MS2). 소셜링 칸에 호스트 닉네임·카테고리·장소·지역을 붙이고, 위 표를 계산한 칸을 더한다. MS14에서 끝에 `fee_note`·`min_age`·`max_age`·`material_url`을 더했다(앞 칸 이름·순서는 그대로, 마이그레이션은 추가만).
+목록·상세는 뷰 `socialing_summaries` 하나를 읽는다(MS2). 소셜링 칸에 호스트 닉네임·카테고리·장소·지역을 붙이고, 위 표를 계산한 칸을 더한다. MS14에서 끝에 `fee_note`·`min_age`·`max_age`·`material_url`을, MS15에서 그 뒤에 `min_participants`·`confirm_deadline_at`·`display_status`·`cancel_reason`·`needed_count`를 더했다(앞 칸 이름·순서는 그대로, 마이그레이션은 추가만).
 
 | 칸 | 값 |
 |---|---|
 | `accepted_count` | 참여 확정 인원 |
 | `is_past` | 지난 소셜링 (starts_at <= now()) |
 | `can_apply` | 신청 가능 |
-| `status_tag` | 꼬리표 `closed`(신청 마감) / `full`(정원 마감) / null |
-| `closed_reason` | 신청할 수 없는 이유. spec 8.4의 2·13줄 순서로 `host_canceled` / `started`(소셜링 일시 지남) / `not_open`(종료) / `deadline` / `full`, 신청 가능하면 null |
+| `status_tag` | 꼬리표 `closed`(신청 마감) / `full`(정원 마감) / null. MS15: 확정 대기·취소·호스트 취소(계산)에는 null. "최소 인원까지 N명"은 값을 더하지 않고 화면이 `needed_count`로 고른다(main 코드가 모르는 값을 받지 않게) |
+| `closed_reason` | 신청할 수 없는 이유. spec 8.4의 2·13줄 순서로 `host_canceled` / `started`(소셜링 일시 지남) / `not_open`(종료) / `deadline` / `full`, 신청 가능하면 null. MS15에서 값은 그대로이고, 아래 영역의 새 줄은 `display_status`·`cancel_reason`으로 고른다 |
+| `display_status` (MS15) | 보이는 상태 `recruiting` / `awaiting_confirm` / `confirmed` / `completed` / `host_canceled` / `auto_canceled`. SECURITY DEFINER 함수 `socialing_display_status(socialing_id)`가 계산한다(승인 대기는 호스트만 읽으므로. 숫자는 내지 않고 상태만) |
+| `cancel_reason` (MS15) | 취소 이유 `host`(직접 호스트 취소) / `not_confirmed`(확정 기한까지 확정하지 않음) / `min_not_met`(최소 인원 미달), 아니면 null |
+| `needed_count` (MS15) | 최소 인원까지 남은 수 max(m − a, 0). 모집중·확정 대기일 때만, 아니면 null |
+| `min_participants` · `confirm_deadline_at` (MS15) | 최소 인원, 확정 기한 (누구나 본다) |
+
+`socialing_display_status(socialing_id, without_application_id)`의 둘째 인자(기본 null)는 "이 신청을 취소했다면"의 상태다. 부른 사람 본인의 신청일 때만 빼고, 남의 신청 id를 주면 그대로 센다(승인 대기 수를 알아낼 수 없게). 신청 취소 창(O05)의 경고 칸이 쓴다.
+
+참여 기록(MS15 SH2)은 보는 사람 권한(security invoker) 함수 `get_my_participation_record()`가 로그인한 본인 것만 돌려준다. 칸: `participated_count`, `late_cancel_count`, `is_new_member`, `late_cancels`(jsonb 배열, 최근 취소 순: `socialing_id`, `title`, `canceled_at`, `expires_at` = 소셜링 일시 + 6개월). 인자가 없어 남의 기록을 고를 수 없고 비로그인은 부를 수 없다. 칸을 더하지 않고 지금 칸(decided_at·canceled_at)으로 계산한다.
 
 탐색 필터(MS6, spec M3)는 DB가 아니라 `lib/explore-filter.ts`가 거른다. P01 서버 컴포넌트가 현재 소셜링(`listExploreSocialings`: 카드 칸 + `venue_id`·`category_is_party`·`region_sido`)과 필터 목록(`getFilterCatalog`: 카테고리·스터디지점·지역)을 읽고, 주소 값(`parseExploreFilter`)으로 거른다(`filterSocialings`). 필터 시트의 "소셜링 N개 보기"도 같은 함수로 센다. 날짜는 Asia/Seoul 기준(`dateFilterRange`). 참가비(MS12)는 뷰의 총 참가비 `fee`를 겹치지 않는 네 구간(`feeInRange`)으로, 술 없음(MS12)은 뷰의 `has_alcohol`로 거른다. 지역 코드(2자리 시·도, 5자리 시·군·구)는 `regions` 이름으로 바꿔 스터디지점·외부 장소 모두와 맞춘다.
 
@@ -108,8 +118,8 @@ erDiagram
 
 | 뷰 | 행 | 더한 칸 |
 |---|---|---|
-| `my_applied_socialings` | 내가 신청한 소셜링마다 **가장 최근 신청** 하나 (거절·신청 취소 뒤 다시 신청하면 새 행) | `application_id`, `application_status`(호스트 취소돼도 그대로), `applied_at`, `has_review`(내가 후기를 썼는지), MS14 `reject_reason`·`reject_note`(가장 최근 신청의 거절 사유). `socialing_summaries`의 MS14 칸은 없다(상세가 따로 읽음) |
-| `my_hosted_socialings` | 내가 호스트인 소셜링 | `pending_count`(승인 대기 건수. applications는 호스트가 읽을 수 있어 함수 없이 센다). MS4 관리 화면(P11) 칸: `closed_count`(거절·취소 탭 건수, 사람마다 가장 최근 신청 기준), `can_confirm` · `confirm_blocked_reason`(`started`), `can_complete` · `complete_blocked_reason`(`confirm_first` 모집중·일시 전 / `not_confirmed` 모집중·일시 지남 / `not_started` 확정·일시 전), `can_cancel`, `can_edit`, `can_decide`(승인·거절), `can_approve` · `approve_blocked_reason`(`started` / `full`). 함수와 같은 조건이다 |
+| `my_applied_socialings` | 내가 신청한 소셜링마다 **가장 최근 신청** 하나 (거절·신청 취소 뒤 다시 신청하면 새 행) | `application_id`, `application_status`(호스트 취소돼도 그대로), `applied_at`, `has_review`(내가 후기를 썼는지), MS14 `reject_reason`·`reject_note`(가장 최근 신청의 거절 사유). `socialing_summaries`의 MS14 칸은 없다(상세가 따로 읽음). MS15 끝 칸: `socialing_summaries`의 MS15 칸 5개 + 신청 취소 창(O05) 두 줄 `cancel_would_auto_cancel`(확정 대기이고 내 신청을 빼면 최소 인원보다 적어져 취소됨) · `cancel_would_be_late`(신청 마감 뒤 내 참여 확정 취소 = 늦은 취소, 확정 대기·확정) |
+| `my_hosted_socialings` | 내가 호스트인 소셜링 | `pending_count`(승인 대기 건수. applications는 호스트가 읽을 수 있어 함수 없이 센다). MS4 관리 화면(P11) 칸: `closed_count`(거절·취소 탭 건수, 사람마다 가장 최근 신청 기준), `can_confirm` · `confirm_blocked_reason`(`started`, MS15 `min_not_met` 참여 확정 < 최소 인원 · `canceled` 계산으로 취소·호스트 취소), `can_complete` · `complete_blocked_reason`(`confirm_first` 모집중·일시 전 / `not_confirmed` 모집중·일시 지남 또는 계산으로 취소 / `not_started` 확정·일시 전), `can_cancel`, `can_edit`, `can_decide`(승인·거절), `can_approve` · `approve_blocked_reason`(`started` / `full`, 계산으로 취소면 null = 보기만). 함수와 같은 조건이다. MS15 끝 칸: `socialing_summaries`의 MS15 칸 5개 |
 | `hosted_socialing_applicants` | 내가 호스트인 소셜링의 신청자마다 **가장 최근 신청** 하나 (MS4, P11 신청자 목록) | `socialing_id`, `application_id`, `nickname`, `status`(호스트 취소돼도 그대로), `applied_at`, `decided_at`, `canceled_at`, MS14 `reject_reason`·`reject_note`. 신청자 본인에게는 비어 보인다 |
 
 ## 4. 권한 (RLS)
@@ -122,6 +132,7 @@ erDiagram
 | review_checks | 아무도 직접 못 읽음 | `create_review` 함수로만 |
 | reports (MS14) | 신고한 본인 행만 (신고했는지 보이려고). 호스트·다른 사람·비로그인은 못 읽음. 쌓인 신고는 Supabase 대시보드에서만 | `create_report` 함수로만 |
 | 호스트 기록 | 모두 (집계 함수 `get_host_record`) | 계산 값 |
+| 참여 기록 (MS15) | 로그인한 본인 것만 (`get_my_participation_record`, 인자 없음). 호스트·다른 사람·비로그인은 못 읽음 | 계산 값 |
 | `socialing_summaries` 뷰 (목록·상세) | 모두 (참여 확정 인원은 숫자만) | 없음 (SELECT 권한만) |
 | `my_applied_socialings`, `my_hosted_socialings`, `hosted_socialing_applicants` 뷰 | 로그인한 본인 행만, 신청자 목록은 그 소셜링의 호스트만 (비로그인 거부) | 없음 (SELECT 권한만) |
 | profiles | 닉네임·id는 모두, 나머지는 본인 | 본인 |
@@ -138,21 +149,23 @@ erDiagram
 
 ## 5. 쓰기 함수 (RPC)
 
-모든 함수는 실패할 때 **정해진 오류 코드**를 돌려주고, 서버 액션이 그것을 spec 8.4·8.6·8.8의 문구로 바꾼다. 방식(SP2에서 정함): `raise exception using errcode = 'P0001', message = 'FULL'`처럼 오류 코드를 message에 넣는다. supabase-js에서는 `error.message`가 오류 코드다. 성공하면 바뀐 행을 돌려준다(`apply_to_socialing`은 만든 `applications` 행). 오류 코드 예: `NOT_AUTHENTICATED`, `NOT_HOST`, `IS_HOST`, `NOT_OPEN`(신청 불가), `DEADLINE_PASSED`, `FULL`, `HOST_CANCELED`, `ALREADY_APPLIED`, `STARTED`(소셜링 일시 지남), `NOT_STARTED`, `INVALID_STATE`, `ALREADY_PROCESSED`, `NOT_ELIGIBLE`(후기 조건), `ALREADY_REVIEWED`, `LOCKED_FIELD`, `BELOW_ACCEPTED`(정원 < 참여 확정 인원), `INVALID_INPUT`, `ALREADY_REPORTED`(MS14 이미 신고함).
+모든 함수는 실패할 때 **정해진 오류 코드**를 돌려주고, 서버 액션이 그것을 spec 8.4·8.6·8.8의 문구로 바꾼다. 방식(SP2에서 정함): `raise exception using errcode = 'P0001', message = 'FULL'`처럼 오류 코드를 message에 넣는다. supabase-js에서는 `error.message`가 오류 코드다. 성공하면 바뀐 행을 돌려준다(`apply_to_socialing`은 만든 `applications` 행). 오류 코드 예: `NOT_AUTHENTICATED`, `NOT_HOST`, `IS_HOST`, `NOT_OPEN`(신청 불가), `DEADLINE_PASSED`, `FULL`, `HOST_CANCELED`, `ALREADY_APPLIED`, `STARTED`(소셜링 일시 지남), `NOT_STARTED`, `INVALID_STATE`, `ALREADY_PROCESSED`, `NOT_ELIGIBLE`(후기 조건), `ALREADY_REVIEWED`, `LOCKED_FIELD`, `BELOW_ACCEPTED`(정원 < 참여 확정 인원), `INVALID_INPUT`, `ALREADY_REPORTED`(MS14 이미 신고함), `MIN_NOT_MET`(MS15 참여 확정 < 최소 인원), `AUTO_CANCELED`(MS15 보이는 상태가 계산으로 취소·호스트 취소. 확정·승인·거절·신청 취소·호스트 취소·수정을 모두 막는다).
 
 | 함수 | 호출 화면 | 검사 |
 |---|---|---|
 | `apply_to_socialing(socialing_id)` | P03 → O02 | 로그인, 호스트 아님, 신청 가능, 유효한 신청 없음, 정원(소셜링 행 `FOR UPDATE` 잠금). 선착순 → accepted, 승인 → pending |
-| `cancel_application(application_id)` | P03 → O05 | 본인(남의 신청은 없는 신청처럼 `INVALID_INPUT`), pending·accepted(아니면 `ALREADY_PROCESSED`), 호스트 취소 아님(`HOST_CANCELED`), 소셜링 일시 전(`STARTED`). 소셜링 행 → 신청 행 순서로 잠금. 성공하면 바뀐 신청 행 |
-| `decide_application(application_id, approve)` | P11 (거절은 O04) | 없는 신청 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), 종료·호스트 취소 아님(`INVALID_STATE`), pending(`ALREADY_PROCESSED`), 소셜링 일시 전(`STARTED`), 승인이면 정원(`FULL`). 소셜링 행 → 신청 행 순서로 잠금. 성공하면 바뀐 신청 행 |
-| `confirm_socialing(id)` | P11 → O04 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), recruiting(`INVALID_STATE`), 소셜링 일시 전(`STARTED`). 소셜링 행 잠금. 성공하면 바뀐 소셜링 행 |
+| `cancel_application(application_id)` | P03 → O05 | 본인(남의 신청은 없는 신청처럼 `INVALID_INPUT`), pending·accepted(아니면 `ALREADY_PROCESSED`), 호스트 취소 아님(`HOST_CANCELED`), MS15 계산으로 취소·호스트 취소 아님(`AUTO_CANCELED`), 소셜링 일시 전(`STARTED`). 소셜링 행 → 신청 행 순서로 잠금. 확정 대기 중에는 되고, 그 취소로 최소 인원이 될 수 없으면 그 순간 취소로 보인다. 성공하면 바뀐 신청 행 |
+| `decide_application(application_id, approve)` | P11 | 승인만(MS15에서 옛 거절 길을 지워 `approve`가 true가 아니면 `INVALID_INPUT`, 인자는 main 코드 때문에 그대로). 없는 신청 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), 종료·호스트 취소 아님(`INVALID_STATE`), MS15 계산으로 취소·호스트 취소 아님(`AUTO_CANCELED`, 모집중은 확정 기한이 지나면 늘 이것이라 확정 기한 전까지만 승인), pending(`ALREADY_PROCESSED`), 소셜링 일시 전(`STARTED`), 정원(`FULL`). 소셜링 행 → 신청 행 순서로 잠금. 성공하면 바뀐 신청 행 |
+| `confirm_socialing(id)` | P11 → O04 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), recruiting(`INVALID_STATE`), MS15 계산으로 취소·호스트 취소 아님(`AUTO_CANCELED`, 확정 기한 전), 소셜링 일시 전(`STARTED`), MS15 참여 확정 ≥ 최소 인원(`MIN_NOT_MET`). 확정 대기 중에도 된다. 소셜링 행 잠금. 성공하면 바뀐 소셜링 행 |
 | `complete_socialing(id)` | P11 → O04 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), confirmed(`INVALID_STATE`, 모집중에서 바로 종료 불가), 소셜링 일시 이후(`NOT_STARTED`). 소셜링 행 잠금. 성공하면 바뀐 소셜링 행 |
-| `cancel_socialing(id)` | P11 → O04 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), completed·canceled 아님(`INVALID_STATE`). 일시가 지나도 종료 전이면 된다. 신청 상태는 바꾸지 않는다. 소셜링 행 잠금. 성공하면 바뀐 소셜링 행 |
-| `create_socialing(title, description, category_id, has_alcohol, branch_id, region_code, place_name, starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, cover_photo_path)` | P07 | 로그인(`NOT_AUTHENTICATED`), 입력 범위(spec 6장, 글은 앞뒤 공백을 빼고 셈), 신청 마감 ≤ 소셜링 일시, 소셜링 일시 > now(), 장소는 스터디지점 id 하나 또는 지역(시·군·구 코드 5자리) + 장소 이름(외부 장소 행을 새로 만든다), 대표 사진은 null이거나 쓰는 사람 폴더에 실제로 올라간 `socialing-photos` 파일. 모두 아니면 `INVALID_INPUT`. 승인 기준은 호스트 승인일 때만 남기고 비면 null. host_id = auth.uid(), status = recruiting. 성공하면 만든 소셜링 행 |
-| `update_socialing(id, …등록과 같은 입력)` | P08 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), 종료·호스트 취소 아님(`INVALID_STATE`), 입력 범위는 등록과 같음(소셜링 일시 > now()는 바꿀 때만). 소셜링 행을 잠근 뒤 센다: 참여 확정자가 있으면 소셜링 일시·장소·총 참가비 변경, 승인 대기가 있으면 모집 방식 변경 `LOCKED_FIELD`, 정원 < 참여 확정 인원 `BELOW_ACCEPTED`. 일시는 같은 분이면 바꾸지 않은 것으로 보고 지금 값을 둔다. 장소는 같으면(외부 장소는 지역·이름이 같으면) 그대로, 바뀐 외부 장소는 새 행. 사진은 지금 경로 그대로 · null(지움) · 쓰는 사람 폴더의 새 파일. 성공하면 바뀐 소셜링 행 |
-| `create_socialing_v2(…등록과 같은 입력, fee_note, min_age, max_age, material_url)` (MS14) | P07 | `create_socialing` 검사 전부 + 참가비 설명은 앞뒤 공백을 뺀 100자까지이고 총 참가비 > 0이면 비울 수 없음, 호스트 승인이면 승인 기준을 비울 수 없음, 연령 조건은 각각 null이거나 1~99·최소 ≤ 최대(호스트 승인일 때만 남기고 선착순이면 버림, 둘 다 null = 제한 없음), 자료 링크는 비었거나 `https://`로 시작하고 공백 없이 주소 이름에 점이 있는 500자 이하. 모두 아니면 `INVALID_INPUT`. 새 인자 4개는 기본값 null. 같은 이름에 인자를 더하면 main 코드의 호출이 깨져서 새 이름이고, 옛 `create_socialing`은 MS15 첫 PR에서 지운다 |
-| `update_socialing_v2(id, …create_socialing_v2와 같은 입력)` (MS14) | P08 | `update_socialing` 검사 전부 + 등록 v2의 입력 범위. 참여 확정자가 있으면 이미 적힌 참가비 설명을 바꿀 때 `LOCKED_FIELD`(앞뒤 공백만 다르면 같은 설명, 비어 있던 설명은 채울 수 있음). 선착순으로 바꾸면 승인 기준·연령 조건을 지운다. 옛 `update_socialing`은 MS15 첫 PR에서 지운다 |
-| `reject_application(application_id, reason, note)` (MS14) | P11 → O04 거절 | `decide_application` 거절과 같은 검사(`INVALID_INPUT` 없는 신청, `NOT_HOST`, `INVALID_STATE`, `ALREADY_PROCESSED`, `STARTED`, 같은 잠금 순서) + 사유 필수, `age`는 그 소셜링에 연령 조건이 있을 때만, `other`면 덧붙일 말 필수, 덧붙일 말은 앞뒤 공백을 뺀 100자까지(`INVALID_INPUT`). 성공하면 바뀐 신청 행. 옛 거절 길 `decide_application(…, false)`은 MS15에서 막는다 |
+| `cancel_socialing(id)` | P11 → O04 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), completed·canceled 아님(`INVALID_STATE`), MS15 계산으로 취소·호스트 취소 아님(`AUTO_CANCELED`, 호스트 취소 수가 두 번 늘지 않게. 확정 대기 중에는 됨). 확정한 소셜링은 일시가 지나도 종료 전이면 된다. 신청 상태는 바꾸지 않는다. 소셜링 행 잠금. 성공하면 바뀐 소셜링 행 |
+| ~~`create_socialing(title, description, category_id, has_alcohol, branch_id, region_code, place_name, starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, cover_photo_path)` | P07 | 로그인(`NOT_AUTHENTICATED`), 입력 범위(spec 6장, 글은 앞뒤 공백을 빼고 셈), 신청 마감 ≤ 소셜링 일시, 소셜링 일시 > now(), 장소는 스터디지점 id 하나 또는 지역(시·군·구 코드 5자리) + 장소 이름(외부 장소 행을 새로 만든다), 대표 사진은 null이거나 쓰는 사람 폴더에 실제로 올라간 `socialing-photos` 파일. 모두 아니면 `INVALID_INPUT`. 승인 기준은 호스트 승인일 때만 남기고 비면 null. host_id = auth.uid(), status = recruiting. 성공하면 만든 소셜링 행~~ **MS15에서 지움**(검사는 `_v2`·`_v3`가 그대로 가짐) |
+| ~~`update_socialing(id, …등록과 같은 입력)`~~ **MS15에서 지움** | P08 | 없는 소셜링 `INVALID_INPUT`, 호스트 본인(`NOT_HOST`), 종료·호스트 취소 아님(`INVALID_STATE`), 입력 범위는 등록과 같음(소셜링 일시 > now()는 바꿀 때만). 소셜링 행을 잠근 뒤 센다: 참여 확정자가 있으면 소셜링 일시·장소·총 참가비 변경, 승인 대기가 있으면 모집 방식 변경 `LOCKED_FIELD`, 정원 < 참여 확정 인원 `BELOW_ACCEPTED`. 일시는 같은 분이면 바꾸지 않은 것으로 보고 지금 값을 둔다. 장소는 같으면(외부 장소는 지역·이름이 같으면) 그대로, 바뀐 외부 장소는 새 행. 사진은 지금 경로 그대로 · null(지움) · 쓰는 사람 폴더의 새 파일. 성공하면 바뀐 소셜링 행 |
+| `create_socialing_v2(…등록과 같은 입력, fee_note, min_age, max_age, material_url)` (MS14, MS16 첫 PR에서 지움) | MS15 PR 2 전까지 P07 | `create_socialing` 검사 전부 + 참가비 설명은 앞뒤 공백을 뺀 100자까지이고 총 참가비 > 0이면 비울 수 없음, 호스트 승인이면 승인 기준을 비울 수 없음, 연령 조건은 각각 null이거나 1~99·최소 ≤ 최대(호스트 승인일 때만 남기고 선착순이면 버림, 둘 다 null = 제한 없음), 자료 링크는 비었거나 `https://`로 시작하고 공백 없이 주소 이름에 점이 있는 500자 이하. 모두 아니면 `INVALID_INPUT`. 새 인자 4개는 기본값 null. 같은 이름에 인자를 더하면 main 코드의 호출이 깨져서 새 이름이고, 옛 `create_socialing`은 MS15 첫 PR에서 지웠다. MS15부터 확정 기한 = 신청 마감, 최소 인원 = 2로 넣는다(12시간 검사 없음) |
+| `update_socialing_v2(id, …create_socialing_v2와 같은 입력)` (MS14, MS16 첫 PR에서 지움) | MS15 PR 2 전까지 P08 | `update_socialing` 검사 전부 + 등록 v2의 입력 범위. 참여 확정자가 있으면 이미 적힌 참가비 설명을 바꿀 때 `LOCKED_FIELD`(앞뒤 공백만 다르면 같은 설명, 비어 있던 설명은 채울 수 있음). 선착순으로 바꾸면 승인 기준·연령 조건을 지운다. 옛 `update_socialing`은 MS15 첫 PR에서 지웠다. MS15부터 확정 기한은 신청 마감 ~ 소셜링 일시 안으로 맞추고, 최소 인원은 정원보다 크지 않게 줄인다 |
+| `create_socialing_v3(…create_socialing_v2와 같은 입력, min_participants, confirm_deadline_at)` (MS15) | P07 | `create_socialing_v2` 검사 전부 + 최소 인원 2~정원, 신청 마감 ≤ 확정 기한 ≤ 소셜링 일시 − 12시간(비우면 안 됨). 모두 아니면 `INVALID_INPUT`. 새 인자 2개는 기본값 null(비우면 `INVALID_INPUT`) |
+| `update_socialing_v3(id, …create_socialing_v3와 같은 입력)` (MS15) | P08 | `update_socialing_v2` 검사 전부 + 계산으로 취소·호스트 취소면 `AUTO_CANCELED`(`INVALID_STATE` 다음), 최소 인원 2~정원, 확정 기한 순서·12시간은 세 일시(소셜링 일시·신청 마감·확정 기한) 중 하나를 바꿀 때만(같은 분이면 바꾸지 않은 것). 참여 확정자가 있으면 최소 인원·확정 기한을 바꿀 때 `LOCKED_FIELD`(신청 마감은 잠기지 않지만 확정 기한을 넘을 수 없음) |
+| `reject_application(application_id, reason, note)` (MS14) | P11 → O04 거절 | 승인과 같은 검사(`INVALID_INPUT` 없는 신청, `NOT_HOST`, `INVALID_STATE`, MS15 `AUTO_CANCELED`, `ALREADY_PROCESSED`, `STARTED`, 같은 잠금 순서) + 사유 필수, `age`는 그 소셜링에 연령 조건이 있을 때만, `other`면 덧붙일 말 필수, 덧붙일 말은 앞뒤 공백을 뺀 100자까지(`INVALID_INPUT`). 성공하면 바뀐 신청 행. 거절로 최소 인원이 될 수 없으면 그 순간 취소로 보인다(세지 않음). 옛 거절 길 `decide_application(…, false)`은 MS15에서 지웠다 |
 | `create_report(socialing_id, reason, note)` (MS14) | P03 신고 시트 | 로그인(`NOT_AUTHENTICATED`), 사유 필수·`other`면 설명 필수·설명은 앞뒤 공백을 뺀 300자까지, 없는 소셜링(`INVALID_INPUT`), 호스트 본인(`IS_HOST`), 이미 신고(`ALREADY_REPORTED`, 동시에 두 번 보내도 유니크 제약이 막음). 신청 여부·소셜링 상태와 관계없이 된다. 성공하면 만든 신고 행 |
 | `create_review(socialing_id, body, photo_path, members_match, extra_money, content_match)` | P09 | 없는 소셜링 `INVALID_INPUT`, 그 소셜링의 참여 확정자(`NOT_ELIGIBLE`, 호스트 본인 포함), completed(`INVALID_STATE`), 미작성(`ALREADY_REVIEWED`, 동시에 두 번 올려도 유니크 제약이 막음), 글은 앞뒤 공백·줄바꿈을 뺀 10~500자, 질문 3개 모두, 사진은 null이거나 쓰는 사람 폴더(`사용자id/파일명`)에 실제로 올라간 `review-photos` 파일(아니면 `INVALID_INPUT`). 후기와 `review_checks`를 함께 저장하고, 성공하면 만든 후기 행(비공개 응답 없음) |
 

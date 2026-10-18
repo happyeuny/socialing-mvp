@@ -94,14 +94,26 @@ test.describe("MS4 승인", () => {
     await expect(page.getByText(/남은 자리/)).toHaveCount(0);
   });
 
+  // MS15: 일시가 지난 모집중은 계산으로 취소라 버튼 없이 보기만(아래 테스트). 일시 지남 이유는 확정 소셜링에서 본다
   test("P11-13: 소셜링 일시가 지나면 승인·거절이 막히고 이유가 보인다", async ({ page }) => {
-    const id = await fixture({ host: "C", joinType: "approval", deadlineInHours: -3, startsInHours: -1 });
+    const id = await fixture({ host: "C", joinType: "approval", status: "confirmed", deadlineInHours: -3, startsInHours: -1 });
     await addApplication(id, "P1", "pending");
     await loginAs(page, "C", manage(id));
 
     await expect(row(page, "P1").getByRole("button", { name: "승인" })).toBeDisabled();
     await expect(row(page, "P1").getByRole("button", { name: "거절" })).toBeDisabled();
     await expect(page.getByText("소셜링 일시가 지나 승인할 수 없어요")).toBeVisible();
+  });
+
+  test("MS15 계산으로 취소된 모집중(확정 기한 지남)의 승인 대기 건도 버튼 없이 '승인 대기' 칩만 (목록 보기만)", async ({ page }) => {
+    // 참여 확정 2 + 승인 대기 1, 확정하지 않은 채 확정 기한이 지남 → 호스트 취소(계산)
+    const id = await fixture({ host: "C", joinType: "approval", deadlineInHours: -3, accepted: ["P2", "P3"] });
+    await addApplication(id, "P1", "pending");
+    await loginAs(page, "C", manage(id));
+
+    await expect(row(page, "P1")).toContainText("승인 대기");
+    await expect(row(page, "P1").getByRole("button")).toHaveCount(0);
+    await expect(page.getByText(/남은 자리|승인할 수 없어요/)).toHaveCount(0);
   });
 
   test("종료·호스트 취소 뒤 승인 대기 건은 버튼 없이 '승인 대기' 칩만 (목록 보기만)", async ({ page }) => {

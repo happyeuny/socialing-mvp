@@ -33,8 +33,10 @@ test.describe("MS2 지난 소셜링 P02", () => {
       expect(shownTitles.filter((title) => fixtureTitles.includes(title))).toEqual(fixtureTitles);
 
       const cardOf = (title: string) => cards(page).filter({ has: page.getByRole("heading", { name: title }) });
+      // MS15: 확정하지 않은 채 일시가 지난 모집중은 보이는 상태가 취소(최소 인원 미달)라 꼬리표 "신청 마감"이 없다.
+      // 배지는 저장된 상태(모집중) 그대로이고, "취소" 배지는 상태 표시 PR(MS15 PR 3)에서
       await expect(cardOf(fixtureTitles[0])).toContainText("모집중");
-      await expect(cardOf(fixtureTitles[0])).toContainText("신청 마감");
+      await expect(cardOf(fixtureTitles[0])).not.toContainText("신청 마감");
       await expect(cardOf(fixtureTitles[1])).toContainText("종료");
       await expect(cardOf(fixtureTitles[1])).not.toContainText("신청 마감");
       await expect(cardOf(fixtureTitles[2])).toContainText("호스트 취소");
