@@ -8,8 +8,9 @@ import {
   type FixtureOptions,
 } from "./helpers/supabase";
 
-// MS3 상세 아래 고정 영역의 로그인한 사람 보기 줄 (spec 8.4 1·3·4·5·6·8줄 · DESIGN.md C4 apply-bar
-// · screen-cases P03-B01·B02·B04·B05·B06·B07·B10). 순서표 우선순위(호스트 > 호스트 취소 > 내 신청)도 본다.
+// MS3 상세 아래 고정 영역의 로그인한 사람 보기 줄 (spec 8.4 1·3·4·5·8줄 · DESIGN.md C4 apply-bar
+// · screen-cases P03-B01·B02·B04·B05·B06·B10). 순서표 우선순위(호스트 > 호스트 취소 > 내 신청)도 본다.
+// 6줄(P03-B07, 모집중 그대로 일시 지남)은 MS15에서 지웠다: 그런 소셜링은 보이는 상태가 취소·호스트 취소라 2·2-1줄이 먼저다.
 // 테스트 전용 [E2E] 소셜링만 만들고 끝에 지운다.
 
 const bar = (page: Page) => page.getByRole("region", { name: "신청" });
@@ -71,7 +72,7 @@ test.describe("MS3 상세 아래 영역: 호스트", () => {
 });
 
 test.describe("MS3 상세 아래 영역: 참여 확정자·신청자", () => {
-  test("P03-B04·B05·B06·B07·B10: 종료 뒤 후기, 일시 지남, 승인 대기 무응답", async ({ page }) => {
+  test("P03-B04·B05·B06·B10: 종료 뒤 후기, 일시 지남, 승인 대기 무응답 (옛 B07 자리는 MS15 취소 줄 B22)", async ({ page }) => {
     const [reviewWrite, reviewDone, waitEnd, notConfirmed, pendingExpired] = await Promise.all([
       fixture({ host: "C", status: "completed", ...PAST, accepted: ["P1"] }),
       fixture({ host: "C", status: "completed", ...PAST, accepted: ["P1"] }),
@@ -104,10 +105,13 @@ test.describe("MS3 상세 아래 영역: 참여 확정자·신청자", () => {
     await expect(bar(page)).toContainText("호스트가 종료하면 후기를 쓸 수 있어요");
     await expect(bar(page).getByRole("button", { name: "지난 소셜링" })).toHaveCount(0);
 
-    // P03-B07 6줄: 모집중 그대로 일시 지남 → 후기 불가
+    // 옛 P03-B07 6줄(모집중 그대로 일시 지남 → 후기 불가)은 MS15에서 지웠다(규칙이 바뀜, 04 3.3).
+    // 참여 확정 1명 < 최소 인원 2명인 채 신청 마감이 지난 모집중은 보이는 상태가 취소라 참여 확정자에게도 2-1줄(P03-B22)
     await page.goto(`/socialings/${notConfirmed}`);
-    await expect(bar(page).getByText("참여 확정", { exact: true })).toBeVisible();
-    await expect(bar(page)).toContainText("호스트가 확정하지 않은 소셜링이라 후기를 쓸 수 없어요");
+    await expect(bar(page).getByRole("button", { name: "취소", exact: true })).toBeDisabled();
+    await expect(bar(page)).toContainText("최소 인원(2명)이 모이지 않아 취소된 소셜링이에요");
+    await expect(bar(page)).not.toContainText("후기를 쓸 수 없어요");
+    await expect(bar(page).getByText("참여 확정", { exact: true })).toHaveCount(0);
 
     // P03-B10 8줄: 승인 대기인 채로 일시 지남
     await page.goto(`/socialings/${pendingExpired}`);

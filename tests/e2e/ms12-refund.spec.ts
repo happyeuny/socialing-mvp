@@ -42,12 +42,12 @@ test.describe("MS12 환불 기준 계산 (lib/refund-policy.ts)", () => {
         "10/21(수) 오후 7:30까지: 50% 환불",
         "10/21(수) 오후 7:30 뒤: 환불 없음",
       ],
-      alwaysFull: "승인 전에 신청 취소 · 호스트가 거절 · 호스트 취소",
+      alwaysFull: "승인 전에 신청 취소 · 호스트가 거절 · 호스트 취소 · 최소 인원이 모이지 않아 취소",
     });
-    // 10/20: 전액 구간이 지남. 선착순은 승인 단계가 없어 "호스트 취소"만
+    // 10/20: 전액 구간이 지남. 선착순은 승인 단계가 없어 "호스트 취소 · 최소 인원이 모이지 않아 취소"만 (MS15 U4)
     expect(refundPolicyText(startsAt, "first_come", at("2026-10-20T01:00:00Z"))).toEqual({
       acceptedLines: ["10/21(수) 오후 7:30까지: 50% 환불", "10/21(수) 오후 7:30 뒤: 환불 없음"],
-      alwaysFull: "호스트 취소",
+      alwaysFull: "호스트 취소 · 최소 인원이 모이지 않아 취소",
     });
     expect(refundPolicyText(startsAt, "first_come", at("2026-10-22T01:00:00Z")).acceptedLines).toEqual([
       "10/21(수) 오후 7:30 뒤: 환불 없음",
@@ -140,7 +140,7 @@ test.describe("MS12 취소·환불 규칙 화면 (U1)", () => {
     await expect(section.getByText(`${formatDateTime(half)}까지: 50% 환불`)).toBeVisible();
     await expect(section.getByText(`${formatDateTime(half)} 뒤: 환불 없음`)).toBeVisible();
     await expect(section.getByText("이럴 때는 언제든 전액 환불")).toBeVisible();
-    await expect(section.getByText("승인 전에 신청 취소 · 호스트가 거절 · 호스트 취소")).toBeVisible();
+    await expect(section.getByText("승인 전에 신청 취소 · 호스트가 거절 · 호스트 취소 · 최소 인원이 모이지 않아 취소")).toBeVisible();
     await expect(section.getByText("참여 확정자가 생기면 일시·장소·참가비는 바뀌지 않아요")).toBeVisible();
     await expect(section.getByText("결제 기능이 없는 데모예요. 실제 결제와 환불은 일어나지 않아요")).toBeVisible();
     await expectNoHorizontalScroll(page);
@@ -152,7 +152,7 @@ test.describe("MS12 취소·환불 규칙 화면 (U1)", () => {
     await expect(section.getByText("참여 확정 뒤 신청을 취소하면")).toBeHidden();
   });
 
-  test("P03-11: 지난 구간 줄은 빠진다 (2일 뒤 = 50%부터, 12시간 뒤 = 환불 없음만), 선착순은 '호스트 취소'만", async ({
+  test("P03-11: 지난 구간 줄은 빠진다 (2일 뒤 = 50%부터, 12시간 뒤 = 환불 없음만), 선착순은 '호스트 취소 · 최소 인원이 모이지 않아 취소'만", async ({
     page,
     request,
   }) => {
@@ -164,7 +164,7 @@ test.describe("MS12 취소·환불 규칙 화면 (U1)", () => {
       `•${formatDateTime(twoDays.half)}까지: 50% 환불`,
       `•${formatDateTime(twoDays.half)} 뒤: 환불 없음`,
     ]);
-    await expect(rules(page).locator("ul").nth(2)).toHaveText("•호스트 취소");
+    await expect(rules(page).locator("ul").nth(2)).toHaveText("•호스트 취소 · 최소 인원이 모이지 않아 취소");
 
     const halfDay = refundDeadlines(await startsAtOf(request, firstCome12h));
     await page.goto(`/socialings/${firstCome12h}`);
@@ -194,7 +194,7 @@ test.describe("MS12 취소·환불 규칙 화면 (U1)", () => {
     await expect(sheet).toContainText("취소·환불 규칙");
     await expect(sheet.getByText(`${formatDateTime(full)}까지: 전액 환불`)).toBeVisible();
     await expect(sheet.getByText(`${formatDateTime(half)}까지: 50% 환불`)).toBeVisible();
-    await expect(sheet).toContainText("승인 전에 신청 취소 · 호스트가 거절 · 호스트 취소");
+    await expect(sheet).toContainText("승인 전에 신청 취소 · 호스트가 거절 · 호스트 취소 · 최소 인원이 모이지 않아 취소");
     await expect(sheet).toContainText("결제 기능이 없는 데모예요. 실제 결제와 환불은 일어나지 않아요");
     await expect(sheet).not.toContainText("플랫폼 공통 환불 규칙");
 

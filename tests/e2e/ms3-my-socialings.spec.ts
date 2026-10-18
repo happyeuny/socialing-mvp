@@ -76,15 +76,16 @@ test.describe("MS3 내 소셜링: 신청한 소셜링", () => {
       [reviewable, reviewed].map(detail),
     );
 
-    // P06-02~05: 상태 배지가 앞, 신청 칩이 뒤. 호스트 취소는 배지 하나만
+    // P06-02~05: 상태 배지가 앞, 신청 칩이 뒤. 호스트 취소는 배지 하나만.
+    // MS15: 참여 확정이 최소 인원(2명)보다 적은 모집중은 배지와 칩 사이에 꼬리표 "최소 인원까지 2명"(카드 공통, spec 8.5)
     const pills = (id: number) => card(page, detail(id)).locator("h2").locator("xpath=preceding-sibling::div[1]");
-    await expect(pills(pending)).toHaveText(/^모집중\s*승인 대기$/);
+    await expect(pills(pending)).toHaveText(/^모집중\s*최소 인원까지 2명\s*승인 대기$/);
     // 시나리오 6단계: 참여 확정과 확정 상태
     await expect(pills(confirmed)).toHaveText(/^확정\s*참여 확정$/);
-    await expect(pills(rejected)).toHaveText(/^모집중\s*거절$/);
+    await expect(pills(rejected)).toHaveText(/^모집중\s*최소 인원까지 2명\s*거절$/);
     // P06-06: 내가 신청 취소한 소셜링은 없고, 취소 뒤 다시 신청했으면 새 신청으로 보인다
     await expect(card(page, detail(withdrawn))).toHaveCount(0);
-    await expect(pills(reapplied)).toHaveText(/^모집중\s*승인 대기$/);
+    await expect(pills(reapplied)).toHaveText(/^모집중\s*최소 인원까지 2명\s*승인 대기$/);
     await expect(pills(hostCanceled)).toHaveText(/^호스트 취소$/);
 
     // P06-07: 후기를 쓸 수 있는 카드에만 "후기 쓰기"

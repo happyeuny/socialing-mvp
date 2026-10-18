@@ -92,7 +92,7 @@ test.describe("MS3 신청 O02", () => {
     expect((await applicationsOf(id)).map((a) => a.status)).toEqual(["pending"]);
   });
 
-  test("O02 선착순: 결과 안내 '신청하면 바로 참여가 확정돼요' → 참여 확정 + 만나는 일시, 인원 +1", async ({ page }) => {
+  test("O02 선착순: 결과 안내 '신청하면 바로 참여가 확정돼요' → 참여 확정 + 확정 기한 안내, 인원 +1", async ({ page }) => {
     const id = await fixture({ host: "C", capacity: 3, accepted: ["P2"] });
     await loginAs(page, "P1");
     await page.goto(`/socialings/${id}`);
@@ -104,7 +104,8 @@ test.describe("MS3 신청 O02", () => {
     await sheet(page).getByRole("button", { name: "신청하기" }).click();
 
     await expect(bar(page).getByText("참여 확정", { exact: true })).toBeVisible();
-    await expect(bar(page)).toContainText(/\d+\/\d+\(.\) (오전|오후) \d+:\d{2}에 만나요/);
+    // MS15: 아직 확정 전(모집중)이라 만나는 일시 대신 확정 기한 안내(P03-B23). 확정 소셜링의 "…에 만나요"는 ms15-status-display
+    await expect(bar(page)).toContainText(/확정 기한\(\d+\/\d+\(.\) (오전|오후) \d+:\d{2}\)까지 호스트가 확정하면 열려요/);
     await expect(people(page)).toContainText("참가자 2/3명");
   });
 
@@ -135,9 +136,10 @@ test.describe("MS3 신청 O02", () => {
       },
     },
     {
+      // MS15: 최소 인원(2명)이 모여 있어야 신청 마감 뒤 확정 대기(13줄 신청 마감). 모자라면 취소(2-1줄)가 된다
       name: "신청 마감",
-      options: { host: "C" },
-      meanwhile: (id) => updateFixtureSocialing(id, { deadlineInHours: -1 }),
+      options: { host: "C", capacity: 4, accepted: ["P2", "P3"] },
+      meanwhile: (id) => updateFixtureSocialing(id, { deadlineInHours: -1, confirmInHours: 20 }),
       reason: "신청 마감 일시가 지났어요",
       after: async (page) => {
         await expect(bar(page).getByRole("button", { name: "신청 마감" })).toBeDisabled();

@@ -74,6 +74,13 @@ export type FixtureOptions = {
   deadlineInHours?: number;
   /** 소셜링 일시까지 남은 시간(시간). 음수면 지난 소셜링. 기본은 신청 마감 24시간 뒤. 신청 마감보다 앞서면 안 된다 */
   startsInHours?: number;
+  /**
+   * 확정 기한까지 남은 시간(시간, MS15 U4). 기본은 신청 마감과 같다. 신청 마감 ≤ 확정 기한 ≤ 소셜링 일시여야 한다.
+   * 직접 넣으므로 12시간 검사(등록 함수)에 걸리지 않는다 → 확정 대기·지난 확정 기한을 만들 수 있다
+   */
+  confirmInHours?: number;
+  /** 최소 인원 (MS15 U4). 기본 2, 정원까지 */
+  minParticipants?: number;
   accepted?: DemoUserKey[];
   description?: string;
   staffCount?: number;
@@ -102,6 +109,8 @@ export async function createFixtureSocialing(options: FixtureOptions): Promise<n
     status = "recruiting",
     deadlineInHours = 24,
     startsInHours = Math.max(deadlineInHours, 0) + 24,
+    confirmInHours = deadlineInHours,
+    minParticipants = 2,
     accepted = [],
     description = "자동 테스트가 만들고 지우는 소셜링",
     staffCount = 0,
@@ -138,14 +147,15 @@ export async function createFixtureSocialing(options: FixtureOptions): Promise<n
       insert into public.socialings
         (host_id, title, description, category_id, has_alcohol, venue_id,
          starts_at, apply_deadline_at, fee, capacity, staff_count, join_type, approval_criteria, status,
-         fee_note, min_age, max_age, material_url)
+         fee_note, min_age, max_age, material_url, confirm_deadline_at, min_participants)
       select host.id, ${sqlText(title)}, ${sqlText(description)},
         (select id from public.categories where slug = 'learning'), false,
         (select id from place),
         now() + interval '${startsInHours} hours',
         now() + interval '${deadlineInHours} hours',
         ${Math.trunc(fee)}, ${capacity}, ${staffCount}, '${joinType}', ${approvalCriteria ? sqlText(approvalCriteria) : "null"}, '${status}',
-        ${sqlOrNull(feeNote)}, ${sqlOrNull(minAge)}, ${sqlOrNull(maxAge)}, ${sqlOrNull(materialUrl)}
+        ${sqlOrNull(feeNote)}, ${sqlOrNull(minAge)}, ${sqlOrNull(maxAge)}, ${sqlOrNull(materialUrl)},
+        now() + interval '${confirmInHours} hours', ${Math.trunc(minParticipants)}
       from host
       returning id
     )
@@ -236,14 +246,18 @@ export async function updateFixtureSocialing(
     deadlineInHours?: number;
     /** 소셜링 일시. 신청 마감 일시는 그보다 늦을 수 없어 함께 옮긴다 (deadlineInHours가 없으면 일시 1시간 전) */
     startsInHours?: number;
+    /** 확정 기한 (MS15). 신청 마감을 옮기면 주지 않아도 신청 마감과 같은 값으로 함께 옮긴다(만들 때 기본값과 같음) */
+    confirmInHours?: number;
     /** 호스트를 바꾼다. 보는 사람이 그 소셜링의 호스트가 된 경우(IS_HOST)를 만든다 */
     host?: DemoUserKey;
   },
 ) {
   const deadline = change.deadlineInHours ?? (change.startsInHours !== undefined ? change.startsInHours - 1 : undefined);
+  const confirm = change.confirmInHours ?? deadline;
   const sets = [
     change.status ? `status = '${change.status}'` : null,
     deadline !== undefined ? `apply_deadline_at = now() + interval '${deadline} hours'` : null,
+    confirm !== undefined ? `confirm_deadline_at = now() + interval '${confirm} hours'` : null,
     change.startsInHours !== undefined ? `starts_at = now() + interval '${change.startsInHours} hours'` : null,
     change.host
       ? `host_id = (select id from auth.users where email = ${sqlText(DEMO_USERS[change.host].email)})`

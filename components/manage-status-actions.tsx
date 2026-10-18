@@ -7,11 +7,13 @@ import { Button, buttonVariants } from "@/components/button";
 import { Dialog } from "@/components/dialog";
 import { showToast } from "@/components/toast";
 import { cancelSocialing, completeSocialing, confirmSocialing } from "@/lib/actions/manage";
+import { formatDateTime } from "@/lib/format";
 import type { CompleteBlockedReason, ConfirmBlockedReason } from "@/lib/queries/manage";
 import { cn } from "@/lib/utils";
 
 // DESIGN.md manage-status-actions. 소셜링 관리(P11) "소셜링 상태"의 상태 버튼 (spec 8.8, screen-cases P11-01~04·18~20).
-// 모집중: primary "확정하기" + 설명, secondary "수정" · danger "호스트 취소", 막힌 "종료하기" + 이유 (시안).
+// 모집중(확정 대기 포함): primary "확정하기" + 설명(최소 인원·확정 기한, MS15 U4) 또는 막힌 이유, secondary "수정" · danger "호스트 취소",
+// 막힌 "종료하기" + 이유 (시안). 계산으로 취소·호스트 취소된 소셜링에는 이 묶음 대신 안내가 보인다(관리 화면).
 // 확정: primary "종료하기"(일시 전이면 막힘 + 이유), "수정" · "호스트 취소".
 // 누를 수 있는지와 막힌 이유는 뷰가 계산한 값. 셋 다 O04(dialog/confirm, 호스트 취소는 confirm-danger)를 거친다.
 // 성공: 서버 액션이 화면을 새로 고쳐 진행 단계·요약이 바뀌고 짧은 안내. 그 사이 처리할 수 없게 됨: 결과 창 + 이유 → 새로 고침.
@@ -28,6 +30,11 @@ type Props = {
   completeBlockedReason: CompleteBlockedReason | null;
   canCancel: boolean;
   canEdit: boolean;
+  /** 확정하기 아래 설명·막힌 이유에 쓰는 값 (MS15 U4, 04 3.6) */
+  minParticipants: number;
+  confirmDeadlineAt: string;
+  acceptedCount: number;
+  pendingCount: number;
 };
 
 const ACTIONS: Record<
@@ -69,10 +76,21 @@ const ACTIONS: Record<
   },
 };
 
-const CONFIRM_HELP = '확정하면 소셜링 상태가 "확정"으로 바뀌어 모두에게 보여요. 소셜링 일시 전까지 할 수 있어요.';
-const CONFIRM_BLOCKED: Record<ConfirmBlockedReason, string> = {
-  started: "소셜링 일시가 지나 확정할 수 없어요",
-};
+/** 확정하기 아래 한 줄: 막혔으면 이유, 아니면 설명 (spec 8.8, 04 3.6) */
+function confirmNote(props: Props): string {
+  const { confirmBlockedReason: reason, minParticipants: min } = props;
+  if (reason === "min_not_met") {
+    const pending = props.pendingCount > 0 ? ` · 승인 대기 ${props.pendingCount}명` : "";
+    return `최소 인원(${min}명)이 모여야 확정할 수 있어요 · 지금 ${props.acceptedCount}명${pending}`;
+  }
+  // 확정 기한 ≤ 일시라 일시가 지난 모집중은 이미 계산으로 취소돼 안내가 보인다. 뷰 값이 오면 그대로 이유를 쓴다
+  if (reason === "started") return "소셜링 일시가 지나 확정할 수 없어요";
+  if (reason === "canceled") return "이미 취소된 소셜링이에요";
+  return (
+    `최소 ${min}명이 모이면 확정 기한(${formatDateTime(props.confirmDeadlineAt)})까지 확정할 수 있어요. ` +
+    "신청 마감 때 최소 인원이 될 수 없으면 바로 취소되고, 최소 인원이 모였는데 기한까지 확정하지 않으면 호스트 취소로 기록돼요."
+  );
+}
 const COMPLETE_BLOCKED: Record<CompleteBlockedReason, string> = {
   confirm_first: "확정한 뒤 소셜링 일시가 지나야 종료할 수 있어요",
   not_confirmed: "확정하지 않은 소셜링은 종료할 수 없어요",
@@ -83,7 +101,7 @@ const RETRY_MESSAGE = "처리하지 못했어요. 연결을 확인하고 다시 
 type Failure = { title: string; reason: string };
 
 export function ManageStatusActions(props: Props) {
-  const { socialingId, status, canConfirm, confirmBlockedReason, canComplete, completeBlockedReason } = props;
+  const { socialingId, status, canConfirm, canComplete, completeBlockedReason } = props;
   const router = useRouter();
   const [open, setOpen] = useState<HostAction | null>(null);
   const [retry, setRetry] = useState(false);
@@ -148,10 +166,7 @@ export function ManageStatusActions(props: Props) {
   return (
     <div className="flex flex-col gap-md">
       {status === "recruiting" && (
-        <ActionWithNote
-          noteId="confirm-note"
-          note={confirmBlockedReason ? CONFIRM_BLOCKED[confirmBlockedReason] : CONFIRM_HELP}
-        >
+        <ActionWithNote noteId="confirm-note" note={confirmNote(props)}>
           <Button
             size="lg"
             className="w-full"

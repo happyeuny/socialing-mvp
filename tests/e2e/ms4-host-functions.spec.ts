@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import type { DemoUserKey } from "../../scripts/seed-data.mts";
 import {
   addApplication,
   applicationsOf,
@@ -14,6 +15,9 @@ import {
 // MS4 호스트 함수: decide_application, confirm_socialing, complete_socialing, cancel_socialing
 // (architecture 5장, spec 3.1·3.3·M8·8.8)와 관리 화면 읽기(my_hosted_socialings 관리 칸, hosted_socialing_applicants).
 // 시드 데이터는 건드리지 않고, 호스트 C의 테스트 전용 소셜링을 만들고 지운다.
+// MS15: 거절은 사유를 받는 reject_application만(옛 거절 길 decide_application(…, false)은 지움), 확정은 참여 확정 ≥ 최소 인원(기본 2),
+// 확정하지 않은 채 확정 기한(= 테스트 소셜링 기본은 신청 마감)이 지난 모집중은 계산으로 취소·호스트 취소라 모든 버튼이 막힌다.
+// 새 규칙 자체는 ms15-host-actions-fn.
 
 const created: number[] = [];
 test.afterAll(async () => {
@@ -40,7 +44,7 @@ test.describe("MS4 decide_application 승인·거절", () => {
     expect(approved.status).toBe(200);
     expect(approved.body).toMatchObject({ id: p1, status: "accepted" });
 
-    const rejected = await rpc(request, "decide_application", { p_application_id: p2, p_approve: false }, host);
+    const rejected = await rpc(request, "reject_application", { p_application_id: p2, p_reason: "criteria" }, host);
     expect(rejected.status).toBe(200);
     expect(rejected.body).toMatchObject({ id: p2, status: "rejected" });
 
@@ -51,7 +55,7 @@ test.describe("MS4 decide_application 승인·거절", () => {
     const [host, p1] = await Promise.all([signIn(request, "C"), signIn(request, "P1")]);
     const id = await fixture({ host: "C", joinType: "approval" });
     const first = await addApplication(id, "P1", "pending");
-    await rpc(request, "decide_application", { p_application_id: first, p_approve: false }, host);
+    await rpc(request, "reject_application", { p_application_id: first, p_reason: "criteria" }, host);
 
     const again = await rpc(request, "apply_to_socialing", { p_socialing_id: id }, p1);
     expect(again.body.status).toBe("pending");
@@ -109,7 +113,9 @@ test.describe("MS4 decide_application 승인·거절", () => {
 
     // 소셜링 일시가 지남: 승인도 거절도 안 된다
     expect(await decide(late, true)).toBe("STARTED");
-    expect(await decide(late, false)).toBe("STARTED");
+    expect(
+      (await rpc(request, "reject_application", { p_application_id: late, p_reason: "criteria" }, host)).body.message,
+    ).toBe("STARTED");
 
     // 정원이 참: 승인만 막히고 거절은 된다
     expect(await decide(waiting, true)).toBe("FULL");
@@ -120,7 +126,7 @@ test.describe("MS4 decide_application 승인·거절", () => {
     expect((await applicationsOf(started)).map((a) => a.status)).toEqual(["pending"]);
     expect((await applicationsOf(full)).map((a) => a.status)).toEqual(["accepted", "accepted", "pending"]);
 
-    const rejected = await rpc(request, "decide_application", { p_application_id: waiting, p_approve: false }, host);
+    const rejected = await rpc(request, "reject_application", { p_application_id: waiting, p_reason: "full" }, host);
     expect(rejected.status).toBe(200);
     expect((await applicationsOf(full)).map((a) => a.status)).toEqual(["accepted", "accepted", "rejected"]);
   });
@@ -145,7 +151,8 @@ test.describe("MS4 상태 버튼 함수 (spec 3.1)", () => {
   test("모집중 → 확정 → 종료: 확정은 일시 전, 종료는 일시 뒤", async ({ request }) => {
     const host = await signIn(request, "C");
 
-    const future = await fixture({ host: "C" });
+    // 확정은 참여 확정이 최소 인원(2명) 이상일 때 (MS15 결정 H4)
+    const future = await fixture({ host: "C", accepted: ["P1", "P2"] });
     const confirmed = await rpc(request, "confirm_socialing", { p_socialing_id: future }, host);
     expect(confirmed.status).toBe(200);
     expect(confirmed.body).toMatchObject({ id: future, status: "confirmed" });
@@ -173,19 +180,23 @@ test.describe("MS4 상태 버튼 함수 (spec 3.1)", () => {
     expect((await applicationsOf(past)).map((a) => a.status)).toEqual(["accepted"]);
   });
 
-  test("모집중에서 바로 종료할 수 없고, 확정하지 않은 채 일시가 지나면 호스트 취소만 된다", async ({ request }) => {
+  // MS15에서 규칙이 바뀜(04 2.4·3.6): 확정하지 않은 채 일시가 지난 모집중은 확정 기한도 지나 계산으로 취소·호스트 취소가 되고,
+  // 호스트 취소도 막힌다(호스트 취소 수가 두 번 늘지 않게). 예전에는 호스트 취소만 됐다
+  test("모집중에서 바로 종료할 수 없고, 확정하지 않은 채 일시가 지나면 확정·호스트 취소도 막힌다 (MS15 계산 취소)", async ({
+    request,
+  }) => {
     const host = await signIn(request, "C");
-    const expired = await fixture({ host: "C", ...STARTED });
+    const [expired, gathered] = await Promise.all([
+      fixture({ host: "C", ...STARTED }),
+      fixture({ host: "C", ...STARTED, accepted: ["P1", "P2"] }),
+    ]);
 
-    expect((await rpc(request, "complete_socialing", { p_socialing_id: expired }, host)).body.message).toBe(
-      "INVALID_STATE",
-    );
-    expect((await rpc(request, "confirm_socialing", { p_socialing_id: expired }, host)).body.message).toBe("STARTED");
-    expect((await socialingStateOf(expired)).status).toBe("recruiting");
-
-    const canceled = await rpc(request, "cancel_socialing", { p_socialing_id: expired }, host);
-    expect(canceled.status).toBe(200);
-    expect(canceled.body).toMatchObject({ id: expired, status: "canceled" });
+    for (const id of [expired, gathered]) {
+      expect((await rpc(request, "complete_socialing", { p_socialing_id: id }, host)).body.message).toBe("INVALID_STATE");
+      expect((await rpc(request, "confirm_socialing", { p_socialing_id: id }, host)).body.message).toBe("AUTO_CANCELED");
+      expect((await rpc(request, "cancel_socialing", { p_socialing_id: id }, host)).body.message).toBe("AUTO_CANCELED");
+      expect((await socialingStateOf(id)).status).toBe("recruiting");
+    }
   });
 
   test("호스트 취소: 모집중·확정 모두 되고, 신청 상태는 바꾸지 않는다 (spec 3.3)", async ({ request }) => {
@@ -262,7 +273,7 @@ test.describe("MS4 관리 화면 읽기", () => {
       // [이름, 테스트 소셜링, 기대값]
       [
         "P11-01 모집중 · 일시 전",
-        { status: "recruiting" },
+        { status: "recruiting", accepted: ["P1", "P2"] },
         { can_confirm: true, confirm_blocked_reason: null, can_complete: false, complete_blocked_reason: "confirm_first" },
       ],
       [
@@ -275,15 +286,17 @@ test.describe("MS4 관리 화면 읽기", () => {
         { status: "confirmed", ...STARTED },
         { can_confirm: false, confirm_blocked_reason: null, can_complete: true, complete_blocked_reason: null },
       ],
+      // MS15: 확정하지 않은 채 일시가 지난 모집중은 계산으로 취소 → 버튼이 모두 막힌다 (예전에는 호스트 취소만 됨)
       [
         "P11-04 모집중 · 일시 지남",
         { status: "recruiting", ...STARTED },
         {
           can_confirm: false,
-          confirm_blocked_reason: "started",
+          confirm_blocked_reason: "canceled",
           can_complete: false,
           complete_blocked_reason: "not_confirmed",
-          can_cancel: true,
+          can_cancel: false,
+          can_edit: false,
         },
       ],
       [
@@ -299,7 +312,8 @@ test.describe("MS4 관리 화면 읽기", () => {
     ] as const;
 
     for (const [name, options, expected] of cases) {
-      const id = await fixture({ host: "C", ...options });
+      const { accepted, ...rest } = options as typeof options & { accepted?: readonly DemoUserKey[] };
+      const id = await fixture({ host: "C", ...rest, accepted: accepted ? [...accepted] : undefined });
       const { rows } = await readAs<ManageRow>(request, `my_hosted_socialings?select=${MANAGE_COLUMNS}&id=eq.${id}`, host);
       expect(rows[0], name).toMatchObject(expected);
     }

@@ -17,6 +17,7 @@ import { REFUND_TEXT, type RefundPolicyText } from "@/lib/refund-policy";
 // 네트워크·서버 오류: 창을 연 채 안내 + "다시 시도". 로그인이 끊겼으면 서버 액션이 로그인 화면으로 보낸다.
 // 참가비가 있으면 맨 아래 "취소·환불 규칙"(상세 접는 줄과 같은 글, 접지 않음). 0원이면 없다(spec M7, 6장 환불 기준).
 // MS14: 요약의 총 참가비 아래 "참가비 설명: …"(U3), 승인 기준 상자 위에 "연령 조건 20~39세"(SH1b). 없으면 줄이 없다.
+// MS15: 모집중 소셜링이면 결과 안내 아래 열리는 조건 한 줄(U4, 최소 인원·확정 기한). 확정 소셜링에는 없다.
 
 export const JOIN_RESULT = {
   approval: "호스트가 승인하면 참여가 확정돼요",
@@ -38,6 +39,8 @@ type ConfirmApplySheetProps = {
   ageRange: string | null;
   /** 취소·환불 규칙 (참가비 0원이면 null). 상세를 그릴 때 서버가 계산한다(lib/refund-policy.ts) */
   refundPolicy: RefundPolicyText | null;
+  /** 열리는 조건 한 줄 (모집중일 때만, 아니면 null). 서버가 만든 글자(apply-bar openConditionText) */
+  openCondition: string | null;
   /** 상세 아래 영역의 버튼 글자. 거절·신청 취소 뒤 9줄은 "다시 신청" */
   triggerLabel?: "신청하기" | "다시 신청";
 };
@@ -134,6 +137,12 @@ export function ConfirmApplySheet(props: ConfirmApplySheetProps) {
           <span aria-hidden>•</span>
           {JOIN_RESULT[props.joinType]}
         </p>
+        {props.openCondition ? (
+          <p className="flex gap-xs text-body-md break-keep text-text-secondary">
+            <span aria-hidden>•</span>
+            {props.openCondition}
+          </p>
+        ) : null}
         {props.refundPolicy ? (
           <NoticeBox title={REFUND_TEXT.title}>
             <RefundPolicyList policy={props.refundPolicy} />

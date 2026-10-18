@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CategoryIcon } from "@/components/category-art";
 import { StatusBadge } from "@/components/status-badge";
+import { StatusTag } from "@/components/status-tag";
 import { formatDateTime, formatFee } from "@/lib/format";
 import { socialingPhotoUrl, type SocialingCardData } from "@/lib/queries/socialings";
 import { cn } from "@/lib/utils";
@@ -8,7 +9,8 @@ import { cn } from "@/lib/utils";
 // DESIGN.md hero-card: 홈 맨 위 소셜링 1개(넘기는 배너가 아님). 모서리 2xl, 여백 20, 최소 높이 280.
 // default: 대표 사진 전체 + 아래쪽 어두운 그라데이션 위 흰 글자.
 // no-photo: 짙은 청록 그라데이션 바탕(--hero-no-photo) + 오른쪽 위 카테고리 선 아이콘 132(흰색 13%) + 왼쪽 아래 primary 빛.
-// 왼쪽 위 라벨 "지금 신청할 수 있는 가장 가까운 소셜링", 아래 status-badge · 제목 · 일시 · 장소 · 호스트 · 참가자 · 총 참가비.
+// 왼쪽 위 라벨 "지금 신청할 수 있는 가장 가까운 소셜링", 아래 status-badge(+ 최소 인원 전이면 status-tag "최소 인원까지 N명", MS15)
+// · 제목 · 일시 · 장소 · 호스트 · 참가자 · 총 참가비. 신청할 수 있는 소셜링이라 신청 마감·정원 마감 꼬리표는 붙지 않는다.
 
 export function HeroCard({ socialing }: { socialing: SocialingCardData }) {
   const place =
@@ -53,7 +55,10 @@ export function HeroCard({ socialing }: { socialing: SocialingCardData }) {
       </p>
 
       <div className="relative mt-3xl flex flex-col gap-xxs">
-        <StatusBadge status={socialing.status} className={cn("self-start", !hasPhoto && "border-transparent")} />
+        <div className="flex flex-wrap items-center gap-[6px]">
+          <StatusBadge status={socialing.display_status} className={cn(!hasPhoto && "border-transparent")} />
+          <StatusTag socialing={socialing} />
+        </div>
         <h3 className="mt-xxs text-title-lg break-words">
           <Link href={`/socialings/${socialing.id}`} className="after:absolute after:inset-0 focus-visible:outline-none">
             {socialing.title}

@@ -3,7 +3,8 @@
 // 돈이 오가지 않는 표시 규칙이라 DB 함수가 아니라 화면 계산으로 둔다(날짜 필터 lib/explore-filter.ts와 같은 방식).
 //
 // 참여 확정 뒤 신청 취소: 소셜링 일시 72시간 전까지(그 시각 포함) 전액, 24시간 전까지 50%, 그 뒤 없음.
-// 참여자 책임이 아닌 경우(승인 전 신청 취소, 호스트 거절, 호스트 취소)는 언제든 전액.
+// 참여자 책임이 아닌 경우(승인 전 신청 취소, 호스트 거절, 호스트 취소, 최소 인원이 모이지 않아 취소)는 언제든 전액.
+// 확정 기한까지 확정하지 않아 생긴 호스트 취소는 "호스트 취소"에 들어간다(MS15 U4, 04 2.7).
 // 화면에는 기준 시각을 한국 시간 실제 시각으로 적고(lib/format), 이미 지난 구간 줄은 빼서 첫 줄이 늘 "지금 기준"이 되게 한다.
 
 import { formatDateTime } from "@/lib/format";
@@ -40,7 +41,7 @@ export function acceptedCancelRate(startsAt: string | Date, now: Date): RefundRa
 export type RefundPolicyText = {
   /** "10/19(월) 오후 7:30까지: 전액 환불" 같은 줄. 지난 구간은 빠지고 "… 뒤: 환불 없음"은 늘 남는다 */
   acceptedLines: string[];
-  /** 언제든 전액인 경우. 선착순은 승인 단계가 없어 "호스트 취소"만 */
+  /** 언제든 전액인 경우. 선착순은 승인 단계가 없어 "호스트 취소 · 최소 인원이 모이지 않아 취소"만 */
   alwaysFull: string;
 };
 
@@ -65,7 +66,10 @@ export function refundPolicyText(
   lines.push(`${formatDateTime(half)} 뒤: 환불 없음`);
   return {
     acceptedLines: lines,
-    alwaysFull: joinType === "approval" ? "승인 전에 신청 취소 · 호스트가 거절 · 호스트 취소" : "호스트 취소",
+    alwaysFull:
+      joinType === "approval"
+        ? "승인 전에 신청 취소 · 호스트가 거절 · 호스트 취소 · 최소 인원이 모이지 않아 취소"
+        : "호스트 취소 · 최소 인원이 모이지 않아 취소",
   };
 }
 
