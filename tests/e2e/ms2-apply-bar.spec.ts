@@ -45,9 +45,16 @@ test.describe("MS2 상세 아래 고정 영역", () => {
   });
 
   const closedCases: { name: string; options: FixtureOptions; button: string; reason: string }[] = [
+    // MS15: 모집중은 신청 마감이 지나면 확정 대기(최소 인원이 모였을 때)나 취소가 된다 → 확정 대기·확정에서 본다
     {
-      name: "P03-B17 신청 마감",
-      options: { host: "B", deadlineInHours: -1 },
+      name: "P03-B17 신청 마감 (확정 대기)",
+      options: { host: "B", capacity: 4, accepted: ["A", "P1"], deadlineInHours: -1, confirmInHours: 20 },
+      button: "신청 마감",
+      reason: "신청 마감 일시가 지났어요",
+    },
+    {
+      name: "P03-B17 신청 마감 (확정)",
+      options: { host: "B", status: "confirmed", capacity: 4, accepted: ["A", "P1"], deadlineInHours: -1 },
       button: "신청 마감",
       reason: "신청 마감 일시가 지났어요",
     },
@@ -57,9 +64,10 @@ test.describe("MS2 상세 아래 고정 영역", () => {
       button: "정원 마감",
       reason: "참여 확정 인원이 정원에 찼어요",
     },
+    // MS15: 확정하지 않은 채 일시가 지나면 확정 기한도 지나 취소·호스트 취소(2-1·2줄, ms15-status-display)라 확정에서 본다
     {
-      name: "P03-B19 지난 소셜링 (확정 안 된 채 일시 지남)",
-      options: { host: "B", deadlineInHours: -3, startsInHours: -2 },
+      name: "P03-B19 지난 소셜링 (확정, 일시 지남)",
+      options: { host: "B", status: "confirmed", deadlineInHours: -3, startsInHours: -2 },
       button: "지난 소셜링",
       reason: "소셜링 일시가 지났어요",
     },

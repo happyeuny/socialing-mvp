@@ -105,8 +105,16 @@ test.describe("MS3 신청 취소 O05", () => {
   const closedCases: { name: string; options: FixtureOptions; status: "rejected" | "canceled"; chip: string; reason: string }[] =
     [
       {
+        // MS15: 최소 인원이 모인 확정 대기 (모자라면 신청 마감 뒤 취소 2-1줄이 먼저)
         name: "P03-B13 거절 · 신청 마감",
-        options: { host: "C", joinType: "approval", deadlineInHours: -1 },
+        options: {
+          host: "C",
+          joinType: "approval",
+          capacity: 4,
+          accepted: ["P2", "P3"],
+          deadlineInHours: -1,
+          confirmInHours: 20,
+        },
         status: "rejected",
         chip: "거절",
         reason: "신청 마감 일시가 지나 다시 신청할 수 없어요",
@@ -119,8 +127,9 @@ test.describe("MS3 신청 취소 O05", () => {
         reason: "정원이 차서 다시 신청할 수 없어요",
       },
       {
+        // MS15: 모집중은 일시가 지나면 취소·호스트 취소(2·2-1줄)라 확정 소셜링에서 본다
         name: "P03-B14 신청 취소 · 소셜링 일시 지남",
-        options: { host: "C", deadlineInHours: -3, startsInHours: -2 },
+        options: { host: "C", status: "confirmed", deadlineInHours: -3, startsInHours: -2 },
         status: "canceled",
         chip: "신청 취소",
         reason: "소셜링 일시가 지나 다시 신청할 수 없어요",

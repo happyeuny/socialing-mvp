@@ -136,9 +136,10 @@ test.describe("MS3 신청 O02", () => {
       },
     },
     {
+      // MS15: 최소 인원(2명)이 모여 있어야 신청 마감 뒤 확정 대기(13줄 신청 마감). 모자라면 취소(2-1줄)가 된다
       name: "신청 마감",
-      options: { host: "C" },
-      meanwhile: (id) => updateFixtureSocialing(id, { deadlineInHours: -1 }),
+      options: { host: "C", capacity: 4, accepted: ["P2", "P3"] },
+      meanwhile: (id) => updateFixtureSocialing(id, { deadlineInHours: -1, confirmInHours: 20 }),
       reason: "신청 마감 일시가 지났어요",
       after: async (page) => {
         await expect(bar(page).getByRole("button", { name: "신청 마감" })).toBeDisabled();
