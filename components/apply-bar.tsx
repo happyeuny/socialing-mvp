@@ -16,16 +16,18 @@ import { type RejectReason, rejectReasonLabel } from "@/lib/validation/reject";
 
 // DESIGN.md C4 apply-bar: 상세 맨 아래에 붙는 영역. spec 8.4 표의 위에서부터 먼저 맞는 줄 하나만 보인다.
 // 신청 가능 여부와 이유, 보는 사람의 신청·후기·승인 대기 건수는 DB(뷰)가 계산한 값을 그대로 쓴다.
-// 1(호스트), 2(호스트 취소), 3·4(종료 뒤 후기), 5·6(참여 확정 · 일시 지남), 7(신청함 → 신청 취소 O05),
-// 8(승인 대기 · 일시 지남), 9·10(거절·신청 취소 뒤 다시 신청 / 불가, 거절이면 사유와 덧붙인 말), 11(비로그인 신청하기 → 로그인 → 상세 복귀),
+// 1(호스트), 2(호스트 취소: 직접 / 확정 기한까지 확정하지 않음), 2-1(취소: 최소 인원 미달, MS15), 3·4(종료 뒤 후기),
+// 5(참여 확정 · 확정 · 일시 지남), 7(신청함 → 신청 취소 O05), 8(승인 대기 · 일시 지남),
+// 9·10(거절·신청 취소 뒤 다시 신청 / 불가, 거절이면 사유와 덧붙인 말), 11(비로그인 신청하기 → 로그인 → 상세 복귀),
 // 12(신청하기 → O02), 13(신청 마감·정원 마감·지난 소셜링).
+// 6줄(참여 확정 · 확정하지 않은 채 일시 지남)은 MS15에서 지웠다: 그런 소셜링은 모두 2줄이나 2-1줄에 먼저 맞는다(확정 기한 ≤ 일시).
 
 const JOIN_GUIDE = {
   approval: "신청하면 호스트가 승인한 뒤 참여가 확정돼요",
   first_come: "신청하면 바로 참여가 확정돼요",
 } as const;
 
-// 10줄: 거절·신청 취소 뒤 다시 신청할 수 없는 이유 (13줄 이유를 "다시 신청할 수 없어요" 꼴로)
+// 10줄: 거절·신청 취소 뒤 다시 신청할 수 없는 이유. host_canceled는 2줄이 먼저 맞아 여기 오지 않는다 (13줄 이유를 "다시 신청할 수 없어요" 꼴로)
 const REAPPLY_CLOSED: Record<Exclude<ClosedReason, "host_canceled">, string> = {
   full: "정원이 차서 다시 신청할 수 없어요",
   deadline: "신청 마감 일시가 지나 다시 신청할 수 없어요",
@@ -64,14 +66,31 @@ export function ApplyBar({ socialing, viewer }: { socialing: SocialingDetail; vi
     );
   }
 
-  // 2줄: 호스트 취소 (신청자에게도 이 줄이 먼저)
-  if (socialing.closed_reason === "host_canceled") {
+  // 2줄: 호스트 취소 (신청자에게도 이 줄이 먼저). 직접 취소와 확정 기한까지 확정하지 않은 경우를 이유로 나눈다
+  if (socialing.display_status === "host_canceled") {
     return (
       <Shell>
         <Button variant="danger" size="lg" className="w-full" disabled>
           호스트 취소
         </Button>
-        <Guide>호스트가 취소한 소셜링이에요</Guide>
+        <Guide>
+          {socialing.cancel_reason === "not_confirmed"
+            ? "호스트가 확정 기한까지 확정하지 않아 취소된 소셜링이에요"
+            : "호스트가 취소한 소셜링이에요"}
+        </Guide>
+        <OtherSocialingsLink />
+      </Shell>
+    );
+  }
+
+  // 2-1줄: 취소 (최소 인원 미달, apply-bar/cancelled). 신청자에게도 이 줄이 먼저
+  if (socialing.display_status === "auto_canceled") {
+    return (
+      <Shell>
+        <Button variant="danger" size="lg" className="w-full" disabled>
+          취소
+        </Button>
+        <Guide>최소 인원({socialing.min_participants}명)이 모이지 않아 취소된 소셜링이에요</Guide>
         <OtherSocialingsLink />
       </Shell>
     );
@@ -105,7 +124,7 @@ export function ApplyBar({ socialing, viewer }: { socialing: SocialingDetail; vi
       );
     }
 
-    // 5·6줄: 참여 확정 + 소셜링 일시 지남. 확정이면 종료를 기다리고, 모집중 그대로면 후기를 쓸 수 없다
+    // 5줄: 참여 확정 + 소셜링 일시 지남. 여기 오는 소셜링은 확정뿐이라(모집중이면 2·2-1줄) 종료를 기다린다
     if (socialing.is_past) {
       return (
         <Shell>
@@ -113,11 +132,7 @@ export function ApplyBar({ socialing, viewer }: { socialing: SocialingDetail; vi
             <ApplicationChip variant="accepted" />
             소셜링 일시가 지났어요
           </StatusBox>
-          <Guide>
-            {socialing.status === "confirmed"
-              ? "호스트가 종료하면 후기를 쓸 수 있어요"
-              : "호스트가 확정하지 않은 소셜링이라 후기를 쓸 수 없어요"}
-          </Guide>
+          <Guide>호스트가 종료하면 후기를 쓸 수 있어요</Guide>
         </Shell>
       );
     }
@@ -137,23 +152,32 @@ export function ApplyBar({ socialing, viewer }: { socialing: SocialingDetail; vi
     );
   }
 
-  // 7줄: 승인 대기·참여 확정, 소셜링 일시 전 → 신청 취소 O05
+  // 7줄: 승인 대기·참여 확정, 소셜링 일시 전 → 신청 취소 O05.
+  // 참여 확정 안내는 확정 소셜링이면 만나는 일시, 모집중·확정 대기면 확정 기한(MS15 U4)
   if (application && (application.status === "pending" || application.status === "accepted")) {
     return (
       <Shell>
         <ChipLine>
           <ApplicationChip variant={application.status} />
-          {application.status === "accepted"
-            ? `${formatDateTime(socialing.starts_at)}에 만나요`
-            : "호스트가 승인하면 참여 확정돼요"}
+          {application.status === "pending"
+            ? "호스트가 승인하면 참여 확정돼요"
+            : socialing.display_status === "confirmed"
+              ? `${formatDateTime(socialing.starts_at)}에 만나요`
+              : `확정 기한(${formatDateTime(socialing.confirm_deadline_at)})까지 호스트가 확정하면 열려요`}
         </ChipLine>
         <ConfirmCancelApplicationSheet
           socialingId={socialing.id}
           applicationId={application.id}
-          firstCome={socialing.join_type === "first_come"}
+          // 신청 마감이 지났으면(확정 대기·확정 + 신청 마감) 아무도 새로 신청할 수 없어 "자리를 채울 수 있어요"를 뺀다 (MS15)
+          firstCome={
+            socialing.join_type === "first_come" &&
+            (socialing.closed_reason === null || socialing.closed_reason === "full")
+          }
           status={application.status}
           startsAt={socialing.starts_at}
           fee={socialing.fee}
+          autoCancelMin={application.cancelWouldAutoCancel ? socialing.min_participants : null}
+          lateCancel={application.cancelWouldBeLate}
         />
       </Shell>
     );
@@ -244,7 +268,20 @@ function applySheetProps(socialing: SocialingDetail) {
     refundPolicy: showsRefundPolicy(socialing.fee, socialing.starts_at, now)
       ? refundPolicyText(socialing.starts_at, socialing.join_type, now)
       : null,
+    openCondition: openConditionText(socialing),
   };
+}
+
+/**
+ * O02 결과 안내 아래 한 줄 (MS15 U4, spec M7): 모집중 소셜링이면 열리는 조건. 확정 소셜링에는 없다.
+ * 참가비가 0원이면 환불 문장은 뺀다. 신청할 수 있는 소셜링만 O02를 열므로 보이는 상태는 모집중·확정 둘 중 하나다
+ */
+export function openConditionText(
+  socialing: Pick<SocialingDetail, "display_status" | "min_participants" | "confirm_deadline_at" | "fee">,
+): string | null {
+  if (socialing.display_status !== "recruiting") return null;
+  const condition = `최소 ${socialing.min_participants}명이 모이고 확정 기한(${formatDateTime(socialing.confirm_deadline_at)})까지 호스트가 확정하면 열려요`;
+  return socialing.fee > 0 ? `${condition}. 취소되면 전액 환불 기준이에요` : condition;
 }
 
 function Shell({ children }: { children: React.ReactNode }) {

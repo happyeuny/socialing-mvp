@@ -10,7 +10,7 @@ import { socialingPhotoUrl, type SocialingCardData } from "@/lib/queries/sociali
 // DESIGN.md socialing-card/photo · no-photo (spec 8.5). 홈·탐색·지난 소셜링 목록에 쓴다. 테두리 없이 shadow-card.
 // 내 소셜링(P06)은 같은 카드에 신청 칩(my-application)이나 아래 줄(후기 쓰기, 승인 대기 · 소셜링 관리)을 더한다.
 // 왼쪽 96px 정사각 사진(없으면 카테고리 그림), 오른쪽 위에서부터
-// ① 상태 배지 + 꼬리표 ② 제목 1줄(700) ③ 카테고리(카테고리 색 600 + 6px 점) · 술 여부 ④ 소셜링 일시 · 장소
+// ① 상태 배지 + 꼬리표(신청 마감·정원 마감·최소 인원까지 N명) ② 제목 1줄(700) ③ 카테고리(카테고리 색 600 + 6px 점) · 술 여부 ④ 소셜링 일시 · 장소
 // ⑤ 호스트 · 참여 확정 인원/정원 · 총 참가비(700).
 // 카드 전체가 상세로 가는 링크다(제목 링크를 카드 크기로 넓힘).
 
@@ -56,8 +56,8 @@ export function SocialingCard({ socialing, href, chip, footer }: SocialingCardPr
 
         <div className="flex min-w-0 flex-1 flex-col gap-xxs">
           <div className="flex flex-wrap items-center gap-[6px]">
-            <StatusBadge status={socialing.status} />
-            {socialing.status_tag && <StatusTag tag={socialing.status_tag} />}
+            <StatusBadge status={socialing.display_status} />
+            <StatusTag socialing={socialing} />
             {chip && <ApplicationChip variant={chip} />}
           </div>
           <h2 className="mt-xxs truncate text-title-md font-bold text-text-primary">

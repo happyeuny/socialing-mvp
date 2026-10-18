@@ -104,7 +104,9 @@ test.describe("MS2 소셜링 상세 P03", () => {
       await page.goto(`/socialings/${id}`);
       const main = page.getByRole("main");
       await expect(infoRow(page, "모집 방식")).toContainText("선착순");
-      await expect(infoRow(page, "인원")).toHaveText(/참가자 0\/2명$/);
+      // 인원 값은 "참가자 0/2명"만(스태프 없음). MS15부터 그 아래 최소 인원 글이 붙어 값 칸만 본다
+      await expect(infoRow(page, "인원").locator("dd").first()).toHaveText("참가자 0/2명");
+      await expect(infoRow(page, "인원")).not.toContainText("스태프");
       await expect(main).not.toContainText("호스트 승인 기준");
       await expect(main).not.toContainText("선착순에는 보이면 안 됨");
       await expect(main).toContainText(`호스트${DEMO_USERS.C.nickname}`);

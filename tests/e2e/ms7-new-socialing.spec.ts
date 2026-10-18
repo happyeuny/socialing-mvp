@@ -42,6 +42,8 @@ const sigunguSelect = (page: Page) => page.getByRole("combobox", { name: "시·�
 const placeNameField = (page: Page) => page.getByLabel("장소 이름");
 const startsAtField = (page: Page) => page.getByLabel("소셜링 일시", { exact: true });
 const deadlineField = (page: Page) => page.getByLabel("신청 마감 일시", { exact: true });
+const confirmField = (page: Page) => page.getByLabel("확정 기한", { exact: true });
+const minField = (page: Page) => page.getByLabel("최소 인원", { exact: true });
 const feeField = (page: Page) => page.getByLabel("총 참가비");
 const feeNoteField = (page: Page) => page.getByRole("textbox", { name: "참가비 설명" });
 const capacityField = (page: Page) => page.getByLabel("정원", { exact: true });
@@ -52,13 +54,18 @@ const openButton = (page: Page) => page.getByRole("button", { name: "소셜링 �
 const errorOf = (page: Page, field: string) => page.locator(`#field-${field}-error`);
 const infoRow = (page: Page, label: string) => page.locator("dl > div").filter({ hasText: label });
 
-/** 스터디지점·선착순·무료가 아닌 기본 입력 (사진·장소 빼고) */
-async function fillBasics(page: Page, title: string, times = { startsAt: inDays(30), deadline: inDays(29) }) {
+/** 스터디지점·선착순·무료가 아닌 기본 입력 (사진·장소 빼고). 확정 기한(MS15 필수)은 주지 않으면 신청 마감과 같게 */
+async function fillBasics(
+  page: Page,
+  title: string,
+  times: { startsAt: string; deadline: string; confirm?: string } = { startsAt: inDays(30), deadline: inDays(29) },
+) {
   await titleField(page).fill(title);
   await pick(page, "카테고리", "배움·자기계발");
   await descriptionField(page).fill(DESCRIPTION);
   await startsAtField(page).fill(times.startsAt);
   await deadlineField(page).fill(times.deadline);
+  await confirmField(page).fill(times.confirm ?? times.deadline);
   await feeField(page).fill("15000");
   await feeNoteField(page).fill(FEE_NOTE);
   await capacityField(page).fill("6");
@@ -83,8 +90,10 @@ type SavedRow = {
   has_alcohol: boolean;
   starts_at: string;
   apply_deadline_at: string;
+  confirm_deadline_at: string;
   fee: number;
   capacity: number;
+  min_participants: number;
   staff_count: number;
   join_type: string;
   approval_criteria: string | null;
@@ -94,8 +103,8 @@ type SavedRow = {
 async function savedRow(id: number): Promise<SavedRow> {
   const [row] = await runQuery<SavedRow>(`
     select u.email as host_email, s.status, s.title, s.description, c.slug as category, s.has_alcohol,
-      s.starts_at, s.apply_deadline_at, s.fee, s.capacity, s.staff_count, s.join_type, s.approval_criteria,
-      s.cover_photo_path
+      s.starts_at, s.apply_deadline_at, s.confirm_deadline_at, s.fee, s.capacity, s.min_participants, s.staff_count,
+      s.join_type, s.approval_criteria, s.cover_photo_path
     from public.socialings s
     join auth.users u on u.id = s.host_id
     join public.categories c on c.id = s.category_id
@@ -125,6 +134,9 @@ test.describe("MS7 소셜링 등록 P07", () => {
     await expect(branchSelect(page)).toHaveValue("");
     await expect(group(page, "모집 방식").getByRole("radio", { name: "선착순" })).toBeChecked();
     await expect(staffField(page)).toHaveValue("0");
+    // 확정 기한은 빈칸, 최소 인원은 2 (MS15 U4)
+    await expect(confirmField(page)).toHaveValue("");
+    await expect(minField(page)).toHaveValue("2");
     await expect(page.getByText("0 / 1000 · 20자 이상")).toBeVisible();
     await expect(criteriaField(page)).toHaveCount(0);
     await expect(openButton(page)).toBeEnabled();
@@ -178,12 +190,14 @@ test.describe("MS7 소셜링 등록 P07", () => {
       has_alcohol: false,
       fee: 15000,
       capacity: 6,
+      min_participants: 2,
       staff_count: 1,
       join_type: "approval",
       approval_criteria: "원서를 한 챕터 미리 읽어 올 수 있는 분",
     });
     expect(Date.parse(saved.starts_at)).toBe(Date.parse(seoulInputToIso(startsAt)!));
     expect(Date.parse(saved.apply_deadline_at)).toBe(Date.parse(seoulInputToIso(deadline)!));
+    expect(Date.parse(saved.confirm_deadline_at)).toBe(Date.parse(seoulInputToIso(deadline)!));
     expect(saved.cover_photo_path).toMatch(/^[0-9a-f-]{36}\/[0-9a-f-]{36}\.jpg$/);
     expect((await venueOf(id)).name).toBe("홍대점");
 
@@ -213,6 +227,7 @@ test.describe("MS7 소셜링 등록 P07", () => {
       branchId: "스터디지점을 골라 주세요",
       startsAt: "소셜링 일시를 골라 주세요",
       applyDeadlineAt: "신청 마감 일시를 골라 주세요",
+      confirmDeadlineAt: "확정 기한을 골라 주세요",
       fee: "총 참가비를 입력해 주세요 (무료면 0)",
       capacity: "정원은 2~20명이에요",
     });
@@ -302,8 +317,10 @@ test.describe("MS7 소셜링 등록 P07", () => {
     await expect(placeNameField(page)).toHaveValue(placeName);
     await expect(feeField(page)).toHaveValue("0");
 
+    // MS15부터 신청 마감 ≤ 확정 기한 ≤ 소셜링 일시 − 12시간이라 신청 마감 = 소셜링 일시로는 열 수 없다(경계는 ms15-socialing-form)
     await startsAtField(page).fill(inDays(31));
-    await deadlineField(page).fill(inDays(31));
+    await deadlineField(page).fill(inDays(30));
+    await confirmField(page).fill(inDays(30));
     await capacityField(page).fill("4");
     const id = await openAndTrack(page);
     await expect(page.getByText("소셜링을 열었어요")).toBeVisible();

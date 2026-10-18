@@ -50,8 +50,9 @@ test.describe("MS9 시연 시나리오", () => {
   }) => {
     test.setTimeout(180_000);
     // 4~6단계용: 호스트 승인, 모집중, 일시 미래, 승인 기준 / X: 확정, 일시 지남, A 참여 확정
+    // MS15: 최소 2명 중 참여자 1명(민지)을 미리 참여 확정 → 5단계 B가 A를 승인하면 확정할 수 있다 (시드 APPROVAL과 같음, 04 7장)
     const [meetup, x] = await Promise.all([
-      fixture({ host: "B", joinType: "approval", capacity: 4, staffCount: 1, approvalCriteria: APPROVAL_CRITERIA }),
+      fixture({ host: "B", joinType: "approval", capacity: 4, staffCount: 1, approvalCriteria: APPROVAL_CRITERIA, accepted: ["P1"] }),
       fixture({ host: "B", status: "confirmed", deadlineInHours: -30, startsInHours: -24, accepted: ["A"] }),
     ]);
     const [meetupTitle, xTitle] = await Promise.all([titleOf(meetup), titleOf(x)]);
@@ -89,7 +90,11 @@ test.describe("MS9 시연 시나리오", () => {
       await expect(page).toHaveURL(detail(meetup));
       await expect(page.getByRole("heading", { level: 2, name: meetupTitle })).toBeVisible();
       await expect(page.getByRole("main").getByText("모집중").first()).toBeVisible();
-      await expect(infoRow(page, "인원")).toContainText("참가자 0/4명 · 스태프 1명");
+      await expect(infoRow(page, "인원")).toContainText("참가자 1/4명 · 스태프 1명");
+      // MS15 U4: 최소 인원과 확정 기한 (04 7장 3단계)
+      await expect(page.getByRole("main").getByText("최소 인원까지 1명", { exact: true })).toBeVisible();
+      await expect(infoRow(page, "인원")).toContainText("최소 2명 · 1명 더 모이면 확정할 수 있어요");
+      await expect(infoRow(page, "확정 기한")).toContainText("이때까지 호스트가 확정하지 않으면 취소돼요");
       await expect(infoRow(page, "총 참가비")).toContainText("무료");
       await expect(page.getByRole("main")).toContainText(APPROVAL_CRITERIA);
       reviewsBefore = await hostReviewCount(page);
@@ -116,6 +121,9 @@ test.describe("MS9 시연 시나리오", () => {
       await bar(page).getByRole("button", { name: "신청하기" }).click();
       const applySheet = page.getByRole("dialog", { name: "신청할까요?" });
       await expect(applySheet).toContainText(APPROVAL_CRITERIA);
+      // MS15 U4: 모집중이면 열리는 조건 한 줄 (무료라 환불 문장 없음)
+      await expect(applySheet).toContainText(/최소 2명이 모이고 확정 기한\(.+\)까지 호스트가 확정하면 열려요/);
+      await expect(applySheet).not.toContainText("취소되면 전액 환불 기준이에요");
       await applySheet.getByRole("button", { name: "신청하기" }).click();
       await expect(applySheet).toHaveCount(0);
       await expect(bar(page).getByText("승인 대기", { exact: true })).toBeVisible();
@@ -151,6 +159,11 @@ test.describe("MS9 시연 시나리오", () => {
         // 시드: 하린의 "필름 카메라로 골목 산책"에서 거절된 카드에는 거절 사유 (MS14 U10, P06-15)
         const film = page.locator("article").filter({ has: page.getByRole("heading", { name: "필름 카메라로 골목 산책" }) });
         await expect(film).toContainText("거절 사유: 승인 기준과 맞지 않아요");
+        // MS15 SH2: 맨 위 나만 보는 참여 기록. 시드의 늦은 취소 1회(B의 지난 소셜링). 참여 수는 다른 테스트의 지난 소셜링에 따라 달라
+        // 숫자는 ms15-participation-record에서 가입시킨 계정으로 본다
+        const record = page.getByRole("region", { name: "내 참여 기록" });
+        await expect(record).toContainText("내 참여 기록 · 나만 볼 수 있어요");
+        await expect(record).toContainText(/참여 \d+회 · 늦은 취소 [1-9]\d*회/);
       });
 
       // 7단계 (B): 일시가 지난 확정 소셜링 X를 내 소셜링 → 관리 → 종료(O04)
