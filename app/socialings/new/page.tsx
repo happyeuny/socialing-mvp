@@ -11,7 +11,7 @@ import { readSimulatedState } from "@/lib/simulated-state";
 import { SocialingForm } from "../socialing-form";
 
 // P07 소셜링 등록 (spec M8, 8.6, 8.7). 로그인한 사람은 누구나 호스트가 된다.
-// "소셜링 열기"를 누르면 create_socialing_v2가 입력을 다시 확인하고 모집중 소셜링을 만든다.
+// "소셜링 열기"를 누르면 create_socialing_v3가 입력을 다시 확인하고 모집중 소셜링을 만든다.
 
 export const metadata: Metadata = { title: "소셜링 등록 · 문화소셜링" };
 

@@ -12,7 +12,8 @@ import { cn } from "@/lib/utils";
 import { rejectReasonLabel } from "@/lib/validation/reject";
 
 // P06 신청한 소셜링 탭 (spec M11): 다가오는 소셜링(가까운 일시 순) → 지난 소셜링(최근 순).
-// 카드마다 소셜링 상태 배지 + 내 신청 칩(socialing-card/my-application). 호스트 취소된 소셜링은 배지 "호스트 취소" 하나만.
+// 카드마다 소셜링 상태 배지 + 내 신청 칩(socialing-card/my-application). 호스트 취소·취소(MS15 계산)로 보이는 소셜링은
+// 배지 하나만(신청 상태는 그대로라 칩을 덮는다, spec 3.3). 확정 대기는 배지 + 칩.
 // 후기를 쓸 수 있으면(참여 확정 + 종료 + 아직 안 씀, spec 3.4) "후기 쓰기"(P09는 MS5).
 // 거절됐고 사유가 있으면 카드 아래 줄에 "거절 사유: …"(MS14 U10). 덧붙인 말은 상세에서만 보인다.
 
@@ -64,7 +65,7 @@ function Group({
           <li key={socialing.id}>
             <SocialingCard
               socialing={socialing}
-              chip={socialing.status === "canceled" ? undefined : chipVariantOf(socialing.application_status)}
+              chip={isCanceled(socialing) ? undefined : chipVariantOf(socialing.application_status)}
               footer={
                 canWriteReview(socialing) ? (
                   <ReviewLink id={socialing.id} />
@@ -80,14 +81,19 @@ function Group({
   );
 }
 
+/** 호스트 취소(직접·확정하지 않음)나 취소(최소 인원 미달)로 보임 → 신청 칩 없이 배지 하나 */
+function isCanceled(socialing: MyAppliedSocialing) {
+  return socialing.display_status === "host_canceled" || socialing.display_status === "auto_canceled";
+}
+
 /** spec 3.4 후기 작성 조건: 참여 확정 + 종료 + 아직 안 씀 (뷰가 준 값만 본다) */
 function canWriteReview(socialing: MyAppliedSocialing) {
   return socialing.application_status === "accepted" && socialing.status === "completed" && !socialing.has_review;
 }
 
-/** 거절 칩이 보이는 카드(호스트 취소가 아님)의 거절 사유 글. 사유가 없으면(MS14 전 거절) null */
+/** 거절 칩이 보이는 카드(호스트 취소·취소가 아님)의 거절 사유 글. 사유가 없으면(MS14 전 거절) null */
 function rejectReasonOf(socialing: MyAppliedSocialing): string | null {
-  if (socialing.application_status !== "rejected" || socialing.status === "canceled" || !socialing.reject_reason) {
+  if (socialing.application_status !== "rejected" || isCanceled(socialing) || !socialing.reject_reason) {
     return null;
   }
   return rejectReasonLabel(socialing.reject_reason);

@@ -17,7 +17,10 @@ import {
   type TestUser,
 } from "./helpers/supabase";
 
-// MS7 create_socialing · update_socialing: 소셜링 등록·수정 함수 (architecture 5장, spec M8·6장·8.6 P07·P08)
+// MS7 소셜링 등록·수정 함수의 검사 (architecture 5장, spec M8·6장·8.6 P07·P08)
+// MS7의 create_socialing·update_socialing은 MS15에서 지웠다. 같은 검사가 지금 화면이 부르는 create_socialing_v3·update_socialing_v3에
+// 그대로 있는지 같은 경우로 본다. 2묶음 칸은 ms14-socialing-v2-fn, 최소 인원·확정 기한은 ms15-socialing-v3-fn.
+// 확정 기한을 따로 주지 않으면 신청 마감과 같은 값을 보낸다(테스트 소셜링 기본값과 같음).
 // 시드 호스트 목록이 바뀌지 않게 테스트 전용 호스트 계정을 가입시켜 쓴다.
 // 끝에 소셜링(신청 포함) → 테스트가 만든 외부 장소 → 계정 순서로 지운다.
 // 사진 경로 확인용으로 올린 작은 파일은 버킷에 남고 다음 `npm run seed`가 비운다.
@@ -44,6 +47,7 @@ async function fixture(host: TestUser, options: Partial<FixtureOptions> = {}) {
 
 const inDays = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 const tag = () => Math.random().toString(36).slice(2, 8);
+const FEE_NOTE = "장소 대여 10,000원 + 음료 5,000원. 현장에서 따로 내는 돈은 없어요";
 
 type SocialingRow = {
   id: number;
@@ -60,6 +64,12 @@ type SocialingRow = {
   join_type: string;
   approval_criteria: string | null;
   cover_photo_path: string | null;
+  fee_note: string | null;
+  min_age: number | null;
+  max_age: number | null;
+  material_url: string | null;
+  min_participants: number;
+  confirm_deadline_at: string;
 };
 
 let defaults: Promise<{ categoryId: number; gangnamId: number }> | undefined;
@@ -74,7 +84,7 @@ function readDefaults() {
   return defaults;
 }
 
-/** 등록·수정 입력. 기본은 강남점, 3일 뒤, 선착순 */
+/** 등록·수정 입력. 기본은 강남점, 3일 뒤, 선착순, 15,000원 + 참가비 설명, 최소 2명, 확정 기한 = 신청 마감 */
 async function input(change: Record<string, unknown> = {}) {
   const { categoryId, gangnamId } = await readDefaults();
   return {
@@ -93,18 +103,24 @@ async function input(change: Record<string, unknown> = {}) {
     p_join_type: "first_come",
     p_approval_criteria: null,
     p_cover_photo_path: null,
+    p_fee_note: FEE_NOTE,
+    p_min_age: null,
+    p_max_age: null,
+    p_material_url: null,
+    p_min_participants: 2,
+    p_confirm_deadline_at: change.p_apply_deadline_at ?? inDays(2),
     ...change,
   };
 }
 
 async function create(request: APIRequestContext, host: TestUser, change: Record<string, unknown> = {}) {
-  const result = await rpc(request, "create_socialing", await input(change), host.accessToken);
+  const result = await rpc(request, "create_socialing_v3", await input(change), host.accessToken);
   const row = result.body as unknown as SocialingRow;
   if (result.status === 200) createdSocialings.push(row.id);
   return { status: result.status, code: result.body.message, row };
 }
 
-/** 지금 행을 그대로 다시 보내는 수정 입력 (장소는 지점) */
+/** 지금 행을 그대로 다시 보내는 수정 입력 (장소는 지점). 신청 마감을 바꾸고 확정 기한을 주지 않으면 확정 기한도 같은 값으로 */
 async function sameAs(id: number, change: Record<string, unknown> = {}) {
   const [row] = await runQuery<SocialingRow & { category_id: number; has_alcohol: boolean }>(
     `select * from public.socialings where id = ${id};`,
@@ -126,12 +142,18 @@ async function sameAs(id: number, change: Record<string, unknown> = {}) {
     p_join_type: row.join_type,
     p_approval_criteria: row.approval_criteria,
     p_cover_photo_path: row.cover_photo_path,
+    p_fee_note: row.fee_note,
+    p_min_age: row.min_age,
+    p_max_age: row.max_age,
+    p_material_url: row.material_url,
+    p_min_participants: row.min_participants,
+    p_confirm_deadline_at: change.p_apply_deadline_at ?? row.confirm_deadline_at,
     ...change,
   };
 }
 
 async function update(request: APIRequestContext, host: TestUser, args: Record<string, unknown>) {
-  const result = await rpc(request, "update_socialing", args, host.accessToken);
+  const result = await rpc(request, "update_socialing_v3", args, host.accessToken);
   return { status: result.status, code: result.body.message, row: result.body as unknown as SocialingRow };
 }
 
@@ -146,7 +168,7 @@ async function uploadPhoto(request: APIRequestContext, user: TestUser, folder = 
   return path;
 }
 
-test.describe("MS7 create_socialing", () => {
+test.describe("MS7 등록 검사 (create_socialing_v3)", () => {
   test("10단계: 스터디지점 소셜링을 열면 모집중 행을 돌려주고, 호스트는 부른 사람, 글 앞뒤 공백은 뺀다", async ({
     request,
   }) => {
@@ -190,10 +212,9 @@ test.describe("MS7 create_socialing", () => {
     expect(result.row.approval_criteria).toBe("책을 미리 읽어 오면 좋아요");
     expect(await venueOf(result.row.id)).toMatchObject({ type: "external", name: placeName, region_code: "11440" });
 
-    // 승인 기준이 비어 있으면 null
+    // 승인 기준이 비어 있으면 받지 않는다 (MS14 U5부터 호스트 승인이면 승인 기준 필수. MS7 함수는 null로 저장했다)
     const empty = await create(request, host, { p_join_type: "approval", p_approval_criteria: "   " });
-    expect(empty.status).toBe(200);
-    expect(empty.row.approval_criteria).toBeNull();
+    expect(empty.code).toBe("INVALID_INPUT");
   });
 
   test("P07-04~09: 입력 범위 밖이면 INVALID_INPUT이고 아무것도 만들지 않는다", async ({ request }) => {
@@ -236,11 +257,14 @@ test.describe("MS7 create_socialing", () => {
     expect(count).toBe(0);
   });
 
-  test("경계 값은 받는다: 제목 40자, 소개 20자·1000자, 정원 2·20명, 스태프 0명, 무료, 신청 마감 = 소셜링 일시", async ({
+  // MS15 결정 H2: 확정 기한이 소셜링 일시 12시간 전까지이고 신청 마감 ≤ 확정 기한이라, 신청 마감의 끝도 "소셜링 일시 = 신청 마감"에서
+  // "소셜링 일시 − 12시간"으로 바뀌었다 (규칙이 바뀐 것, 12시간보다 짧은 경우는 ms15-socialing-v3-fn)
+  test("경계 값은 받는다: 제목 40자, 소개 20자·1000자, 정원 2·20명, 스태프 0명, 무료, 신청 마감 = 소셜링 일시 − 12시간", async ({
     request,
   }) => {
     const host = await newHost(request, "create-edge");
     const startsAt = inDays(5);
+    const lastDeadline = new Date(Date.parse(startsAt) - 12 * 60 * 60 * 1000).toISOString();
     const results = await Promise.all([
       create(request, host, { p_title: `[E2E] ${"가".repeat(34)}`, p_description: "가".repeat(20), p_capacity: 2 }),
       create(request, host, {
@@ -248,8 +272,9 @@ test.describe("MS7 create_socialing", () => {
         p_capacity: 20,
         p_staff_count: 0,
         p_fee: 0,
+        p_fee_note: null,
         p_starts_at: startsAt,
-        p_apply_deadline_at: startsAt,
+        p_apply_deadline_at: lastDeadline,
       }),
     ]);
     expect(results.map((r) => r.status)).toEqual([200, 200]);
@@ -272,12 +297,12 @@ test.describe("MS7 create_socialing", () => {
   });
 
   test("E02: 비로그인은 부를 수 없다", async ({ request }) => {
-    const result = await rpc(request, "create_socialing", await input());
+    const result = await rpc(request, "create_socialing_v3", await input());
     expect(result.status).not.toBe(200);
   });
 });
 
-test.describe("MS7 update_socialing", () => {
+test.describe("MS7 수정 검사 (update_socialing_v3)", () => {
   test("P08-05: 호스트가 고치면 바뀐 행을 돌려준다 (제목·카테고리·술·정원·스태프·모집 방식·승인 기준)", async ({
     request,
   }) => {
@@ -296,6 +321,8 @@ test.describe("MS7 update_socialing", () => {
         p_capacity: 10,
         p_staff_count: 2,
         p_fee: 20000,
+        // 유료로 바꾸면 참가비 설명이 필요하다 (MS14 U3)
+        p_fee_note: FEE_NOTE,
         p_join_type: "approval",
         p_approval_criteria: "처음 오시는 분 환영해요",
       }),
@@ -338,19 +365,21 @@ test.describe("MS7 update_socialing", () => {
     const confirmed = await fixture(host, { status: "confirmed" });
     expect((await update(request, host, await sameAs(confirmed))).status).toBe(200);
     // 비로그인은 부를 수 없다
-    expect((await rpc(request, "update_socialing", await sameAs(open))).status).not.toBe(200);
+    expect((await rpc(request, "update_socialing_v3", await sameAs(open))).status).not.toBe(200);
   });
 
   test("수정 잠금(P08-02): 참여 확정자가 있으면 일시·장소·참가비를 바꾸면 LOCKED_FIELD, 그대로 두면 다른 칸은 저장된다", async ({
     request,
   }) => {
     const host = await newHost(request, "update-lock");
-    const id = await fixture(host, { capacity: 6, accepted: ["P1", "P2"] });
+    // 유료 + 참가비 설명 (MS14 U3: 무료에서 유료로 바꾸면 설명이 필요해 잠금보다 먼저 INVALID_INPUT)
+    const id = await fixture(host, { capacity: 6, accepted: ["P1", "P2"], fee: 15000, feeNote: FEE_NOTE });
     const before = await sameAs(id);
     const hongdae = await branchIdOf("홍대점");
 
     const cases: [string, Record<string, unknown>][] = [
-      ["소셜링 일시", { p_starts_at: inDays(10), p_apply_deadline_at: inDays(9) }],
+      // 신청 마감·확정 기한은 그대로 두고 일시만 옮긴다 (확정 기한도 잠기고, 신청 마감만 옮기면 확정 기한보다 뒤가 되어 INVALID_INPUT)
+      ["소셜링 일시", { p_starts_at: inDays(10) }],
       ["장소: 다른 지점", { p_branch_id: hongdae }],
       ["장소: 외부 장소로", { p_branch_id: null, p_region_code: "11440", p_place_name: "[E2E] 다른 장소" }],
       ["총 참가비", { p_fee: (before.p_fee as number) + 1000 }],
@@ -359,10 +388,16 @@ test.describe("MS7 update_socialing", () => {
       expect((await update(request, host, { ...before, ...change })).code, name).toBe("LOCKED_FIELD");
     }
 
-    // 잠긴 칸을 그대로 두면 제목·신청 마감·정원은 바뀐다
+    // 잠긴 칸을 그대로 두면 제목·신청 마감·정원은 바뀐다. 확정 기한도 잠기므로(MS15) 신청 마감은 확정 기한 안에서 옮긴다
     const title = `[E2E] 잠금 중 고친 제목 ${tag()}`;
-    const deadline = new Date(Date.parse(before.p_starts_at as string) - 3 * 60 * 60 * 1000).toISOString();
-    const ok = await update(request, host, { ...before, p_title: title, p_apply_deadline_at: deadline, p_capacity: 8 });
+    const deadline = new Date(Date.parse(before.p_confirm_deadline_at as string) - 3 * 60 * 60 * 1000).toISOString();
+    const ok = await update(request, host, {
+      ...before,
+      p_title: title,
+      p_apply_deadline_at: deadline,
+      p_confirm_deadline_at: before.p_confirm_deadline_at,
+      p_capacity: 8,
+    });
     expect(ok.status).toBe(200);
     expect(ok.row).toMatchObject({ title, capacity: 8 });
     expect(Date.parse(ok.row.apply_deadline_at)).toBe(Date.parse(deadline));
@@ -380,8 +415,9 @@ test.describe("MS7 update_socialing", () => {
   test("승인 대기 신청이 있으면 모집 방식을 바꾸면 LOCKED_FIELD, 승인 대기가 없으면 바뀐다", async ({ request }) => {
     const host = await newHost(request, "update-join-type");
     const [withPending, decided] = await Promise.all([
-      fixture(host, { joinType: "approval", capacity: 4 }),
-      fixture(host, { joinType: "approval", capacity: 4 }),
+      // 호스트 승인이면 승인 기준 필수 (MS14 U5)
+      fixture(host, { joinType: "approval", capacity: 4, approvalCriteria: "누구나 환영해요" }),
+      fixture(host, { joinType: "approval", capacity: 4, approvalCriteria: "누구나 환영해요" }),
     ]);
     await Promise.all([addApplication(withPending, "P1", "pending"), addApplication(decided, "P1", "rejected")]);
 

@@ -10,6 +10,19 @@ type Enums = Database["public"]["Enums"];
 export type SocialingStatus = Enums["socialing_status"];
 export type ApplicationStatus = Enums["application_status"];
 export type StatusTag = "closed" | "full";
+/**
+ * 보이는 상태 (MS15 U4, DB 함수 socialing_display_status가 계산). 저장된 상태(status)는 그대로 4개이고,
+ * 신청 마감·확정 기한이 지나면 화면에 보이는 상태만 확정 대기·취소·호스트 취소로 바뀐다(spec 3.1, 예약 작업 없음)
+ */
+export type DisplayStatus =
+  | "recruiting"
+  | "awaiting_confirm"
+  | "confirmed"
+  | "completed"
+  | "host_canceled"
+  | "auto_canceled";
+/** 호스트 취소·취소의 이유: 직접 취소 / 확정 기한까지 확정하지 않음 / 최소 인원 미달 */
+export type CancelReason = "host" | "not_confirmed" | "min_not_met";
 
 /** 카드(spec 8.5)에 필요한 칸 */
 export type SocialingCardData = {
@@ -28,11 +41,16 @@ export type SocialingCardData = {
   accepted_count: number;
   cover_photo_path: string | null;
   status: SocialingStatus;
+  /** 배지는 이 값으로 그린다 (DESIGN.md status-badge) */
+  display_status: DisplayStatus;
+  /** 신청 마감 · 정원 마감. 보이는 상태가 모집중·확정일 때만 */
   status_tag: StatusTag | null;
+  /** 최소 인원까지 남은 수. 모집중·확정 대기일 때만(그 밖은 null) → 꼬리표 "최소 인원까지 N명" */
+  needed_count: number | null;
 };
 
 export const CARD_COLUMNS =
-  "id, title, host_nickname, category_slug, category_name, has_alcohol, venue_type, venue_name, region_sigungu, starts_at, fee, capacity, accepted_count, cover_photo_path, status, status_tag";
+  "id, title, host_nickname, category_slug, category_name, has_alcohol, venue_type, venue_name, region_sigungu, starts_at, fee, capacity, accepted_count, cover_photo_path, status, display_status, status_tag, needed_count";
 
 // 현재/지난은 상태가 아니라 소셜링 일시로 나눈다(spec 3.1). 상태는 그대로 보인다.
 async function listByPast(past: boolean): Promise<SocialingCardData[]> {
@@ -78,7 +96,8 @@ export function listPastSocialings(): Promise<SocialingCardData[]> {
 
 /**
  * 홈(P00, spec 8.2): 히어로 = 지금 신청할 수 있는 소셜링 중 일시가 가장 가까운 1개(없으면 null),
- * 곧 열리는 소셜링 = 일시가 지나지 않은 소셜링 가까운 순 3개(히어로와 호스트 취소는 뺌). 운영자가 고르거나 유료로 올리는 자리는 없다.
+ * 곧 열리는 소셜링 = 일시가 지나지 않은 소셜링 가까운 순 3개(히어로와 호스트 취소·취소는 뺌, 확정 대기는 남음).
+ * 운영자가 고르거나 유료로 올리는 자리는 없다.
  * 홈의 두 묶음이 따로 부르므로 요청 안에서 한 번만 읽는다.
  */
 export const getHomeSocialings = cache(async (): Promise<{
@@ -101,7 +120,7 @@ export const getHomeSocialings = cache(async (): Promise<{
     .from("socialing_summaries")
     .select(CARD_COLUMNS)
     .eq("is_past", false)
-    .neq("status", "canceled")
+    .not("display_status", "in", "(host_canceled,auto_canceled)")
     .order("starts_at", { ascending: true })
     .order("id", { ascending: true })
     .limit(3);
@@ -130,9 +149,13 @@ export type SocialingDetail = SocialingCardData & {
   is_past: boolean;
   can_apply: boolean;
   closed_reason: ClosedReason | null;
+  /** MS15 3묶음: 최소 인원·확정 기한(U4), 호스트 취소·취소의 이유 */
+  min_participants: number;
+  confirm_deadline_at: string;
+  cancel_reason: CancelReason | null;
 };
 
-const DETAIL_COLUMNS = `${CARD_COLUMNS}, description, host_id, region_sido, apply_deadline_at, staff_count, join_type, approval_criteria, fee_note, min_age, max_age, material_url, is_past, can_apply, closed_reason`;
+const DETAIL_COLUMNS = `${CARD_COLUMNS}, description, host_id, region_sido, apply_deadline_at, staff_count, join_type, approval_criteria, fee_note, min_age, max_age, material_url, is_past, can_apply, closed_reason, min_participants, confirm_deadline_at, cancel_reason`;
 
 /** 상세 하나. 없는 번호면 null. 화면과 제목(metadata)이 같이 부르므로 요청 안에서 한 번만 읽는다 */
 export const getSocialing = cache(async (id: number): Promise<SocialingDetail | null> => {

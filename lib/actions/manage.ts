@@ -19,13 +19,15 @@ export type ManageActionResult =
   /** 네트워크·서버 오류 → 다시 시도 */
   | { ok: false; retry: true };
 
-const decideSchema = z.object({
+const approveSchema = z.object({
   socialingId: z.number().int().positive(),
   applicationId: z.number().int().positive(),
-  approve: z.boolean(),
 });
 
-// decide_application 오류 코드 → 승인·거절하지 못한 이유 (spec 8.8, screen-cases P11-12~14)
+/** 계산으로 취소·호스트 취소된 소셜링에서 모든 동작이 막힐 때 (MS15 U4, 오류 코드 AUTO_CANCELED) */
+const AUTO_CANCELED_REASON = "이미 취소된 소셜링이에요";
+
+// decide_application·reject_application 오류 코드 → 승인·거절하지 못한 이유 (spec 8.8, screen-cases P11-12~14)
 function decideReason(code: string, approve: boolean): string | undefined {
   switch (code) {
     case "FULL":
@@ -39,16 +41,15 @@ function decideReason(code: string, approve: boolean): string | undefined {
     // 그 사이 종료·호스트 취소됨
     case "INVALID_STATE":
       return "이미 처리된 소셜링이에요";
+    // 신청 마감 때 최소 인원이 될 수 없었거나, 확정 기한이 지남 (MS15)
+    case "AUTO_CANCELED":
+      return AUTO_CANCELED_REASON;
   }
 }
 
-/** 승인 대기 신청을 승인(참여 확정)한다. 거절은 사유를 받는 rejectApplication(MS14). approve=false는 옛 길로 남겨 둔다 */
-export async function decideApplication(
-  socialingId: number,
-  applicationId: number,
-  approve: boolean,
-): Promise<ManageActionResult> {
-  const parsed = decideSchema.safeParse({ socialingId, applicationId, approve });
+/** 승인 대기 신청을 승인(참여 확정)한다. 거절은 사유를 받는 rejectApplication(MS14). 옛 거절 길은 MS15에서 지움 */
+export async function approveApplication(socialingId: number, applicationId: number): Promise<ManageActionResult> {
+  const parsed = approveSchema.safeParse({ socialingId, applicationId });
   if (!parsed.success) return { ok: false, reason: "이미 처리된 신청이에요" };
   const managePath = `/socialings/${parsed.data.socialingId}/manage`;
   const detailPath = `/socialings/${parsed.data.socialingId}`;
@@ -60,12 +61,12 @@ export async function decideApplication(
 
   const { error } = await supabase.rpc("decide_application", {
     p_application_id: parsed.data.applicationId,
-    p_approve: parsed.data.approve,
+    p_approve: true,
   });
   if (error) {
     if (error.message === "NOT_AUTHENTICATED") redirect(withNext("/login", managePath));
     if (error.message === "NOT_HOST") redirect(withNotice(detailPath, "host-only"));
-    const reason = decideReason(error.message, parsed.data.approve);
+    const reason = decideReason(error.message, true);
     if (reason) return { ok: false, reason };
     console.error("decide_application", error);
     return { ok: false, retry: true };
@@ -128,7 +129,23 @@ const STATUS_REASONS: Record<string, string> = {
   NOT_STARTED: "소셜링 일시가 지나야 종료할 수 있어요",
   INVALID_STATE: "이미 처리된 소셜링이에요",
   INVALID_INPUT: "이미 처리된 소셜링이에요",
+  AUTO_CANCELED: AUTO_CANCELED_REASON,
 };
+
+/** 확정: 참여 확정이 최소 인원보다 적음 (MS15 U4 결정 H4, 오류 코드 MIN_NOT_MET). 인원 수는 그 소셜링에서 다시 읽는다 */
+async function minNotMetReason(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  socialingId: number,
+): Promise<string> {
+  const { data } = await supabase
+    .from("socialing_summaries")
+    .select("min_participants")
+    .eq("id", socialingId)
+    .maybeSingle();
+  return data?.min_participants != null
+    ? `최소 인원(${data.min_participants}명)이 모여야 확정할 수 있어요`
+    : "최소 인원이 모여야 확정할 수 있어요";
+}
 
 async function changeSocialingStatus(
   fn: "confirm_socialing" | "complete_socialing" | "cancel_socialing",
@@ -147,6 +164,7 @@ async function changeSocialingStatus(
   if (error) {
     if (error.message === "NOT_AUTHENTICATED") redirect(withNext("/login", managePath));
     if (error.message === "NOT_HOST") redirect(withNotice(detailPath, "host-only"));
+    if (error.message === "MIN_NOT_MET") return { ok: false, reason: await minNotMetReason(supabase, parsed.data) };
     const reason = STATUS_REASONS[error.message];
     if (reason) return { ok: false, reason };
     console.error(fn, error);
@@ -158,7 +176,7 @@ async function changeSocialingStatus(
   return { ok: true };
 }
 
-/** 확정: 모집중, 소셜링 일시 전 */
+/** 확정: 모집중(확정 대기 포함), 확정 기한 전, 참여 확정 ≥ 최소 인원 */
 export async function confirmSocialing(socialingId: number): Promise<ManageActionResult> {
   return changeSocialingStatus("confirm_socialing", socialingId);
 }
@@ -168,7 +186,7 @@ export async function completeSocialing(socialingId: number): Promise<ManageActi
   return changeSocialingStatus("complete_socialing", socialingId);
 }
 
-/** 호스트 취소: 종료·호스트 취소 전. 신청 상태는 그대로 둔다(spec 3.3) */
+/** 호스트 취소: 종료·호스트 취소 전, 계산으로 취소·호스트 취소가 아님. 신청 상태는 그대로 둔다(spec 3.3) */
 export async function cancelSocialing(socialingId: number): Promise<ManageActionResult> {
   return changeSocialingStatus("cancel_socialing", socialingId);
 }

@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 // P06 호스트인 소셜링 탭 (spec M11): 신청한 탭과 같은 순서(다가오는 → 지난).
 // 카드를 누르면 관리(P11, MS4). 카드 아래 "승인 대기" 건수(있을 때)와 "소셜링 관리 ›"(socialing-card/host).
+// 승인 대기 건수는 승인할 수 있는 소셜링에만 보인다: 확정 대기는 보이고, 호스트 취소·취소(MS15)는 숨긴다.
 // "새 소셜링 만들기"는 등록(P07, MS7)으로 간다.
 
 const NEW_SOCIALING = { href: "/socialings/new", label: "새 소셜링 만들기" };
@@ -63,7 +64,15 @@ function Group({
             <SocialingCard
               socialing={socialing}
               href={`/socialings/${socialing.id}/manage`}
-              footer={<HostFooter pendingCount={socialing.pending_count} />}
+              footer={
+                <HostFooter
+                  pendingCount={
+                    socialing.display_status === "host_canceled" || socialing.display_status === "auto_canceled"
+                      ? 0
+                      : socialing.pending_count
+                  }
+                />
+              }
             />
           </li>
         ))}

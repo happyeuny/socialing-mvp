@@ -86,10 +86,17 @@ export type SeedSocialing = {
   venue: VenueKey;
   starts_at: string;
   apply_deadline_at: string;
+  /**
+   * 확정 기한 (MS15 U4). 모집중인 미래 소셜링은 신청 마감 ≤ 확정 기한 ≤ 소셜링 일시 − 12시간으로 적는다.
+   * 없으면 신청 마감 일시와 같다(확정·종료·호스트 취소·지난 소셜링, 04 7장)
+   */
+  confirm_deadline_at?: string;
   fee: number;
   /** 참가비 설명 (MS14 U3). 유료 소셜링은 모두 넣는다 */
   fee_note?: string;
   capacity: number;
+  /** 최소 인원 (MS15 U4). 없으면 2 */
+  min_participants?: number;
   staff_count: number;
   join_type: "first_come" | "approval";
   approval_criteria?: string;
@@ -108,6 +115,10 @@ export type SeedSocialing = {
     user: DemoUserKey;
     status: "pending" | "accepted" | "rejected" | "canceled";
     created_at: string;
+    /** 참여 확정·거절된 때. 없으면 신청한 때(선착순과 같음). 승인 대기는 늘 비어 있다 */
+    decided_at?: string;
+    /** 신청 취소한 때. 없으면 신청한 때 (MS15 SH2 늦은 취소는 신청 마감 뒤로 적는다) */
+    canceled_at?: string;
     /** 거절 사유와 덧붙인 말 (MS14 U10). 거절일 때만 */
     reject_reason?: "criteria" | "age" | "full" | "host" | "other";
     reject_note?: string;
@@ -187,6 +198,8 @@ export function demoSocialings(now = new Date()): SeedSocialing[] {
       venue: "gangnam",
       starts_at: seoulDateAt(4, 19, 30, now),
       apply_deadline_at: seoulDateAt(3, 23, 0, now),
+      // 확정 기한은 소셜링 일시 12시간 전 (04 7장)
+      confirm_deadline_at: seoulDateAt(4, 7, 30, now),
       fee: 15000,
       fee_note: "스터디룸 이용 5,000원 + 음료 한 잔 10,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 6,
@@ -194,7 +207,10 @@ export function demoSocialings(now = new Date()): SeedSocialing[] {
       join_type: "approval",
       approval_criteria: "영어로 3분 정도 자기소개를 할 수 있는 분이면 좋아요. 신청 순서대로 확인해요.",
       status: "recruiting",
-      applications: [],
+      // 최소 2명 중 민지를 미리 참여 확정(MS15 U4): 3단계 "1명 더 모이면 확정할 수 있어요" → 5단계 B가 A를 승인하면 확정할 수 있다
+      applications: [
+        { user: "P1", status: "accepted", created_at: seoulDateAt(-2, 20, 0, now), decided_at: seoulDateAt(-1, 9, 0, now) },
+      ],
     },
   ];
 }
@@ -208,10 +224,13 @@ function completedSocialing(
   s: Omit<SeedSocialing, "starts_at" | "apply_deadline_at" | "status" | "confirmed_at" | "completed_at" | "applications" | "reviews"> & {
     daysAgo: number;
     participants: DemoUserKey[];
+    /** 참여 확정이었다가 신청 마감 뒤(소셜링 당일 오전 9시) 신청 취소한 사람 = 참여 기록의 늦은 취소 (MS15 SH2) */
+    lateCancels?: DemoUserKey[];
     reviews?: (Omit<SeedReview, "created_at"> & { daysAfter?: number })[];
   },
 ): SeedSocialing {
-  const { daysAgo, participants, reviews = [], ...rest } = s;
+  const { daysAgo, participants, lateCancels = [], reviews = [], ...rest } = s;
+  const appliedAt = seoulDateAt(-daysAgo - 5, 20, 0, now);
   return {
     ...rest,
     starts_at: seoulDateAt(-daysAgo, 19, 30, now),
@@ -219,7 +238,16 @@ function completedSocialing(
     status: "completed",
     confirmed_at: seoulDateAt(-daysAgo - 2, 12, 0, now),
     completed_at: seoulDateAt(-daysAgo, 22, 0, now),
-    applications: accepted(participants, seoulDateAt(-daysAgo - 5, 20, 0, now)),
+    applications: [
+      ...accepted(participants, appliedAt),
+      ...lateCancels.map((user) => ({
+        user,
+        status: "canceled" as const,
+        created_at: appliedAt,
+        decided_at: appliedAt,
+        canceled_at: seoulDateAt(-daysAgo, 9, 0, now),
+      })),
+    ],
     reviews: reviews.map(({ daysAfter = 1, ...review }) => ({
       ...review,
       created_at: seoulDateAt(-daysAgo + daysAfter, 10, 0, now),
@@ -247,12 +275,16 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       category: "learning",
       has_alcohol: false,
       venue: "seongsu",
-      starts_at: seoulDateAt(1, 7, 0, now),
-      // 마감을 시드 당일 밤으로 두면 밤 11시 뒤에 시드를 넣거나 점검할 때 이미 마감이라 홈 히어로가 바뀐다 → 시작 1시간 전
-      apply_deadline_at: seoulDateAt(1, 6, 0, now),
+      // 확정 기한이 일시 12시간 전까지라(MS15 U4) 일시를 모레 아침으로, 신청 마감 내일 낮 12시·확정 기한 내일 오후 6시.
+      // 시드를 넣는 시각과 상관없이 마감 전이고, 다음으로 가까운 신청 가능 소셜링보다 앞이라 홈 히어로는 그대로
+      starts_at: seoulDateAt(2, 7, 0, now),
+      apply_deadline_at: seoulDateAt(1, 12, 0, now),
+      confirm_deadline_at: seoulDateAt(1, 18, 0, now),
       fee: 8000,
       fee_note: "스터디룸 이용 5,000원 + 커피 3,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 8,
+      // 꼬리표 "최소 인원까지 2명" (참여 확정 2명)
+      min_participants: 4,
       staff_count: 0,
       join_type: "first_come",
       status: "recruiting",
@@ -268,7 +300,8 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: false,
       venue: "yeoksam_lounge",
       starts_at: seoulDateAt(2, 19, 30, now),
-      apply_deadline_at: seoulDateAt(1, 23, 0, now),
+      // 꼬리표 "확정 + 신청 마감" (MS15: 모집중 + 신청 마감은 확정 대기나 취소가 되므로 확정 소셜링에서 보인다)
+      apply_deadline_at: hoursFromNow(-3, now),
       fee: 20000,
       fee_note: "라운지 대여 12,000원 + 예제 파일·교재 8,000원. 현장에서 따로 내는 돈은 없어요",
       material_url: "https://ko.wikipedia.org/wiki/%EC%8A%A4%ED%94%84%EB%A0%88%EB%93%9C%EC%8B%9C%ED%8A%B8",
@@ -280,7 +313,8 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       applications: accepted(["P1", "P3", "P5"], seoulDateAt(-4, 20, 0, now)),
     },
     {
-      // 꼬리표 "신청 마감": 신청 마감 일시는 지났고 소셜링 일시는 미래
+      // 확정 대기 (MS15 U4): 신청 마감은 지났고 참여 확정 2명 = 최소 인원, 확정 기한까지 하루 넘게 남음.
+      // 하린(C)으로 로그인하면 관리 화면에서 확정할 수 있다
       key: "C_DEADLINE_PASSED",
       host: "C",
       title: "작은 전시 함께 보고 이야기 나누기",
@@ -289,15 +323,16 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       category: "culture",
       has_alcohol: false,
       venue: "yeonnam_cafe",
-      starts_at: hoursFromNow(20, now),
+      starts_at: seoulDateAt(2, 19, 30, now),
       apply_deadline_at: hoursFromNow(-2, now),
+      confirm_deadline_at: seoulDateAt(2, 7, 30, now),
       fee: 10000,
       fee_note: "전시 입장료 5,000원 + 카페 음료 5,000원. 현장에서 따로 내는 돈은 없어요",
       capacity: 6,
       staff_count: 0,
       join_type: "first_come",
       status: "recruiting",
-      applications: accepted(["P2"], seoulDateAt(-3, 20, 0, now)),
+      applications: accepted(["P2", "P4"], seoulDateAt(-3, 20, 0, now)),
     },
     {
       // 꼬리표 "정원 마감": 참여 확정 인원 = 정원
@@ -310,7 +345,8 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: false,
       venue: "jamsil_court",
       starts_at: seoulDateAt(5, 7, 30, now),
-      apply_deadline_at: seoulDateAt(4, 22, 0, now),
+      apply_deadline_at: seoulDateAt(4, 12, 0, now),
+      confirm_deadline_at: seoulDateAt(4, 18, 0, now),
       fee: 0,
       capacity: 4,
       staff_count: 0,
@@ -328,7 +364,8 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: false,
       venue: "hongdae",
       starts_at: seoulDateAt(6, 14, 0, now),
-      apply_deadline_at: seoulDateAt(5, 23, 0, now),
+      apply_deadline_at: seoulDateAt(5, 20, 0, now),
+      confirm_deadline_at: seoulDateAt(5, 23, 0, now),
       fee: 10000,
       fee_note: "스터디룸 이용 5,000원 + 음료 5,000원. 책은 각자 준비해 와요",
       material_url: "https://ko.wikipedia.org/wiki/%EC%88%98%ED%95%84",
@@ -348,7 +385,8 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: true,
       venue: "seongsu_studio",
       starts_at: seoulDateAt(3, 20, 0, now),
-      apply_deadline_at: seoulDateAt(3, 12, 0, now),
+      apply_deadline_at: seoulDateAt(2, 23, 0, now),
+      confirm_deadline_at: seoulDateAt(3, 8, 0, now),
       fee: 25000,
       fee_note: "공방 대여 10,000원 + 와인 두 잔·간단한 안주 15,000원. 안주를 더 먹고 싶으면 현장에서 각자 주문해요",
       capacity: 10,
@@ -387,7 +425,9 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: false,
       venue: "yeonnam_cafe",
       starts_at: seoulDateAt(8, 15, 0, now),
-      apply_deadline_at: seoulDateAt(7, 23, 0, now),
+      // 확정 기한이 새벽이 되지 않게 신청 마감을 저녁으로 (MS15 U4)
+      apply_deadline_at: seoulDateAt(7, 20, 0, now),
+      confirm_deadline_at: seoulDateAt(7, 23, 0, now),
       fee: 5000,
       fee_note: "출발 장소 카페 음료 5,000원. 필름은 각자 준비하고, 현장에서 따로 내는 돈은 없어요",
       capacity: 8,
@@ -419,6 +459,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       venue: "gangnam",
       starts_at: seoulDateAt(10, 19, 30, now),
       apply_deadline_at: seoulDateAt(9, 23, 0, now),
+      confirm_deadline_at: seoulDateAt(10, 7, 30, now),
       fee: 15000,
       fee_note: "스터디룸 이용 5,000원 + 음료 한 잔 10,000원. 현장에서 따로 내는 돈은 없어요",
       material_url: "https://ko.wikipedia.org/wiki/%ED%94%84%EB%A0%88%EC%A0%A0%ED%85%8C%EC%9D%B4%EC%85%98",
@@ -439,7 +480,8 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       has_alcohol: true,
       venue: "yeoksam_lounge",
       starts_at: seoulDateAt(7, 19, 30, now),
-      apply_deadline_at: seoulDateAt(7, 12, 0, now),
+      apply_deadline_at: seoulDateAt(6, 23, 0, now),
+      confirm_deadline_at: seoulDateAt(7, 7, 0, now),
       fee: 15000,
       fee_note: "라운지 이용 5,000원 + 맥주 한 잔 10,000원. 두 잔째부터는 현장에서 각자 주문해요",
       capacity: 8,
@@ -451,7 +493,7 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
 
     // ---------------------------------------------------------------- 지난 소셜링
     {
-      // 확정하지 않은 채 소셜링 일시가 지남 (상태는 그대로 모집중)
+      // 취소 (MS15 U4): 신청 없이 신청 마감이 지나 최소 인원(2명)이 모이지 않음. 저장된 상태는 모집중 그대로, 호스트 기록에 세지 않는다
       key: "C_EXPIRED_RECRUITING",
       host: "C",
       title: "캘리그라피 한 줄 써 보기",
@@ -508,6 +550,8 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
       join_type: "first_come",
       daysAgo: 30,
       participants: ["P3", "P4", "P5"],
+      // 서윤(A)의 늦은 취소 1회 (MS15 SH2): 시연 6단계 내 소셜링 "새 멤버 · 참여 2회 · 늦은 취소 1회"
+      lateCancels: ["A"],
       reviews: [
         { user: "P3", body: "호스트님이 모두에게 말할 기회를 골고루 줘서 좋았어요.", checks: MATCH },
         { user: "P4", body: "생각보다 어려웠지만 피드백이 친절했어요. 내용은 소개와 같았어요.", checks: MATCH },
@@ -653,6 +697,28 @@ export function seedSocialings(now = new Date()): SeedSocialing[] {
 
 // --------------------------------------------------------------------------- 호스트 기록 (architecture 3.2)
 
+/** 최소 인원·확정 기한의 기본값 (04 7장): 최소 2명, 확정 기한 = 신청 마감 일시 */
+export const minParticipantsOf = (s: SeedSocialing) => s.min_participants ?? 2;
+export const confirmDeadlineOf = (s: SeedSocialing) => s.confirm_deadline_at ?? s.apply_deadline_at;
+
+/**
+ * 시드 정의만으로 계산한 보이는 상태 (DB 함수 socialing_display_status와 같은 규칙, 시드 조건 점검용)
+ * 참여 확정 + 승인 대기 = a + p, 최소 인원 = m
+ */
+export function displayStatusFromSeed(
+  s: SeedSocialing,
+  now = new Date(),
+): "recruiting" | "awaiting_confirm" | "confirmed" | "completed" | "host_canceled" | "auto_canceled" {
+  if (s.status === "completed") return "completed";
+  if (s.status === "canceled") return "host_canceled";
+  if (s.status === "confirmed") return "confirmed";
+  if (now < new Date(s.apply_deadline_at)) return "recruiting";
+  const active = s.applications.filter((a) => a.status === "accepted" || a.status === "pending").length;
+  if (active < minParticipantsOf(s)) return "auto_canceled";
+  if (now < new Date(confirmDeadlineOf(s))) return "awaiting_confirm";
+  return "host_canceled";
+}
+
 export type HostRecord = {
   opened: number;
   canceled: number;
@@ -673,8 +739,11 @@ export function hostRecordFromSeed(socialings: SeedSocialing[], host: DemoUserKe
   const mine = socialings.filter((s) => s.host === host && new Date(s.starts_at) >= sixMonthsAgo);
 
   const opened = mine.filter((s) => s.status === "completed" && s.applications.some((a) => a.status === "accepted")).length;
+  // 호스트 취소 = 신청이 있던 상태에서 호스트 취소 + 확정 대기인 채로 확정 기한이 지남(MS15 U4, 최소 인원 미달 취소는 세지 않음)
   const canceled = mine.filter(
-    (s) => s.status === "canceled" && s.applications.some((a) => a.status === "accepted" || a.status === "pending"),
+    (s) =>
+      (s.status === "canceled" && s.applications.some((a) => a.status === "accepted" || a.status === "pending")) ||
+      (s.status === "recruiting" && displayStatusFromSeed(s, now) === "host_canceled"),
   ).length;
   const allReviews = mine.flatMap((s) => s.reviews ?? []);
   const matches = allReviews.filter((r) => r.checks[0] && !r.checks[1] && r.checks[2]).length;

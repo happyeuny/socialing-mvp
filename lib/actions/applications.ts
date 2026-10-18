@@ -64,6 +64,8 @@ export type CancelResult = { ok: true } | { ok: false; reason: string } | { ok: 
 const CANCEL_REASONS: Record<string, string> = {
   STARTED: "소셜링 일시가 지나 취소할 수 없어요",
   HOST_CANCELED: "호스트가 취소한 소셜링이에요",
+  // 창을 연 사이 최소 인원이 될 수 없게 됐거나 확정 기한이 지남 (MS15 U4)
+  AUTO_CANCELED: "이미 취소된 소셜링이에요",
   // 창을 연 사이 호스트가 거절했거나 다른 화면에서 이미 취소함
   ALREADY_PROCESSED: "이미 처리된 신청이에요",
   INVALID_INPUT: "이미 처리된 신청이에요",
