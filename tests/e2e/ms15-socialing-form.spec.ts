@@ -65,10 +65,16 @@ test.describe("MS15 등록 P07: 확정 기한·최소 인원", () => {
     await loginAs(page, NEW_PATH);
 
     // 칸 순서: 신청 마감 일시 바로 아래 확정 기한, 정원 바로 아래 최소 인원 (3.7)
-    const labels = await page.locator("form label").allInnerTexts();
-    const at = (label: string) => labels.findIndex((text) => text.trim() === label);
-    expect(at("확정 기한")).toBe(at("신청 마감 일시") + 1);
-    expect(at("최소 인원")).toBe(at("정원") + 1);
+    const top = async (field: ReturnType<typeof confirmField>) => (await field.boundingBox())!.y;
+    const [deadlineY, confirmY, feeY, capacityY, minY, staffY] = await Promise.all(
+      [deadlineField, confirmField, (p: Page) => p.getByLabel("총 참가비"), capacityField, minField, (p: Page) => p.getByLabel("스태프 인원")].map(
+        (field) => top(field(page)),
+      ),
+    );
+    expect(deadlineY).toBeLessThan(confirmY);
+    expect(confirmY).toBeLessThan(feeY);
+    expect(capacityY).toBeLessThan(minY);
+    expect(minY).toBeLessThan(staffY);
     await expect(confirmField(page)).toHaveAccessibleDescription(CONFIRM_HELP);
     await expect(minField(page)).toHaveAccessibleDescription(MIN_HELP);
 

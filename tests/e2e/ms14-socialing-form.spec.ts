@@ -275,8 +275,8 @@ test.describe("MS14 소셜링 수정 P08 새 칸", () => {
     ]);
     await loginAs(page, editPath(written));
 
-    // 장소 · 일시 · 참가비 · 참가비 설명 네 곳
-    await expect(lockReason(page)).toHaveCount(4);
+    // 장소 · 일시 · 참가비 · 참가비 설명 네 곳 + MS15 확정 기한 · 최소 인원
+    await expect(lockReason(page)).toHaveCount(6);
     await expect(feeNoteField(page)).toBeDisabled();
     await expect(feeNoteField(page)).toHaveValue(FEE_NOTE);
     await expect(feeNoteField(page)).toHaveAccessibleDescription(new RegExp(ACCEPTED_LOCK));
@@ -288,7 +288,8 @@ test.describe("MS14 소셜링 수정 P08 새 칸", () => {
 
     // MS14 전에 연 유료 소셜링(설명 없음): 참여 확정자가 있어도 설명은 열려 있고, 채워야 저장된다
     await page.goto(editPath(empty));
-    await expect(lockReason(page)).toHaveCount(3);
+    // 장소 · 일시 · 참가비 + MS15 확정 기한 · 최소 인원 (설명은 열림)
+    await expect(lockReason(page)).toHaveCount(5);
     await expect(feeField(page)).toBeDisabled();
     await expect(feeNoteField(page)).toBeEnabled();
     await saveButton(page).click();
