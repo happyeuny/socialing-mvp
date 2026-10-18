@@ -1,11 +1,13 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 import { DEMO_USERS, type DemoUserKey } from "../../../scripts/seed-data.mts";
 
-/** 지금 열린 로그인 화면(P04)에서 데모 계정으로 로그인한다 */
-export async function submitLogin(page: Page, user: DemoUserKey) {
+/** 지금 열린 로그인 화면(P04)에서 데모 계정(또는 테스트가 가입시킨 계정)으로 로그인한다 */
+export async function submitLogin(page: Page, user: DemoUserKey | { email: string; password: string }) {
   await expect(page.getByRole("heading", { level: 1, name: "로그인" })).toBeVisible();
-  await page.getByLabel("이메일").fill(DEMO_USERS[user].email);
-  await page.getByLabel("비밀번호", { exact: true }).fill(process.env.DEMO_PASSWORD ?? "");
+  const { email, password } =
+    typeof user === "string" ? { email: DEMO_USERS[user].email, password: process.env.DEMO_PASSWORD ?? "" } : user;
+  await page.getByLabel("이메일").fill(email);
+  await page.getByLabel("비밀번호", { exact: true }).fill(password);
   await page.getByRole("button", { name: "로그인" }).click();
 }
 

@@ -43,7 +43,7 @@ export async function rpc(
 const sqlText = (value: string) => `'${value.replace(/'/g, "''")}'`;
 
 /** 테스트가 가입시킨 계정 (`e2e-…@socialing.test`). 끝에 deleteAuthUsers로 지운다 */
-export type TestUser = { id: string; email: string; nickname: string; accessToken: string };
+export type TestUser = { id: string; email: string; nickname: string; accessToken: string; password: string };
 
 /**
  * 테스트 전용 계정을 가입시킨다(이메일 인증이 꺼져 있어 바로 로그인된다).
@@ -53,13 +53,14 @@ export async function createTestUser(request: APIRequestContext, label: string):
   const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   const email = `e2e-${label}-${suffix}@${DEMO_EMAIL_DOMAIN}`;
   const nickname = `t${suffix}`.slice(0, 12);
+  const password = `e2e-${suffix}-pw`;
   const response = await request.post(`${supabaseUrl}/auth/v1/signup`, {
     headers: apiHeaders(),
-    data: { email, password: `e2e-${suffix}-pw`, data: { nickname } },
+    data: { email, password, data: { nickname } },
   });
   expect(response.status(), "테스트 계정 가입").toBe(200);
   const body = await response.json();
-  return { id: body.user.id, email, nickname, accessToken: body.access_token };
+  return { id: body.user.id, email, nickname, accessToken: body.access_token, password };
 }
 
 const emailOf = (user: DemoUserKey | TestUser) => (typeof user === "string" ? DEMO_USERS[user].email : user.email);

@@ -3,10 +3,17 @@ import Link from "next/link";
 import { chipVariantOf } from "@/components/application-chip";
 import { buttonVariants } from "@/components/button";
 import { EmptyState } from "@/components/empty-state";
-import { ErrorStateFull } from "@/components/error-state";
+import { ErrorStateFull, ErrorStateInline } from "@/components/error-state";
+import { ParticipationRecordBox } from "@/components/participation-record";
 import { SectionHeader } from "@/components/section-header";
 import { SocialingCard } from "@/components/socialing-card";
-import { listMyAppliedSocialings, type MyAppliedSocialing, type SplitByPast } from "@/lib/queries/my-socialings";
+import {
+  getMyParticipationRecord,
+  listMyAppliedSocialings,
+  type MyAppliedSocialing,
+  type ParticipationRecord,
+  type SplitByPast,
+} from "@/lib/queries/my-socialings";
 import type { SimulatedState } from "@/lib/simulated-state";
 import { cn } from "@/lib/utils";
 import { rejectReasonLabel } from "@/lib/validation/reject";
@@ -16,31 +23,53 @@ import { rejectReasonLabel } from "@/lib/validation/reject";
 // 배지 하나만(신청 상태는 그대로라 칩을 덮는다, spec 3.3). 확정 대기는 배지 + 칩.
 // 후기를 쓸 수 있으면(참여 확정 + 종료 + 아직 안 씀, spec 3.4) "후기 쓰기"(P09는 MS5).
 // 거절됐고 사유가 있으면 카드 아래 줄에 "거절 사유: …"(MS14 U10). 덧붙인 말은 상세에서만 보인다.
+// 맨 위에 나만 보는 참여 기록(MS15 SH2). 기록만 실패하면 그 자리에만 다시 시도, 목록은 그대로(spec 8.6, Q3, `?_state=partial`).
+
+/** 화면 상태 흉내 empty: 신청이 없는 새 계정의 기록 */
+const EMPTY_RECORD: ParticipationRecord = { participatedCount: 0, lateCancelCount: 0, isNewMember: true, lateCancels: [] };
 
 export async function AppliedSocialings({ simulated }: { simulated: SimulatedState | null }) {
-  let lists: SplitByPast<MyAppliedSocialing>;
-  try {
-    if (simulated === "error") throw new Error("화면 상태 흉내: 오류");
-    lists = simulated === "empty" ? { upcoming: [], past: [] } : await listMyAppliedSocialings();
-  } catch (error) {
-    if (simulated !== "error") console.error(error);
+  const [lists, record] = await Promise.allSettled([
+    simulated === "error"
+      ? Promise.reject(new Error("화면 상태 흉내: 오류"))
+      : simulated === "empty"
+        ? Promise.resolve<SplitByPast<MyAppliedSocialing>>({ upcoming: [], past: [] })
+        : listMyAppliedSocialings(),
+    simulated === "partial"
+      ? Promise.reject(new Error("화면 상태 흉내: 참여 기록만 실패"))
+      : simulated === "empty"
+        ? Promise.resolve(EMPTY_RECORD)
+        : getMyParticipationRecord(),
+  ]);
+  if (lists.status === "rejected") {
+    if (simulated !== "error") console.error(lists.reason);
     return <ErrorStateFull />;
   }
+  if (record.status === "rejected" && simulated !== "partial") console.error(record.reason);
 
-  if (lists.upcoming.length === 0 && lists.past.length === 0) {
-    return (
-      <EmptyState
-        icon={CalendarSearch}
-        title="아직 신청한 소셜링이 없어요"
-        action={{ href: "/explore", label: "탐색하기" }}
-      />
+  const recordBox =
+    record.status === "fulfilled" ? (
+      <ParticipationRecordBox record={record.value} />
+    ) : (
+      <ErrorStateInline message="참여 기록을 불러오지 못했어요" />
     );
-  }
+  const { upcoming, past } = lists.value;
 
   return (
     <div className="flex flex-col gap-2xl">
-      <Group id="applied-upcoming" title="다가오는 소셜링" criteria="가까운 일시 순" socialings={lists.upcoming} />
-      <Group id="applied-past" title="지난 소셜링" criteria="최근 순" socialings={lists.past} />
+      {recordBox}
+      {upcoming.length === 0 && past.length === 0 ? (
+        <EmptyState
+          icon={CalendarSearch}
+          title="아직 신청한 소셜링이 없어요"
+          action={{ href: "/explore", label: "탐색하기" }}
+        />
+      ) : (
+        <>
+          <Group id="applied-upcoming" title="다가오는 소셜링" criteria="가까운 일시 순" socialings={upcoming} />
+          <Group id="applied-past" title="지난 소셜링" criteria="최근 순" socialings={past} />
+        </>
+      )}
     </div>
   );
 }

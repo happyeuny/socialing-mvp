@@ -214,7 +214,7 @@ MVP(MS1~MS9)는 main에 있고 운영 주소(발표 DB)에서 1~10단계가 된�
   - [x] 등록·수정(P07·P08)에 확정 기한·최소 인원(도움말·오류·참여 확정자가 있으면 잠금)이 있고 `_v3`를 부른다. 시연 10단계 등록이 그대로 된다. #85, `ms15-socialing-form`, `ms7-new-socialing`·`ms7-edit-socialing`·`ms14-socialing-form`, `ms9-scenario` (2026-10-18)
   - [x] 배지 "확정 대기"·"취소"와 꼬리표 "최소 인원까지 N명"(조합 10가지)이 카드·상세에 보이고, 상세(P03)에 확정 기한 줄·보조 글, 아래 영역 2줄 이유·새 줄(최소 인원 미달)·7줄 둘, 신청 확인(O02)에 한 줄. 390·320px. #86, `ms15-status-display`, 바뀐 규칙에 맞춘 `ms2-apply-bar`·`ms2-past`·`ms2-home`·`ms2-detail`·`ms3-apply-bar`·`ms3-apply`·`ms3-cancel`·`ms3-my-socialings`·`ms12-refund`·`ms14-detail-info`·`ms14-reject-reason`, `ms9-scenario` (2026-10-18)
   - [x] 소셜링 관리(P11): 요약 줄 최소 인원, 확정 대기 단계, 확정 조건 설명·막힌 이유, 계산으로 취소·호스트 취소면 버튼 대신 안내. #87, `ms15-manage`, 바뀐 규칙에 맞춘 `ms4-status`, `ms4-manage`·`ms4-decide`·`ms9-focus-return`·`ms9-screen-sweep`, `ms9-scenario` (2026-10-18)
-  - [ ] 내 소셜링(P06) "신청한 소셜링" 맨 위에 나만 보는 참여 기록(새 멤버·참여·늦은 취소, 늦은 취소 목록 접는 줄)과 불러오지 못했을 때의 자리, 신청 취소 창(O05) 두 줄(확정 대기 취소 경고, 늦은 취소 안내)
+  - [x] 내 소셜링(P06) "신청한 소셜링" 맨 위에 나만 보는 참여 기록(새 멤버·참여·늦은 취소, 늦은 취소 목록 접는 줄)과 불러오지 못했을 때의 자리, 신청 취소 창(O05) 두 줄(확정 대기 취소 경고, 늦은 취소 안내). #88, `ms15-participation-record`, `ms3-cancel`·`ms3-my-socialings`·`ms12-refund`·`ms15-participation-fn`·`ms9-focus-return`·`ms9-screen-sweep`, `ms9-scenario` (2026-10-18)
   - [ ] 화면이 바뀐 PR마다 PM이 미리보기에서 확인하고 dev에 병합한다. 여러 화면을 바꾼 PR은 `ms9-screen-sweep`이 통과한다
   - [ ] dev → main 전 점검(demo-checklist 7장): dev 시드 다시 → 전체 E2E 통과. 새 마이그레이션 7개와 시드 변경이 있어 발표 DB 준비를 dev 기준으로 실제 실행한다. dev → main PR은 이 결과를 보여 드리고 PM 승인 뒤
 

@@ -159,6 +159,11 @@ test.describe("MS9 시연 시나리오", () => {
         // 시드: 하린의 "필름 카메라로 골목 산책"에서 거절된 카드에는 거절 사유 (MS14 U10, P06-15)
         const film = page.locator("article").filter({ has: page.getByRole("heading", { name: "필름 카메라로 골목 산책" }) });
         await expect(film).toContainText("거절 사유: 승인 기준과 맞지 않아요");
+        // MS15 SH2: 맨 위 나만 보는 참여 기록. 시드의 늦은 취소 1회(B의 지난 소셜링). 참여 수는 다른 테스트의 지난 소셜링에 따라 달라
+        // 숫자는 ms15-participation-record에서 가입시킨 계정으로 본다
+        const record = page.getByRole("region", { name: "내 참여 기록" });
+        await expect(record).toContainText("내 참여 기록 · 나만 볼 수 있어요");
+        await expect(record).toContainText(/참여 \d+회 · 늦은 취소 [1-9]\d*회/);
       });
 
       // 7단계 (B): 일시가 지난 확정 소셜링 X를 내 소셜링 → 관리 → 종료(O04)

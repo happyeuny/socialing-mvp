@@ -168,10 +168,16 @@ export function ApplyBar({ socialing, viewer }: { socialing: SocialingDetail; vi
         <ConfirmCancelApplicationSheet
           socialingId={socialing.id}
           applicationId={application.id}
-          firstCome={socialing.join_type === "first_come"}
+          // 신청 마감이 지났으면(확정 대기·확정 + 신청 마감) 아무도 새로 신청할 수 없어 "자리를 채울 수 있어요"를 뺀다 (MS15)
+          firstCome={
+            socialing.join_type === "first_come" &&
+            (socialing.closed_reason === null || socialing.closed_reason === "full")
+          }
           status={application.status}
           startsAt={socialing.starts_at}
           fee={socialing.fee}
+          autoCancelMin={application.cancelWouldAutoCancel ? socialing.min_participants : null}
+          lateCancel={application.cancelWouldBeLate}
         />
       </Shell>
     );
