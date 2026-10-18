@@ -3,8 +3,11 @@ import {
   DEMO_USERS,
   REGIONS,
   VENUES,
+  confirmDeadlineOf,
   demoSocialings,
+  displayStatusFromSeed,
   hostRecordFromSeed,
+  minParticipantsOf,
   seedSocialings,
 } from "../../scripts/seed-data.mts";
 
@@ -93,13 +96,21 @@ test.describe("시드 조건 (spec 7장)", () => {
     const has = (label: string, predicate: (s: (typeof definitions)[number]) => boolean) =>
       expect(definitions.some(predicate), label).toBe(true);
 
-    has("모집중(미래)", (s) => s.status === "recruiting" && future(s) && new Date(s.apply_deadline_at).getTime() > now);
+    // MS15 U4: 보이는 상태 (2.4 표). "모집중 + 신청 마감"은 없어지고 확정 대기·취소가 생겼다
+    const display = (s: (typeof definitions)[number]) => displayStatusFromSeed(s);
+    has("모집중(미래)", (s) => display(s) === "recruiting" && future(s) && new Date(s.apply_deadline_at).getTime() > now);
+    has("모집중 + 최소 인원까지 N명", (s) => display(s) === "recruiting" && accepted(s) < minParticipantsOf(s));
     has("확정(미래)", (s) => s.status === "confirmed" && future(s));
-    has("신청 마감", (s) => s.status === "recruiting" && future(s) && new Date(s.apply_deadline_at).getTime() < now);
-    has("정원 마감", (s) => s.status === "recruiting" && future(s) && accepted(s) === s.capacity);
+    has("확정 + 신청 마감", (s) => s.status === "confirmed" && future(s) && new Date(s.apply_deadline_at).getTime() < now);
+    has("정원 마감", (s) => display(s) === "recruiting" && future(s) && accepted(s) === s.capacity);
+    has("확정 대기", (s) => display(s) === "awaiting_confirm");
     has("종료", (s) => s.status === "completed");
     has("호스트 취소", (s) => s.status === "canceled");
-    has("확정 안 된 채 일시 지남", (s) => s.status === "recruiting" && !future(s));
+    has("취소(최소 인원 미달)", (s) => display(s) === "auto_canceled");
+    expect(
+      definitions.filter((s) => s.status === "recruiting" && display(s) === "recruiting" && new Date(s.apply_deadline_at).getTime() < now),
+      "모집중 + 신청 마감은 없다",
+    ).toEqual([]);
     has("파티·사교(취소 아님)", (s) => s.category === "party" && s.status !== "canceled");
     has("술 있음", (s) => s.has_alcohol);
     // 파티·사교를 숨겨도 남는 술 자리 → "술 없음" 필터와 "파티·사교 숨기기"의 결과가 갈린다 (MS12 U2)
@@ -112,6 +123,16 @@ test.describe("시드 조건 (spec 7장)", () => {
     for (const s of definitions) {
       expect(accepted(s), `${s.title}: 참여 확정 인원 ≤ 정원`).toBeLessThanOrEqual(s.capacity);
       expect(new Date(s.apply_deadline_at) <= new Date(s.starts_at), `${s.title}: 마감 ≤ 일시`).toBe(true);
+      // MS15: 신청 마감 ≤ 확정 기한 ≤ 소셜링 일시, 최소 인원 2명~정원
+      const confirm = new Date(confirmDeadlineOf(s)).getTime();
+      expect(new Date(s.apply_deadline_at).getTime() <= confirm && confirm <= new Date(s.starts_at).getTime(), `${s.title}: 확정 기한 순서`).toBe(true);
+      expect(minParticipantsOf(s) >= 2 && minParticipantsOf(s) <= s.capacity, `${s.title}: 최소 인원`).toBe(true);
+      // 모집중인 미래 소셜링은 등록 함수와 같은 12시간 규칙 (결정 H2)
+      if (s.status === "recruiting" && future(s) && new Date(s.apply_deadline_at).getTime() > now) {
+        expect(new Date(s.starts_at).getTime() - confirm, `${s.title}: 확정 기한은 일시 12시간 전까지`).toBeGreaterThanOrEqual(
+          12 * 60 * 60 * 1000,
+        );
+      }
     }
   });
 
@@ -213,6 +234,62 @@ test.describe("시드 조건 (spec 7장)", () => {
     expect(seeded.filter((r) => r.material_url).map((r) => r.title).sort()).toEqual(
       withMaterial.map((s) => s.title).sort(),
     );
+  });
+
+  test("MS15 3묶음 시드: 확정 대기·취소·최소 인원 예와 서윤의 참여 기록 (04 7장)", async ({ request }) => {
+    const byKey = (key: string) => definitions.find((s) => s.key === key)!;
+    expect(minParticipantsOf(byKey("B_RECRUITING_SOON"))).toBe(4);
+    expect(definitions.filter((s) => minParticipantsOf(s) !== 2).map((s) => s.key)).toEqual(["B_RECRUITING_SOON"]);
+    // 4~6단계: APPROVAL은 민지가 미리 참여 확정 → "1명 더 모이면 확정할 수 있어요"
+    expect(byKey("APPROVAL").applications).toEqual([expect.objectContaining({ user: "P1", status: "accepted" })]);
+
+    type Row = { title: string; display_status: string; needed_count: number | null; status_tag: string | null; cancel_reason: string | null };
+    const rows: Row[] = await (
+      await request.get(
+        `${supabaseUrl}/rest/v1/socialing_summaries?select=title,display_status,needed_count,status_tag,cancel_reason`,
+        { headers },
+      )
+    ).json();
+    const row = (key: string) => rows.find((r) => r.title === byKey(key).title);
+    expect(row("B_RECRUITING_SOON")).toMatchObject({ display_status: "recruiting", needed_count: 2, status_tag: null });
+    expect(row("APPROVAL")).toMatchObject({ display_status: "recruiting", needed_count: 1 });
+    expect(row("C_DEADLINE_PASSED")).toMatchObject({ display_status: "awaiting_confirm", needed_count: 0, status_tag: null });
+    expect(row("C_EXPIRED_RECRUITING")).toMatchObject({ display_status: "auto_canceled", cancel_reason: "min_not_met" });
+    expect(row("D_CONFIRMED")).toMatchObject({ display_status: "confirmed", status_tag: "closed" });
+    expect(row("D_CANCELED")).toMatchObject({ display_status: "host_canceled", cancel_reason: "host" });
+
+    // 하린(C): 확정 대기 소셜링을 확정할 수 있다
+    const harin = await signIn(request, DEMO_USERS.C.email);
+    const [managed] = await (
+      await request.get(
+        `${supabaseUrl}/rest/v1/my_hosted_socialings?select=can_confirm&title=eq.${encodeURIComponent(byKey("C_DEADLINE_PASSED").title)}`,
+        { headers: { ...headers, Authorization: `Bearer ${harin}` } },
+      )
+    ).json();
+    expect(managed).toEqual({ can_confirm: true });
+
+    // SH2: 서윤은 Y·B_PAST_1 참여 2회 + B_PAST_2 늦은 취소 1회 → "새 멤버 · 참여 2회 · 늦은 취소 1회"
+    const seoyun = await signIn(request, DEMO_USERS.A.email);
+    const [record] = await (
+      await request.post(`${supabaseUrl}/rest/v1/rpc/get_my_participation_record`, {
+        headers: { ...headers, Authorization: `Bearer ${seoyun}` },
+        data: {},
+      })
+    ).json();
+    expect(record).toMatchObject({ participated_count: 2, late_cancel_count: 1, is_new_member: true });
+    expect(record.late_cancels.map((c: { title: string }) => c.title)).toEqual([byKey("B_PAST_2").title]);
+    // 취소한 소셜링은 내 소셜링 "신청한 소셜링"에 나오지 않는다(지금 규칙) → 뷰에는 신청 취소로 남는다
+    const [applied] = await (
+      await request.get(
+        `${supabaseUrl}/rest/v1/my_applied_socialings?select=application_status&title=eq.${encodeURIComponent(byKey("B_PAST_2").title)}`,
+        { headers: { ...headers, Authorization: `Bearer ${seoyun}` } },
+      )
+    ).json();
+    expect(applied).toEqual({ application_status: "canceled" });
+
+    // 호스트 기록: B는 그대로 등급, C의 캘리그라피(최소 인원 미달)는 세지 않는다
+    expect(hostRecordFromSeed(definitions, "B")).toMatchObject({ canceled: 0, isTrusted: true });
+    expect(hostRecordFromSeed(definitions, "C").canceled).toBe(0);
   });
 
   test("지역은 전국 시·도 16개 > 시·군·구 256곳이고, 장소는 정의한 구에 있다 (MS6 지역 필터)", async ({ request }) => {

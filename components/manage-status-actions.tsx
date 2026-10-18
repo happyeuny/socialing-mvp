@@ -72,6 +72,9 @@ const ACTIONS: Record<
 const CONFIRM_HELP = '확정하면 소셜링 상태가 "확정"으로 바뀌어 모두에게 보여요. 소셜링 일시 전까지 할 수 있어요.';
 const CONFIRM_BLOCKED: Record<ConfirmBlockedReason, string> = {
   started: "소셜링 일시가 지나 확정할 수 없어요",
+  // MS15 U4: 인원 수와 계산 취소 화면은 관리 PR에서 (04 3.6)
+  min_not_met: "최소 인원이 모여야 확정할 수 있어요",
+  canceled: "이미 취소된 소셜링이에요",
 };
 const COMPLETE_BLOCKED: Record<CompleteBlockedReason, string> = {
   confirm_first: "확정한 뒤 소셜링 일시가 지나야 종료할 수 있어요",
