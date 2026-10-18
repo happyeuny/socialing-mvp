@@ -76,12 +76,13 @@ test.describe("MS3 신청 취소 O05", () => {
     expect((await applicationsOf(id)).map((a) => a.status)).toEqual(["canceled", "pending"]);
   });
 
-  test("P03-B09·O05 선착순 문구: 참여 확정을 취소하면 자리가 다시 생긴다 (정원 마감 → 9줄)", async ({ page }) => {
+  test("P03-B23·O05 선착순 문구: 참여 확정을 취소하면 자리가 다시 생긴다 (정원 마감 → 9줄)", async ({ page }) => {
     const id = await fixture({ host: "C", capacity: 2, accepted: ["P1", "P2"] });
     await openDetailAs(page, id);
     await expect(people(page)).toContainText("참가자 2/2명");
     await expect(bar(page).getByText("참여 확정", { exact: true })).toBeVisible();
-    await expect(bar(page)).toContainText(/에 만나요/);
+    // MS15: 모집중이라 "…에 만나요"(확정 소셜링, B09) 대신 확정 기한 안내(B23)
+    await expect(bar(page)).toContainText(/까지 호스트가 확정하면 열려요/);
 
     await openCancelSheet(page);
     await expect(cancelSheet(page)).toContainText(FIRST_COME_NOTICE);

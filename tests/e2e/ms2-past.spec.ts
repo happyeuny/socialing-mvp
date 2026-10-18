@@ -8,8 +8,8 @@ const cards = (page: Page) => page.getByRole("article");
 const notFixture = (title: string) => !title.startsWith("[E2E]");
 
 test.describe("MS2 지난 소셜링 P02", () => {
-  test("P02-01: 일시가 지난 소셜링이 최근 순이고 상태는 그대로(종료·호스트 취소·모집중)", async ({ page, request }) => {
-    // 확정하지 않은 채 일시가 지난 모집중(1시간 전), 종료(2시간 전), 호스트 취소(3시간 전)
+  test("P02-01: 일시가 지난 소셜링이 최근 순이고 보이는 상태 그대로(취소·종료·호스트 취소)", async ({ page, request }) => {
+    // 확정하지 않은 채 일시가 지난 모집중(1시간 전, 신청 없음 → 보이는 상태 취소), 종료(2시간 전), 호스트 취소(3시간 전)
     const ids = [
       await createFixtureSocialing({ host: "B", status: "recruiting", deadlineInHours: -4, startsInHours: -1 }),
       await createFixtureSocialing({ host: "B", status: "completed", deadlineInHours: -4, startsInHours: -2 }),
@@ -33,9 +33,9 @@ test.describe("MS2 지난 소셜링 P02", () => {
       expect(shownTitles.filter((title) => fixtureTitles.includes(title))).toEqual(fixtureTitles);
 
       const cardOf = (title: string) => cards(page).filter({ has: page.getByRole("heading", { name: title }) });
-      // MS15: 확정하지 않은 채 일시가 지난 모집중은 보이는 상태가 취소(최소 인원 미달)라 꼬리표 "신청 마감"이 없다.
-      // 배지는 저장된 상태(모집중) 그대로이고, "취소" 배지는 상태 표시 PR(MS15 PR 3)에서
-      await expect(cardOf(fixtureTitles[0])).toContainText("모집중");
+      // MS15: 확정하지 않은 채 일시가 지난 모집중은 보이는 상태가 취소(최소 인원 미달)라 배지 "취소" 하나, 꼬리표 없음
+      await expect(cardOf(fixtureTitles[0]).getByText("취소", { exact: true })).toBeVisible();
+      await expect(cardOf(fixtureTitles[0])).not.toContainText("모집중");
       await expect(cardOf(fixtureTitles[0])).not.toContainText("신청 마감");
       await expect(cardOf(fixtureTitles[1])).toContainText("종료");
       await expect(cardOf(fixtureTitles[1])).not.toContainText("신청 마감");

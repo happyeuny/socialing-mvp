@@ -17,7 +17,9 @@ export type ManagedSocialing = Pick<
   | "id"
   | "title"
   | "status"
+  | "display_status"
   | "status_tag"
+  | "needed_count"
   | "starts_at"
   | "venue_type"
   | "venue_name"
@@ -40,7 +42,7 @@ export type ManagedSocialing = Pick<
 };
 
 const MANAGED_COLUMNS =
-  "id, title, status, status_tag, starts_at, venue_type, venue_name, join_type, capacity, staff_count, accepted_count, " +
+  "id, title, status, display_status, status_tag, needed_count, starts_at, venue_type, venue_name, join_type, capacity, staff_count, accepted_count, " +
   "pending_count, closed_count, can_confirm, confirm_blocked_reason, can_complete, complete_blocked_reason, " +
   "can_cancel, can_edit, can_decide, can_approve, approve_blocked_reason";
 

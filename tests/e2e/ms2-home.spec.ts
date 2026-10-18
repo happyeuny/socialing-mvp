@@ -22,7 +22,8 @@ test.describe("MS2 홈 P00", () => {
   }) => {
     await page.goto("/");
 
-    // 히어로 = 지금 신청할 수 있는 소셜링 중 일시가 가장 가까운 1개, 곧 열리는 소셜링 = 히어로와 호스트 취소를 뺀 가까운 순 3개
+    // 히어로 = 지금 신청할 수 있는 소셜링 중 일시가 가장 가까운 1개, 곧 열리는 소셜링 = 히어로와 호스트 취소·취소를 뺀 가까운 순 3개
+    // (MS15: 보이는 상태로 뺀다. 확정하지 않아 호스트 취소·최소 인원 미달 취소도 빠지고 확정 대기는 남는다)
     await expect(async () => {
       await page.reload();
       const [expectedHero] = await rest<{ id: number; title: string }[]>(
@@ -31,7 +32,7 @@ test.describe("MS2 홈 P00", () => {
       );
       const expectedUpcoming = await rest<{ title: string }[]>(
         request,
-        `socialing_summaries?select=title&is_past=eq.false&status=neq.canceled&id=neq.${expectedHero.id}&order=starts_at.asc,id.asc&limit=3`,
+        `socialing_summaries?select=title&is_past=eq.false&display_status=not.in.(host_canceled,auto_canceled)&id=neq.${expectedHero.id}&order=starts_at.asc,id.asc&limit=3`,
       );
       await expect(hero(page).getByRole("heading")).toHaveText(expectedHero.title, { timeout: 2000 });
       await expect(section(page, "곧 열리는 소셜링").getByRole("article").getByRole("heading")).toHaveText(

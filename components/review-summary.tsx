@@ -8,7 +8,7 @@ import type { SocialingDetail } from "@/lib/queries/socialings";
 // 이 화면에는 참여 확정자 + 종료일 때만 들어오므로 배지와 칩은 언제나 이 둘이다.
 
 type ReviewSummaryProps = {
-  socialing: Pick<SocialingDetail, "status" | "title" | "starts_at" | "venue_type" | "venue_name" | "host_nickname">;
+  socialing: Pick<SocialingDetail, "display_status" | "title" | "starts_at" | "venue_type" | "venue_name" | "host_nickname">;
 };
 
 export function ReviewSummary({ socialing }: ReviewSummaryProps) {
@@ -18,7 +18,7 @@ export function ReviewSummary({ socialing }: ReviewSummaryProps) {
       className="flex flex-col gap-xs rounded-xl bg-surface p-lg shadow-card"
     >
       <div className="flex flex-wrap items-center gap-[6px]">
-        <StatusBadge status={socialing.status} />
+        <StatusBadge status={socialing.display_status} />
         <ApplicationChip variant="accepted" />
       </div>
       <h2 className="text-title-lg break-words break-keep text-text-primary">{socialing.title}</h2>

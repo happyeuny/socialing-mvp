@@ -16,8 +16,8 @@ export function ManageSummary({ socialing }: { socialing: ManagedSocialing }) {
       className="flex flex-col gap-xs rounded-xl bg-surface p-lg shadow-card"
     >
       <div className="flex flex-wrap items-center gap-[6px]">
-        <StatusBadge status={socialing.status} />
-        {socialing.status_tag && <StatusTag tag={socialing.status_tag} />}
+        <StatusBadge status={socialing.display_status} />
+        <StatusTag socialing={socialing} />
       </div>
       <h2 className="text-title-lg break-words break-keep text-text-primary">{socialing.title}</h2>
       <p className="text-body-md break-words break-keep text-text-secondary">

@@ -91,6 +91,10 @@ test.describe("MS9 시연 시나리오", () => {
       await expect(page.getByRole("heading", { level: 2, name: meetupTitle })).toBeVisible();
       await expect(page.getByRole("main").getByText("모집중").first()).toBeVisible();
       await expect(infoRow(page, "인원")).toContainText("참가자 1/4명 · 스태프 1명");
+      // MS15 U4: 최소 인원과 확정 기한 (04 7장 3단계)
+      await expect(page.getByRole("main").getByText("최소 인원까지 1명", { exact: true })).toBeVisible();
+      await expect(infoRow(page, "인원")).toContainText("최소 2명 · 1명 더 모이면 확정할 수 있어요");
+      await expect(infoRow(page, "확정 기한")).toContainText("이때까지 호스트가 확정하지 않으면 취소돼요");
       await expect(infoRow(page, "총 참가비")).toContainText("무료");
       await expect(page.getByRole("main")).toContainText(APPROVAL_CRITERIA);
       reviewsBefore = await hostReviewCount(page);
@@ -117,6 +121,9 @@ test.describe("MS9 시연 시나리오", () => {
       await bar(page).getByRole("button", { name: "신청하기" }).click();
       const applySheet = page.getByRole("dialog", { name: "신청할까요?" });
       await expect(applySheet).toContainText(APPROVAL_CRITERIA);
+      // MS15 U4: 모집중이면 열리는 조건 한 줄 (무료라 환불 문장 없음)
+      await expect(applySheet).toContainText(/최소 2명이 모이고 확정 기한\(.+\)까지 호스트가 확정하면 열려요/);
+      await expect(applySheet).not.toContainText("취소되면 전액 환불 기준이에요");
       await applySheet.getByRole("button", { name: "신청하기" }).click();
       await expect(applySheet).toHaveCount(0);
       await expect(bar(page).getByText("승인 대기", { exact: true })).toBeVisible();
